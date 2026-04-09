@@ -2,6 +2,7 @@ import { createApp } from 'vue'
 import App from './App.vue'
 import router from './router'
 import L from 'leaflet'
+import 'leaflet/dist/leaflet.css'
 
 // Configurar iconos de Leaflet
 delete L.Icon.Default.prototype._getIconUrl;

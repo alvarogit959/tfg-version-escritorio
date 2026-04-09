@@ -14,7 +14,8 @@
 
 <script>
 import L from 'leaflet';
-
+const nombre = "Evento CarMeet";
+const fecha = "20/05/2026";
 export default {
   name: "map-view",
   props: {
@@ -30,27 +31,60 @@ export default {
     };
   },
   mounted() {
-    this.initializeMap();
+    this.$nextTick(() => {
+      this.initializeMap();
+    });
+  },
+  beforeUnmount() {
+    if (this.map) {
+      this.map.off();
+      this.map.remove();
+      this.map = null;
+    }
   },
   methods: {
     initializeMap() {
+      // Verify DOM element exists
+      const mapContainer = document.getElementById('map');
+      if (!mapContainer) {
+        console.warn('Map container not found');
+        return;
+      }
+
 //UBICACION INICIO
-      this.map = L.map('map').setView([42.2383, -8.7292], 13);
+      this.map = L.map('map');
+      this.map.setView([42.2383, -8.7292], 13);
 
     //capa de OpenStreetMap
     //Cambiar color aqui??
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+  attribution: '© OpenStreetMap contributors',
+  maxZoom: 19
+}).addTo(this.map);
     
-      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
-        maxZoom: 19,
-        tileSize: 256
-      }).addTo(this.map);
+//Marcador de ejemplo ---------------------------------------------
+      L.marker([42.223,  -8.6380])
+        .addTo(this.map)
+        .bindTooltip(`${nombre}`, { permanent: true, direction: 'top' })
+        .bindPopup(`
+    <b>${nombre}</b><br>
+    ${fecha}<br><br>
+    <button onclick="alert('Apuntado correctamente')">Asistir</button>
+  `);
 
-//Marcador de ejemplo
+
       L.marker([42.2383, -8.7102]).addTo(this.map)
-        .bindPopup('test')
-        .openPopup();
+        .bindPopup(`Test<br><br>
+    <button onclick="alert('Apuntado correctamente')">Asistir</button>`);
+      
+      // Delay popup opening to avoid animation conflicts
+      setTimeout(() => {
+        if (this.map) {
+          document.querySelectorAll('.leaflet-marker-icon')[0]?.click();
+        }
+      }, 500);
     },
+    
     async createUser() {
       if (this.password !== this.confirmpassword) {
         this.notification = "Las contraseñas no coinciden";
@@ -97,6 +131,14 @@ export default {
 
 <!-- Add "scoped" attribute to limit CSS to this component only -->
 <style scoped>
+.leaflet-control-attribution {
+  font-size: 10px;
+  opacity: 0.1;
+}
+.leaflet-bottom.leaflet-right {
+  bottom: 5px;
+  right: 5px;
+}
 .mainarea {
   display: flex;
   flex-direction: column;
