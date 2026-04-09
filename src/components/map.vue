@@ -16,6 +16,12 @@
 import L from 'leaflet';
 const nombre = "Evento CarMeet";
 const fecha = "20/05/2026";
+const carIcon = L.icon({
+  iconUrl: require('../assets/transport.png'),
+  iconSize: [40, 40],
+  iconAnchor: [20, 40],
+  popupAnchor: [0, -35]
+});
 export default {
   name: "map-view",
   props: {
@@ -63,9 +69,9 @@ export default {
 }).addTo(this.map);
     
 //Marcador de ejemplo ---------------------------------------------
-      L.marker([42.223,  -8.6380])
+      L.marker([42.223, -8.6380], { icon: carIcon })
         .addTo(this.map)
-        .bindTooltip(`${nombre}`, { permanent: true, direction: 'top' })
+       // .bindTooltip(`${nombre}`, { permanent: true, direction: 'top' })
         .bindPopup(`
     <b>${nombre}</b><br>
     ${fecha}<br><br>
