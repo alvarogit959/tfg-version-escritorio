@@ -15,10 +15,10 @@ async function createWindow() {
   win = new BrowserWindow({
     width: 1080,
     height: 750,
-    resizable: false,
+    //resizable: false,
         frame: false,
-            transparent: true,
-             backgroundColor: '#00000000',
+            //transparent: true,
+            // backgroundColor: '#00000000',
     webPreferences: {
             preload: path.join(__dirname, 'preload.js'),
 
@@ -48,6 +48,17 @@ ipcMain.on('minimize-window', () => {
 ipcMain.on('close-window', () => {
     console.log("CLOSE RECIBIDO");
   if (win) win.close();
+});
+
+ipcMain.on('toggle-maximize', () => {
+    console.log("TOGGLE MAXIMIZE RECIBIDO");
+  if (win) {
+    if (win.isMaximized()) {
+      win.unmaximize();
+    } else {
+      win.maximize();
+    }
+  }
 });
 
 // Quit when all windows are closed.

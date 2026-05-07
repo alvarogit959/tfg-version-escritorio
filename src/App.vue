@@ -1,8 +1,12 @@
 <template>
-  <div class="buttoncontanier">
-    <button class="defaultbutton" @click="minimizeWindow">_</button>
-    <button class="defaultbutton" @click="closeWindow">X</button>
+  <div class="titlebar" @dblclick="toggleMaximize">
+    <div class="buttoncontanier">
+      <button class="defaultbutton" @click="minimizeWindow">_</button>
+      <button class="defaultbutton" @click="toggleMaximize">□</button>
+      <button class="defaultbutton" @click="closeWindow">X</button>
+    </div>
   </div>
+
   <login-view
     v-if="screen === 'login'"
     @login="handleLogin"
@@ -11,45 +15,44 @@
   />
 
   <newUser v-else-if="screen === 'newUser'" @back="goLogin" />
-  <MapView
-  v-else-if="screen === 'map'"
-  @back="goLogin"
-/>
-<mainMenuAdmin
-  v-else-if="screen === 'main' && user && user.admin"
-  :user="user"
-  @logout="logout"
-  @newActivity="goNewActivity"
-  @editActivity="goEditActivity"
-  @attendanceActivity="goAttendanceActivity"
-/>
+
+  <MapView v-else-if="screen === 'map'" @back="goLogin" />
+
+  <mainMenuAdmin
+    v-else-if="screen === 'main' && user && user.admin"
+    :user="user"
+    @logout="logout"
+    @newActivity="goNewActivity"
+    @editActivity="goEditActivity"
+    @attendanceActivity="goAttendanceActivity"
+  />
+
   <newActivity
     v-else-if="screen === 'newActivity'"
     @logout="logout"
     @back="goMain"
   />
+
   <editActivity
-  v-else-if="screen === 'editActivity'"
-  :activity="selectedActivity"
-  @back="goMain"
-/>
-<attendanceActivity
-  v-else-if="screen === 'attendanceActivity'"
-  :actividad="selectedActivity"
-  @back="goMain"
-/>
+    v-else-if="screen === 'editActivity'"
+    :activity="selectedActivity"
+    @back="goMain"
+  />
 
+  <attendanceActivity
+    v-else-if="screen === 'attendanceActivity'"
+    :actividad="selectedActivity"
+    @back="goMain"
+  />
 
- <mainMenu
-  v-else-if="screen === 'main' && user"
-  :user="user"
-  @logout="logout"
-/>
-
+  <mainMenu
+    v-else-if="screen === 'main' && user"
+    :user="user"
+    @logout="logout"
+  />
 </template>
 
 <script>
-//ACORDARSE DE IMPORTAR AQUI TAMBIEN
 import 'leaflet/dist/leaflet.css';
 import LoginView from "./components/login-view.vue";
 import MainMenu from "./components/mainMenu.vue";
@@ -59,6 +62,7 @@ import MapView from "./components/map.vue";
 import NewActivity from "./components/newActivity.vue";
 import EditActivity from "./components/editActivity.vue";
 import AttendanceActivity from "./components/attendanceActivity.vue";
+
 export default {
   name: "App",
   components: {
@@ -83,11 +87,9 @@ export default {
       this.user = user;
       this.screen = "main";
     },
-
     goNewUser() {
       this.screen = "newUser";
     },
-
     goLogin() {
       this.screen = "login";
     },
@@ -102,32 +104,33 @@ export default {
       this.screen = "newActivity";
     },
     goEditActivity(actividad) {
-  this.selectedActivity = actividad;
-  this.screen = "editActivity";
-},
-   goAttendanceActivity(actividad) {
-  this.selectedActivity = actividad;
-  this.screen = "attendanceActivity";
-}
-,
+      this.selectedActivity = actividad;
+      this.screen = "editActivity";
+    },
+    goAttendanceActivity(actividad) {
+      this.selectedActivity = actividad;
+      this.screen = "attendanceActivity";
+    },
     goMain() {
       this.screen = "main";
     },
-    minimizeWindow() {
-      if (window.electron) {
-        window.electron.ipcRenderer.send("minimize-window");
-      }
-    },
+
+    // 🔲 Window controls
     closeWindow() {
-      if (window.electron) {
-        window.electron.ipcRenderer.send("close-window");
-      }
+      window.electron?.ipcRenderer.send("close-window");
+    },
+    minimizeWindow() {
+      window.electron?.ipcRenderer.send("minimize-window");
+    },
+    toggleMaximize() {
+      window.electron?.ipcRenderer.send("toggle-maximize");
     },
   },
 };
 </script>
+
 <style>
-@import url("https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap");
 
 html,
 body {
@@ -135,61 +138,68 @@ body {
   width: 100vw;
   padding: 0;
   margin: 0;
-  border-radius: 1rem;
   background: transparent;
   overflow: hidden;
   -webkit-app-region: no-drag;
 }
 
 #app {
+  padding-top: 4rem;
   display: flex;
-  font-family: "Inter", sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  justify-content: center;
+  flex-direction: column;
   align-items: center;
+  font-family: "Inter", sans-serif;
+  justify-content: flex-start;
   text-align: center;
-  margin: 0rem;
-  height: 100vh;
-  padding: 0rem;
+  height: 94vh;
+  
   background-color: rgb(194, 221, 228);
   background-image: url("assets/test2.png");
-  /*background-image: url('assets/backgroundtest.svg');*/
-  background-size: cover; /* o contain, auto, etc. */
+  background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
-  border-radius: 3rem;
-  -webkit-app-region: drag;
-}
-.buttoncontanier {
-  position: absolute;
-  right: 1.5rem;
-  top: 1.5rem;
+  border-radius: 0.5rem;
   -webkit-app-region: no-drag;
 }
+
+.titlebar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3.5rem;
+  -webkit-app-region: drag;
+  z-index: 1000;
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  user-select: none;
+}
+
+/* Buttons must NOT be draggable */
+.buttoncontanier {
+  position: relative;
+  right: 1rem;
+  display: flex;
+  -webkit-app-region: no-drag;
+}
+
 .defaultbutton {
   font-family: "Inter", sans-serif;
   width: 2rem;
-  padding: 0.5rem;
+  height: 2rem;
   margin: 0.1rem;
   cursor: pointer;
   transition: all 0.25s ease;
   background: rgba(255, 255, 255, 0.12);
   backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
   border: 1px solid rgba(255, 255, 255, 0.25);
   border-radius: 0.5rem;
   color: white;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.25);
 }
 
 .defaultbutton:hover {
   background: rgba(255, 255, 255, 0.22);
   transform: translateY(-2px);
-}
-
-.defaultbutton:active {
-  transform: translateY(0);
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
 }
 </style>

@@ -149,8 +149,8 @@ export default {
   display: flex;
   flex-direction: column;
   row-gap: 0.1rem;
-  width: 75%;
-  height: 88%;
+  width: 93%;
+  height: 80%;
   background: linear-gradient(
     135deg,
     rgba(255,255,255,0.12),

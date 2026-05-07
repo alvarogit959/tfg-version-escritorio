@@ -93,7 +93,7 @@ this.notification = result.error.issues[0].message;
   flex-direction: column;
   row-gap: 1rem;
   width: 50%;
-  height: 88%;
+  height: 80%;
   background: linear-gradient(
     135deg,
     rgba(255,255,255,0.12),
