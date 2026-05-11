@@ -144,14 +144,14 @@ body {
 }
 
 #app {
-  padding-top: 4rem;
+  padding-top: 3.5rem;
   display: flex;
   flex-direction: column;
   align-items: center;
   font-family: "Inter", sans-serif;
   justify-content: flex-start;
   text-align: center;
-  height: 94vh;
+  height: calc(100vh - 3.5rem);
   
   background-color: rgb(194, 221, 228);
   background-image: url("assets/test2.png");
