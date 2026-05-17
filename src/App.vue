@@ -7,114 +7,22 @@
     </div>
   </div>
 
-  <login-view
-    v-if="screen === 'login'"
-    @login="handleLogin"
-    @newUser="goNewUser"
-    @goToMap="goMap"
-  />
-
-  <newUser v-else-if="screen === 'newUser'" @back="goLogin" />
-
-  <MapView v-else-if="screen === 'map'" @back="goLogin" />
-
-  <mainMenuAdmin
-    v-else-if="screen === 'main' && user && user.admin"
-    :user="user"
-    @logout="logout"
-    @newActivity="goNewActivity"
-    @editActivity="goEditActivity"
-    @attendanceActivity="goAttendanceActivity"
-  />
-
-  <newActivity
-    v-else-if="screen === 'newActivity'"
-    @logout="logout"
-    @back="goMain"
-  />
-
-  <editActivity
-    v-else-if="screen === 'editActivity'"
-    :activity="selectedActivity"
-    @back="goMain"
-  />
-
-  <attendanceActivity
-    v-else-if="screen === 'attendanceActivity'"
-    :actividad="selectedActivity"
-    @back="goMain"
-  />
-
-  <mainMenu
-    v-else-if="screen === 'main' && user"
-    :user="user"
-    @logout="logout"
-  />
+  <MainView />
 </template>
 
 <script>
 import 'leaflet/dist/leaflet.css';
-import LoginView from "./components/login-view.vue";
-import MainMenu from "./components/mainMenu.vue";
-import MainMenuAdmin from "./components/mainMenuAdmin.vue";
-import NewUser from "./components/newUser.vue";
-import MapView from "./components/map.vue";
-import NewActivity from "./components/newActivity.vue";
-import EditActivity from "./components/editActivity.vue";
-import AttendanceActivity from "./components/attendanceActivity.vue";
+import MainView from "./components/main.vue";
 
 export default {
   name: "App",
   components: {
-    LoginView,
-    MainMenu,
-    MainMenuAdmin,
-    NewUser,
-    MapView,
-    NewActivity,
-    EditActivity,
-    AttendanceActivity,
+    MainView,
   },
   data() {
-    return {
-      user: null,
-      screen: "login",
-      selectedActivity: null,
-    };
+    return {};
   },
   methods: {
-    handleLogin(user) {
-      this.user = user;
-      this.screen = "main";
-    },
-    goNewUser() {
-      this.screen = "newUser";
-    },
-    goLogin() {
-      this.screen = "login";
-    },
-    goMap() {
-      this.screen = "map";
-    },
-    logout() {
-      this.user = null;
-      this.screen = "login";
-    },
-    goNewActivity() {
-      this.screen = "newActivity";
-    },
-    goEditActivity(actividad) {
-      this.selectedActivity = actividad;
-      this.screen = "editActivity";
-    },
-    goAttendanceActivity(actividad) {
-      this.selectedActivity = actividad;
-      this.screen = "attendanceActivity";
-    },
-    goMain() {
-      this.screen = "main";
-    },
-
     // 🔲 Window controls
     closeWindow() {
       window.electron?.ipcRenderer.send("close-window");
@@ -152,14 +60,11 @@ body {
   justify-content: flex-start;
   text-align: center;
   height: calc(100vh - 3.5rem);
-  
-  background-color: rgb(194, 221, 228);
-  background-image: url("assets/test2.png");
-  background-size: cover;
-  background-position: center;
-  background-repeat: no-repeat;
-  border-radius: 0.5rem;
+  width: 100vw;
+  background: linear-gradient(135deg, rgba(10, 10, 20, 1), rgba(20, 20, 40, 1));
+  border-radius: 0;
   -webkit-app-region: no-drag;
+  overflow: hidden;
 }
 
 .titlebar {
@@ -169,11 +74,14 @@ body {
   right: 0;
   height: 3.5rem;
   -webkit-app-region: drag;
-  z-index: 1000;
+  z-index: 9999;
   display: flex;
   justify-content: flex-end;
   align-items: center;
   user-select: none;
+  background: rgba(20, 20, 40, 0.95);
+  backdrop-filter: blur(15px);
+  border-bottom: 1px solid rgba(100, 200, 255, 0.2);
 }
 
 /* Buttons must NOT be draggable */
@@ -201,5 +109,9 @@ body {
 .defaultbutton:hover {
   background: rgba(255, 255, 255, 0.22);
   transform: translateY(-2px);
+}
+
+.defaultbutton:active {
+  transform: translateY(0);
 }
 </style>

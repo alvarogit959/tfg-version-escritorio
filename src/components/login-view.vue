@@ -13,7 +13,6 @@
 <input v-model="password" type="password" placeholder="Contraseña..." />
     <button @click="login">Iniciar sesión</button>
     <button @click="newUser">Crear cuenta</button>
-    <button @click="goToMap">Ir al mapa</button>
     <!--
     <h3>Installed CLI Plugins</h3>
     <ul>
@@ -46,8 +45,7 @@ methods: {
     });
 
     if (!result.success) {
-this.notification = result.error.issues[0].message;
-
+      this.notification = result.error.issues[0].message;
       return;
     }
 //ZOD SUCCESS
@@ -61,26 +59,34 @@ this.notification = result.error.issues[0].message;
       });
 
       if (!res.ok) {
-        this.notification = "Error, compruebe sus datos";
+        const error = await res.json();
+        this.notification = error.error || "Error, compruebe sus datos";
         return;
       }
 
-      const user = await res.json();
+      const response = await res.json();
+      const user = response.user;
+
+      // Guardar datos en localStorage
+      localStorage.setItem('user', JSON.stringify(user));
+      localStorage.setItem('isLoggedIn', 'true');
+
+      // Limpiar campos
+      this.username = "";
+      this.password = "";
+      this.notification = "";
 
       this.$emit("login", user);
 
     } catch (error) {
       //ZOD ERROR
       console.error(error);
-      alert('Error conectando con servidor');
+      this.notification = 'Error conectando con servidor';
     }
   },
 
   newUser() {
     this.$emit("newUser");
-  },
-  goToMap() {
-    this.$emit('goToMap');
   }
 },
 };
@@ -92,8 +98,8 @@ this.notification = result.error.issues[0].message;
   display: flex;
   flex-direction: column;
   row-gap: 1rem;
-  width: 50%;
-  height: 80%;
+  width: 60%;
+  height: 95%;
   background: linear-gradient(
     135deg,
     rgba(255,255,255,0.12),

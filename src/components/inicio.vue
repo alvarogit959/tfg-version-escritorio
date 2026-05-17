@@ -425,7 +425,7 @@ a {
 
 #map {
   width: 99%;
-  height: 80vh;
+  height: 35rem;
  /* border-radius: 1rem;*/
 
   /*border: 2px solid rgba(255, 255, 255, 0.3);*/

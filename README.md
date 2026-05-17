@@ -20,6 +20,8 @@ npm install vue-router
 
 npm install leaflet
 
+npm install socket.io
+
 -Lanzar app:
 node .\serverVueElectron.js
 npm run electron:serve   

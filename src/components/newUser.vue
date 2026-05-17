@@ -4,12 +4,13 @@
     <img id="image"  src="../assets/transport.png">
     <h3>CarMeet Club</h3>
     <p >
-      Cree su nuevo usario en CarMeet Club
+      Cree su nuevo usuario en CarMeet Club
     </p>
     <p id="notifications">{{ notification }}</p>
-    <input v-model="username" type="text" placeholder="Nombre o correo..." />
-<input v-model="password" type="password" placeholder="Contraseña..." />
-<input v-model="confirmpassword" type="password" placeholder="Vuelva a escribir su contraseña" />
+    <input v-model="username" type="text" placeholder="Nombre de usuario..." />
+    <input v-model="email" type="email" placeholder="Correo electrónico..." />
+    <input v-model="password" type="password" placeholder="Contraseña..." />
+    <input v-model="confirmpassword" type="password" placeholder="Vuelva a escribir su contraseña" />
     <button @click="createUser">Crear cuenta</button>
     <button @click="$emit('back')">Atrás</button>
 
@@ -24,13 +25,14 @@
 
 <script>
 export default {
-  name: "login-view",
+  name: "new-user-view",
   props: {
     msg: String,
   },
 data() {
   return {
     username: "",
+    email: "",
     password: "",
     confirmpassword: "",
     notification: ""
@@ -44,8 +46,14 @@ methods: {
     return;
   }
 
-  if (!this.username || !this.password) {
+  if (!this.username || !this.email || !this.password) {
     this.notification = "Rellene todos los campos";
+    return;
+  }
+
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!emailRegex.test(this.email)) {
+    this.notification = "Ingrese un correo válido";
     return;
   }
 
@@ -57,8 +65,13 @@ methods: {
         "Content-Type": "application/json"
       },
       body: JSON.stringify({
-        nombreCorreo: this.username,
-        password: this.password
+        username: this.username,
+        email: this.email,
+        password: this.password,
+        location: {
+          city: this.city,
+          country: this.country
+        }
       })
     });
 
@@ -71,8 +84,16 @@ methods: {
     this.notification = "Usuario creado correctamente";
 
     this.username = "";
+    this.email = "";
     this.password = "";
     this.confirmpassword = "";
+    this.city = "";
+    this.country = "";
+
+    // Emit evento para que main.vue sepa que se creó el usuario
+    setTimeout(() => {
+      this.$emit("userCreated");
+    }, 1500);
 
   } catch (error) {
     console.error(error);
