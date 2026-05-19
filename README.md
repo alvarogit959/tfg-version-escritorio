@@ -22,6 +22,9 @@ npm install leaflet
 
 npm install socket.io
 
+npm install socket.io-client
+
+npm install mapbox-gl
 -Lanzar app:
 node .\serverVueElectron.js
 npm run electron:serve   

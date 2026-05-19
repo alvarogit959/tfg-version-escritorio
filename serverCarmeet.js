@@ -240,17 +240,6 @@ const Message = mongoose.model("Message", messageSchema);
 
 
 
-//Todos los eventos
-app.get("/events", async (req, res) => {
-  try {
-    const events = await Event.find();
-    res.json(events);
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ error: "Error obteniendo eventos" });
-  }
-});
-
 // Crear nuevo usuario
 app.post("/users", async (req, res) => {
   try {
@@ -428,43 +417,42 @@ app.post("/messages", async (req, res) => {
       return res.status(400).json({ error: "Faltan campos requeridos" });
     }
 
-    // Crear el nuevo mensaje
+    // Crear el mensaje
     const newMessage = new Message({
       conversationId,
       senderId,
       text,
       type: "text",
       readBy: [senderId],
+      sentAt: new Date()
     });
 
     await newMessage.save();
 
-    // Actualizar el último mensaje de la conversación
-    await Conversation.findByIdAndUpdate(
-      conversationId,
-      {
-        lastMessage: {
-          text: text,
-          sender: senderId,
-          sentAt: new Date(),
-        },
-      },
-      { new: true }
-    );
+    // Actualizar último mensaje de la conversación
+    await Conversation.findByIdAndUpdate(conversationId, {
+      lastMessage: {
+        text,
+        sender: senderId,
+        sentAt: new Date()
+      }
+    });
 
-    // Obtener el mensaje con datos completos
+    // Poblar los datos del usuario en el mensaje
     const populatedMessage = await Message.findById(newMessage._id).populate(
       "senderId",
       "username profileImage"
     );
 
-    res.status(201).json({
-      message: "Mensaje enviado exitosamente",
-      data: populatedMessage,
-    });
+    // Emitir a todos los clientes conectados
+    io.to("group-chat").emit("new-message", populatedMessage);
+
+    // Responder al cliente
+    res.status(201).json(populatedMessage);
+
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ error: "Error enviando mensaje" });
+    console.error("Error al enviar mensaje:", error);
+    res.status(500).json({ error: "Error interno del servidor" });
   }
 });
 
@@ -548,7 +536,7 @@ io.on("connection", (socket) => {
     socket.join("group-chat");
     console.log(`${userId} se unió al chat grupal`);
   });
-
+  
   // Evento: nuevo mensaje
   socket.on("send-message", async (messageData) => {
     try {
@@ -558,6 +546,7 @@ io.on("connection", (socket) => {
       console.error("Error emitiendo mensaje:", error);
     }
   });
+  
 
   // Evento: desconexión
   socket.on("disconnect", () => {

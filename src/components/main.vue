@@ -95,7 +95,7 @@
       </div>
     </div>
 
-    <!-- BOTÓN CHAT FLOTANTE -->
+<!--BOTON CHAT-->
     <button 
       v-if="isLoggedIn"
       class="chat-button"
@@ -103,14 +103,13 @@
       :class="{ active: chatOpen }"
       title="Abrir chat"
     >
-      <span v-if="!chatOpen">💬</span>
+      <span v-if="!chatOpen">Chat</span>
       <span v-else>✕</span>
     </button>
 
-    <!-- VENTANA DE CHAT -->
     <div v-if="isLoggedIn && chatOpen" class="chat-window">
       <div class="chat-header">
-        <h3>Chat Grupal - CarMeet Club</h3>
+        <h3>TEST Chat Grupal</h3>
       </div>
       <div class="chat-messages">
         <div v-for="msg in messages" :key="msg.id" class="message" :class="msg.type">
@@ -135,12 +134,15 @@
 </template>
 
 <script>
+import 'mapbox-gl/dist/mapbox-gl.css';
 import InicioView from './inicio.vue';
 import MapView from './map.vue';
 import EventsView from './events.vue';
 import ForumView from './forum.vue';
 import LoginView from './login-view.vue';
 import newUser from './newUser.vue';
+import { io } from "socket.io-client";
+const socket = io("http://localhost:5000");
 export default {
   name: 'main-view',
   components: {
@@ -166,7 +168,32 @@ export default {
     // Cargar el estado de login desde localStorage
     const savedLoginState = localStorage.getItem('isLoggedIn');
     const savedUser = localStorage.getItem('user');
-    
+    socket.on("new-message", (msg) => {
+  // Evitar duplicados
+  const exists = this.messages.some(m => m.id === msg._id);
+  if (exists) return;
+
+  this.messages.push({
+    id: msg._id,
+    text: msg.text,
+    senderId: msg.senderId._id || msg.senderId,
+    senderName: msg.senderId.username || "Usuario",
+    senderImage: msg.senderId.profileImage || "",
+    type:
+      (msg.senderId._id || msg.senderId) === this.currentUser?.id
+        ? "user"
+        : "bot",
+    sentAt: msg.sentAt
+  });
+
+  this.$nextTick(() => {
+    const chatMessages = document.querySelector(".chat-messages");
+    if (chatMessages) {
+      chatMessages.scrollTop = chatMessages.scrollHeight;
+    }
+  });
+});
+
     if (savedLoginState === 'true' && savedUser) {
       const user = JSON.parse(savedUser);
       this.isLoggedIn = user.status === true;
@@ -178,6 +205,7 @@ export default {
       }
     }
   },
+  
   methods: {
     switchView(viewName) {
       this.currentView = viewName;
@@ -197,7 +225,7 @@ export default {
         .then(res => res.json())
         .then(conversation => {
           this.conversationId = conversation._id;
-          
+          socket.emit("join-group-chat", this.currentUser.id);
           // Agregar usuario a los participantes
           return fetch(`http://localhost:5000/conversations/${conversation._id}/add-participant`, {
             method: 'POST',
@@ -276,19 +304,8 @@ export default {
         })
       })
         .then(res => res.json())
-        .then(response => {
-          // Agregar mensaje a la lista local
-          const msg = response.data;
-          this.messages.push({
-            id: msg._id,
-            text: msg.text,
-            senderId: msg.senderId._id,
-            senderName: msg.senderId.username,
-            senderImage: msg.senderId.profileImage,
-            type: 'user',
-            sentAt: msg.sentAt
-          });
-
+        .then(() => {
+          // El mensaje se agregará automáticamente por el socket listener
           this.messageInput = '';
 
           // Scroll al último mensaje
@@ -527,16 +544,16 @@ export default {
   position: fixed;
   bottom: 20px;
   right: 20px;
-  width: 50px;
+  width: 100px;
   height: 50px;
-  border-radius: 50%;
-  background: rgba(100, 200, 255, 0.8);
-  border: 2px solid rgba(100, 200, 255, 1);
-  color: white;
+  border-radius: 5%;
+  background: rgb(64, 32, 122);
+  border: 2px solid rgb(120, 85, 201);
+  color: rgb(231, 231, 231);
   font-size: 1.5rem;
   cursor: pointer;
   transition: all 0.3s ease;
-  box-shadow: 0 4px 15px rgba(100, 200, 255, 0.4);
+  box-shadow: 0 4px 15px rgba(146, 61, 226, 0.4);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -545,8 +562,9 @@ export default {
 }
 
 .chat-button:hover {
-  background: rgba(100, 200, 255, 0.95);
-  box-shadow: 0 6px 25px rgba(100, 200, 255, 0.6);
+  background: rgb(255, 170, 100);
+  color: rgb(77, 14, 14);
+  box-shadow: 0 6px 25px rgba(255, 193, 100, 0.6);
   transform: scale(1.1);
 }
 

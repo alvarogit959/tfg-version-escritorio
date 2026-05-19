@@ -2,7 +2,7 @@
 <template>
   <div class="mainarea">
     <h1>{{ msg }}</h1>
-    <img id="image"  src="../assets/transport.png">
+    <img id="image"  src="../assets/transport1.png">
     <h3>CarMeet Club</h3>
     <p >
       Bienvenido a la CarMeet Club, escriba su nombre de usuario y contraseña o cree una

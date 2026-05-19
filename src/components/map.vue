@@ -57,16 +57,10 @@
 </template>
 
 <script>
-import L from 'leaflet';
-//const nombre = "Evento CarMeet";
-//const fecha = "20/05/2026";
-/*
-const carIcon = L.icon({
-  iconUrl: require('../assets/transport.png'),
-  iconSize: [40, 40],
-  iconAnchor: [20, 40],
-  popupAnchor: [0, -35]
-});*/
+import mapboxgl from 'mapbox-gl';
+import 'mapbox-gl/dist/mapbox-gl.css';
+mapboxgl.accessToken = 'pk.eyJ1IjoiYWx2YXJvZCIsImEiOiJjbXBiemtremUwMmV3MnFzYjd6d3c1c291In0.SgpTdV6EiabbSeRDcXg24w';
+
 export default {
   name: "map-view",
   props: {
@@ -86,24 +80,40 @@ export default {
       activeFilter: null,
       userLocation: null,
       events: [],
-      markers: []
+      markers: [],
+      popups: []
     };
   },
   async mounted() {
     await this.loadEvents();
 
+    // Dar más tiempo para que el DOM se renderice completamente
     this.$nextTick(() => {
-      this.initializeMap();
+      setTimeout(() => {
+        this.initializeMap();
+        // Agregar listener para cambios de tamaño
+        window.addEventListener('resize', this.onWindowResize);
+      }, 100);
     });
   },
   beforeUnmount() {
+    // Remover listener de resize
+    window.removeEventListener('resize', this.onWindowResize);
+    // Limpiar popups
+    this.popups.forEach(popup => popup.remove());
+    this.popups = [];
+    this.markers = [];
     if (this.map) {
-      this.map.off();
-      this.map.remove();
       this.map = null;
     }
   },
   methods: {
+    onWindowResize() {
+      if (this.map) {
+        this.map.resize();
+      }
+    },
+
     toggleUbicacion() {
       this.showUbicacion = !this.showUbicacion;
       this.showCompeticion = false;
@@ -120,17 +130,23 @@ export default {
       this.userLocation = this.manualLocation;
       this.manualLocation = "";
     },
-    createCarIcon(zoom) {
-      // Small size when zoomed out, larger when zoomed in
-      const size = Math.max(8, Math.min(40, zoom * 2.5));
+    
+ createMarkerElement() {
+  
+  const el = document.createElement('div');
 
-      return L.icon({
-        iconUrl: require('../assets/transport.png'),
-        iconSize: [size, size],
-        iconAnchor: [size / 2, size],
-        popupAnchor: [0, -size + 5]
-      });
-    },
+  el.style.width = '22px';
+  el.style.height = '22px';
+  el.style.backgroundImage = `url('${require('../assets/transport.png')}')`;
+  el.style.backgroundSize = 'contain';
+  el.style.backgroundRepeat = 'no-repeat';
+  el.style.backgroundPosition = 'center';
+  el.style.cursor = 'pointer';
+  el.style.filter = 'drop-shadow(0 0 6px orange)';
+  // No agregar position absolute ni transform - Mapbox GL lo maneja
+
+  return el;
+},
 
     activateGPS() {
       if ("geolocation" in navigator) {
@@ -139,7 +155,11 @@ export default {
             const { latitude, longitude } = position.coords;
             this.userLocation = `${latitude.toFixed(4)}, ${longitude.toFixed(4)}`;
             this.notification = `GPS Activado: ${this.userLocation}`;
-            this.map.setView([latitude, longitude], 13);
+            this.map.flyTo({
+              center: [longitude, latitude],
+              zoom: 13,
+              duration: 1500
+            });
             this.showUbicacion = false;
           },
           (error) => {
@@ -175,77 +195,67 @@ export default {
         return;
       }
 
-//UBICACION INICIO
-      this.map = L.map('map');
-      this.map.setView([42.2383, -8.7292], 13);
+      // Crear mapa de Mapbox
+      this.map = new mapboxgl.Map({
+        container: 'map',
+        style: 'mapbox://styles/alvarod/cmpbzx3ho001z01s6bjz3eruc',
+        center: [-8.7292, 42.2383],
+        zoom: 13
+      });
 
-    //capa de OpenStreetMap
-    //Cambiar color aqui??
-    L.tileLayer(
-  'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',
-  {
-    attribution: '&copy; OpenStreetMap contributors &copy; CARTO',
-    maxZoom: 19
-  }
-).addTo(this.map);
-    
-//Marcador de ejemplo ---------------------------------------------
- /*     L.marker([42.223, -8.6380], { icon: carIcon })
-        .addTo(this.map)
-       // .bindTooltip(`${nombre}`, { permanent: true, direction: 'top' })
-        .bindPopup(`
-    <b>${nombre}</b><br>
-    ${fecha}<br><br>
-    <button onclick="alert('Apuntado correctamente')">Asistir</button>
-  `);
+      // Esperar a que el mapa esté cargado
+      this.map.on('load', () => {
+        // Crear un marcador por cada evento
+        this.events.forEach(event => {
+          if (!event.location || event.location.length === 0) return;
 
+          const loc = event.location[0];
+          const lat = parseFloat(loc.latitude);
+          const lng = parseFloat(loc.longitude);
 
-      L.marker([42.2383, -8.7102]).addTo(this.map)
-        .bindPopup(`Test<br><br>
-    <button onclick="alert('Apuntado correctamente')">Asistir</button>`);
-      
-      //DELAY PARA TESTEAR POPUP 
-      setTimeout(() => {
-        if (this.map) {
-          document.querySelectorAll('.leaflet-marker-icon')[0]?.click();
-        }
-      }, 500); */
-      // Crear un marcador por cada evento
-this.events.forEach(event => {
-  if (!event.location || event.location.length === 0) return;
+          if (isNaN(lat) || isNaN(lng)) return;
 
-  const loc = event.location[0];
-  const lat = parseFloat(loc.latitude);
-  const lng = parseFloat(loc.longitude);
+          const fechaInicio = new Date(event.start).toLocaleDateString("es-ES");
 
-  if (isNaN(lat) || isNaN(lng)) return;
+          // Crear elemento del marcador
+          const markerEl = this.createMarkerElement();
 
-  const fechaInicio = new Date(event.start).toLocaleDateString("es-ES");
+          // Crear popup
+          const popupContent = document.createElement('div');
+          popupContent.className = 'mapbox-popup-content';
+          popupContent.innerHTML = `
+            <div style="padding: 10px; max-width: 200px;">
+              <b style="font-size: 1.1em; color: #333;">${event.title}</b><br>
+              <span style="color: #666; font-size: 0.9em;">${fechaInicio}</span><br><br>
+              <p style="color: #555; margin: 5px 0; font-size: 0.9em;">${event.description}</p><br>
+              <button onclick="alert('Apuntado correctamente')" 
+                style="width: 100%; padding: 8px; background-color: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer;">
+                Asistir
+              </button>
+            </div>
+          `;
 
-  const marker = L.marker(
-    [lat, lng],
-    { icon: this.createCarIcon(this.map.getZoom()) }
-  )
-    .addTo(this.map)
-    .bindPopup(`
-      <b>${event.title}</b><br>
-      ${fechaInicio}<br><br>
-      ${event.description}<br><br>
-      <button onclick="alert('Apuntado correctamente')">
-        Asistir
-      </button>
-    `);
+          const popup = new mapboxgl.Popup({ offset: 25, closeButton: true })
+            .setDOMContent(popupContent);
 
-  this.markers.push(marker);
-});
-this.map.on('zoomend', () => {
-  const zoom = this.map.getZoom();
-  const newIcon = this.createCarIcon(zoom);
+          // Crear marcador y agregarlo al mapa
+          const marker = new mapboxgl.Marker({
+  element: this.createMarkerElement(),
+  anchor: 'center'
+})
+  .setLngLat([lng, lat])
+  .setPopup(popup)
+  .addTo(this.map);
 
-  this.markers.forEach(marker => {
-    marker.setIcon(newIcon);
-  });
-});
+          this.markers.push(marker);
+          this.popups.push(popup);
+
+          // Mostrar popup al hacer clic en el marcador
+          markerEl.addEventListener('click', () => {
+            marker.togglePopup();
+          });
+        });
+      });
     },
     
     async createUser() {
@@ -305,20 +315,12 @@ this.map.on('zoomend', () => {
 
 <!-- Add "scoped" attribute to limit CSS to this component only -->
 <style scoped>
-.leaflet-control-attribution {
-  font-size: 10px;
-  opacity: 0.1;
-}
-.leaflet-bottom.leaflet-right {
-  bottom: 5px;
-  right: 5px;
-}
 .mainarea {
   display: flex;
   flex-direction: column;
   row-gap: 0.1rem;
   width: 100%;
-  height: 100%;
+  height: 100vh;
   background: linear-gradient(
     135deg,
     rgba(255,255,255,0.12),
@@ -328,12 +330,10 @@ this.map.on('zoomend', () => {
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
   border: 3px solid rgba(175, 175, 175, 0.2);
-  /*border-radius: 16px;*/
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.25);
 
   align-items: center;
   justify-content: flex-start;
-  /*border-radius: 3rem;*/
   color: rgb(255, 255, 255);
   padding: 1rem;
   
@@ -425,13 +425,9 @@ a {
 
 #map {
   width: 99%;
-  height: 80vh;
- /* border-radius: 1rem;*/
-
-  /*border: 2px solid rgba(255, 255, 255, 0.3);*/
- /* box-shadow: 0 8px 32px rgba(0, 0, 0, 0.25);*/
+  height: calc(100vh - 260px);
   overflow: hidden;
-  z-index: 1;
+  min-height: 400px;
 }
 
 .filters-container {
@@ -521,7 +517,7 @@ a {
 .submenu input {
   font-family: "Inter", sans-serif;
   width: 100%;
-  padding: 0.6rem;
+
   background: rgba(255, 255, 255, 0.1);
   border: 1px solid rgba(255, 255, 255, 0.2);
   border-radius: 0.6rem;
@@ -538,6 +534,15 @@ a {
   outline: none;
   border-color: rgba(255, 255, 255, 0.4);
   background: rgba(255, 255, 255, 0.15);
+}
+
+.marker {
+  display: block !important;
+  width: 100% !important;
+  height: 100% !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  border: none !important;
 }
 
 </style>
