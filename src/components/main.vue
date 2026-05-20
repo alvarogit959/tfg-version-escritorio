@@ -58,7 +58,13 @@
             >
               Ver Perfil
             </button>
-            <button @click="selectOption('myevents')" class="submenu-btn">Mis Eventos</button>
+            <button
+              @click="selectOption('myevents')"
+              class="submenu-btn"
+              :class="{ active: currentView === 'myevents' }"
+            >
+              Mis Eventos
+            </button>
             <button @click="selectOption('settings')" class="submenu-btn">Configuración</button>
             <button @click="selectOption('logout')" class="submenu-btn logout-option">Cerrar sesión</button>
           </template>
@@ -89,7 +95,41 @@
 
       <!-- Vista Eventos -->
       <div v-if="currentView === 'events'" class="view-container">
-        <EventsView :initial-event="eventFromMap" />
+        <EventsView
+          :initial-event="eventFromMap"
+          :current-user="currentUser"
+          @events-updated="handleProfileUpdated"
+          @create-event="switchView('newEvent')"
+        />
+      </div>
+
+      <!-- Crear evento -->
+      <div v-if="currentView === 'newEvent'" class="view-container">
+        <NewEventView
+          v-if="isLoggedIn && currentUser"
+          :current-user="currentUser"
+          @created="onEventCreated"
+          @cancel="switchView('events')"
+        />
+        <LoginView
+          v-else
+          @newUser="switchView('newUser')"
+          @login="handleLogin"
+        />
+      </div>
+
+      <!-- Mis Eventos -->
+      <div v-if="currentView === 'myevents'" class="view-container">
+        <MyEventsView
+          v-if="isLoggedIn && currentUser"
+          :user-id="currentUser.id"
+          @events-updated="handleProfileUpdated"
+        />
+        <LoginView
+          v-else
+          @newUser="switchView('newUser')"
+          @login="handleLogin"
+        />
       </div>
 
       <!-- Vista Foro -->
@@ -97,9 +137,18 @@
         <ForumView />
       </div>
 
-      <!-- Vista Perfil -->
+      <!-- Vista Perfil / Login -->
       <div v-if="currentView === 'profile'" class="view-container">
-        <LoginView @newUser="switchView('newUser')" @login="handleLogin"/>
+        <ProfileView
+          v-if="isLoggedIn && currentUser"
+          :user-id="currentUser.id"
+          @profile-updated="handleProfileUpdated"
+        />
+        <LoginView
+          v-else
+          @newUser="switchView('newUser')"
+          @login="handleLogin"
+        />
       </div>
       <div v-if="currentView === 'newUser'" class="view-container">
         <newUser @back="switchView('profile')" @userCreated="switchView('profile')"/>  
@@ -151,6 +200,9 @@ import MapView from './map.vue';
 import EventsView from './events.vue';
 import ForumView from './forum.vue';
 import LoginView from './login-view.vue';
+import ProfileView from './profile.vue';
+import MyEventsView from './myEvents.vue';
+import NewEventView from './newEvent.vue';
 import newUser from './newUser.vue';
 import { io } from "socket.io-client";
 const socket = io("http://localhost:5000");
@@ -162,6 +214,9 @@ export default {
     EventsView,
     ForumView,
     LoginView,
+    ProfileView,
+    MyEventsView,
+    NewEventView,
     newUser
   },
   data() {
@@ -231,14 +286,32 @@ export default {
       this.eventFromMap = event;
       this.currentView = "events";
     },
+
+    onEventCreated() {
+      this.switchView("events");
+    },
     handleLogin(user) {
       this.isLoggedIn = user.status === true;
       this.currentUser = user;
-      
+
       // Cargar conversación grupal y agregar como participante
       this.loadGroupConversation();
-      
+
       this.switchView('inicio');
+    },
+
+    handleProfileUpdated(user) {
+      this.currentUser = {
+        id: user.id,
+        username: user.username,
+        email: user.email,
+        role: user.role,
+        location: user.location,
+        profileImage: user.profileImage,
+        bio: user.bio,
+        status: user.status,
+      };
+      localStorage.setItem('user', JSON.stringify(this.currentUser));
     },
     loadGroupConversation() {
       // Obtener conversación grupal
@@ -273,7 +346,7 @@ export default {
           this.switchView('profile');
           break;
         case 'myevents':
-          this.switchView('events');
+          this.switchView('myevents');
           break;
         case 'settings':
           // Opción de configuración - puedes agregar una nueva vista si es necesario

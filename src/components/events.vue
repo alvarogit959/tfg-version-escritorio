@@ -5,7 +5,17 @@
     <div class="content-wrapper">
       <!-- LISTA DE EVENTOS -->
       <div class="events-list-section">
-        <h2>Eventos Disponibles</h2>
+        <div class="list-header">
+          <h2>Eventos Disponibles</h2>
+          <button
+            v-if="currentUser"
+            type="button"
+            class="create-event-btn"
+            @click="$emit('create-event')"
+          >
+            + Crear evento
+          </button>
+        </div>
         <p v-if="notification" id="notification" :class="notificationClass">
           {{ notification }}
         </p>
@@ -28,7 +38,7 @@
             <p class="event-location" v-if="event.location && event.location.length > 0">
               📍 {{ event.location[0].location }}
             </p>
-            <p class="event-preview">{{ event.description.substring(0, 60) }}...</p>
+            <p class="event-preview">{{ eventPreview(event) }}</p>
           </div>
 
           <div v-if="events.length === 0" class="no-events">
@@ -106,7 +116,19 @@
             </div>
 
             <div class="action-buttons">
-              <button class="attend-btn" @click="attendEvent">Asistir a este evento</button>
+              <button
+                class="attend-btn"
+                :disabled="attending || isAttendingSelected"
+                @click="attendEvent"
+              >
+                {{
+                  attending
+                    ? "Apuntando..."
+                    : isAttendingSelected
+                      ? "Ya estás apuntado"
+                      : "Asistir a este evento"
+                }}
+              </button>
               <button class="share-btn" @click="shareEvent">Compartir</button>
             </div>
           </div>
@@ -124,6 +146,13 @@
 </template>
 
 <script>
+import {
+  apiJson,
+  eventIdentifier,
+  isUserAttending,
+  userIdFrom,
+} from "../utils/api.js";
+
 export default {
   name: "events-view",
   props: {
@@ -131,14 +160,25 @@ export default {
       type: Object,
       default: null,
     },
+    currentUser: {
+      type: Object,
+      default: null,
+    },
   },
+  emits: ["events-updated", "create-event"],
   data() {
     return {
       events: [],
       selectedEvent: null,
       notification: "",
-      notificationClass: ""
+      notificationClass: "",
+      attending: false,
     };
+  },
+  computed: {
+    isAttendingSelected() {
+      return isUserAttending(this.selectedEvent, this.currentUser);
+    },
   },
   watch: {
     initialEvent: {
@@ -154,19 +194,21 @@ export default {
   methods: {
     async loadEvents() {
       try {
-        const res = await fetch("http://localhost:5000/events");
-        if (!res.ok) {
-          throw new Error("Error al cargar eventos");
-        }
-        this.events = await res.json();
+        this.events = await apiJson("/events");
         this.notification = `${this.events.length} eventos cargados`;
         this.notificationClass = "success";
-        console.log("Eventos cargados:", this.events);
       } catch (error) {
         console.error("Error cargando eventos:", error);
-        this.notification = "No se pudieron cargar los eventos";
+        this.notification = error.message || "No se pudieron cargar los eventos";
         this.notificationClass = "error";
       }
+    },
+
+    eventPreview(event) {
+      const raw = event.description || "";
+      const plain =
+        typeof raw === "string" ? raw.replace(/<[^>]*>/g, "") : "";
+      return plain.length > 60 ? `${plain.slice(0, 60)}...` : plain || "—";
     },
 
     applyInitialEvent() {
@@ -208,13 +250,54 @@ export default {
       });
     },
 
-    attendEvent() {
-      this.notification = `Te has apuntado a: ${this.selectedEvent.title}`;
-      this.notificationClass = "success";
-      console.log("Asistencia registrada para:", this.selectedEvent.id);
-      setTimeout(() => {
-        this.notification = "";
-      }, 3000);
+    async attendEvent() {
+      const userId = userIdFrom(this.currentUser);
+      if (!userId) {
+        this.notification = "Debes iniciar sesión para apuntarte";
+        this.notificationClass = "error";
+        return;
+      }
+
+      if (!this.selectedEvent) return;
+
+      const eventId = eventIdentifier(this.selectedEvent);
+      this.attending = true;
+
+      try {
+        const data = await apiJson(
+          `/users/${userId}/joined-events/${eventId}`,
+          { method: "POST" }
+        );
+
+        if (data.event) {
+          this.updateEventInList(data.event);
+          this.selectedEvent = data.event;
+        }
+
+        this.notification = `Te has apuntado a: ${this.selectedEvent.title}`;
+        this.notificationClass = "success";
+        this.$emit("events-updated", data.user);
+      } catch (error) {
+        console.error(error);
+        this.notification = error.message;
+        this.notificationClass = "error";
+      } finally {
+        this.attending = false;
+        setTimeout(() => {
+          this.notification = "";
+        }, 3500);
+      }
+    },
+
+    updateEventInList(updatedEvent) {
+      const idx = this.events.findIndex(
+        (e) =>
+          (updatedEvent._id && e._id === updatedEvent._id) ||
+          e.id === updatedEvent.id
+      );
+      if (idx >= 0) {
+        this.events[idx] = updatedEvent;
+      }
     },
 
     shareEvent() {
@@ -317,10 +400,34 @@ export default {
   overflow: hidden;
 }
 
-.events-list-section h2 {
-  margin: 0 0 1rem 0;
+.list-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.8rem;
+  margin-bottom: 1rem;
+}
+
+.list-header h2 {
+  margin: 0;
   font-size: 1.3rem;
   color: white;
+}
+
+.create-event-btn {
+  flex-shrink: 0;
+  padding: 0.5rem 1rem;
+  font-size: 0.85rem;
+  background: rgba(76, 175, 80, 0.35);
+  border: 1px solid rgba(76, 175, 80, 0.6);
+  border-radius: 0.6rem;
+  color: white;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.create-event-btn:hover {
+  background: rgba(76, 175, 80, 0.55);
 }
 
 .events-list {
@@ -609,10 +716,16 @@ export default {
   color: #90ee90;
 }
 
-.attend-btn:hover {
+.attend-btn:hover:not(:disabled) {
   background: rgba(76, 175, 80, 0.6);
   transform: translateY(-2px);
   box-shadow: 0 4px 12px rgba(76, 175, 80, 0.3);
+}
+
+.attend-btn:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+  transform: none;
 }
 
 .share-btn {

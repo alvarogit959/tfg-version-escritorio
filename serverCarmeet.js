@@ -93,6 +93,11 @@ const eventSchema = new mongoose.Schema({
     type: [locationSchema],
     default: [],
   },
+  moderators: {
+    type: [mongoose.Schema.Types.ObjectId],
+    ref: "User",
+    default: [],
+  },
 });
 
 // Modelo para la colección "events"
@@ -340,6 +345,211 @@ app.post("/login", async (req, res) => {
   }
 });
 
+const formatUserResponse = (user) => ({
+  id: user._id,
+  username: user.username,
+  email: user.email,
+  role: user.role,
+  location: user.location,
+  profileImage: user.profileImage,
+  bio: user.bio,
+  status: user.status,
+  joinedEvents: user.joinedEvents,
+  managedEvents: user.managedEvents,
+  createdAt: user.createdAt,
+});
+
+const findEventByIdentifier = async (identifier) => {
+  if (mongoose.Types.ObjectId.isValid(identifier)) {
+    const byId = await Event.findById(identifier);
+    if (byId) return byId;
+  }
+  const numId = Number(identifier);
+  if (!Number.isNaN(numId)) {
+    return Event.findOne({ id: numId });
+  }
+  return null;
+};
+
+const addUserToEvent = async (user, event) => {
+  const userIdStr = user._id.toString();
+  if (!event.attendees.includes(userIdStr)) {
+    event.attendees.push(userIdStr);
+    await event.save();
+  }
+  const alreadyJoined = user.joinedEvents.some((id) =>
+    id.equals(event._id)
+  );
+  if (!alreadyJoined) {
+    user.joinedEvents.push(event._id);
+    await user.save();
+  }
+};
+
+const removeUserFromEvent = async (user, event) => {
+  const userIdStr = user._id.toString();
+  event.attendees = event.attendees.filter(
+    (attendee) =>
+      attendee !== user.username &&
+      attendee !== user.email &&
+      attendee !== userIdStr
+  );
+  await event.save();
+  user.joinedEvents = user.joinedEvents.filter(
+    (id) => !id.equals(event._id)
+  );
+  await user.save();
+};
+
+const isEventModerator = (event, userId) => {
+  if (!event?.moderators?.length || !userId) return false;
+  const uid = userId.toString();
+  return event.moderators.some((m) => {
+    const mid = m?._id ? m._id.toString() : m.toString();
+    return mid === uid;
+  });
+};
+
+const removeAttendeeFromEvent = async (event, attendeeRef) => {
+  event.attendees = event.attendees.filter((a) => a !== attendeeRef);
+  await event.save();
+
+  if (mongoose.Types.ObjectId.isValid(attendeeRef)) {
+    const attendeeUser = await User.findById(attendeeRef);
+    if (attendeeUser) {
+      attendeeUser.joinedEvents = attendeeUser.joinedEvents.filter(
+        (id) => !id.equals(event._id)
+      );
+      await attendeeUser.save();
+    }
+  }
+};
+
+// Obtener perfil de usuario
+app.get("/users/:userId", async (req, res) => {
+  try {
+    const user = await User.findById(req.params.userId)
+      .select("-passwordHash")
+      .populate("joinedEvents")
+      .populate("managedEvents");
+
+    if (!user) {
+      return res.status(404).json({ error: "Usuario no encontrado" });
+    }
+
+    const moderatedEvents = await Event.find({ moderators: user._id });
+
+    res.status(200).json({
+      ...formatUserResponse(user),
+      moderatedEvents,
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "Error obteniendo usuario" });
+  }
+});
+
+// Actualizar perfil de usuario
+app.patch("/users/:userId", async (req, res) => {
+  try {
+    const { username, profileImage, bio } = req.body;
+    const { userId } = req.params;
+
+    if (username) {
+      const existing = await User.findOne({
+        username,
+        _id: { $ne: userId },
+      });
+      if (existing) {
+        return res.status(400).json({ error: "El nombre de usuario ya existe" });
+      }
+    }
+
+    const update = {};
+    if (username !== undefined) update.username = username;
+    if (profileImage !== undefined) update.profileImage = profileImage;
+    if (bio !== undefined) update.bio = bio;
+
+    const user = await User.findByIdAndUpdate(userId, update, { new: true })
+      .select("-passwordHash")
+      .populate("joinedEvents");
+
+    if (!user) {
+      return res.status(404).json({ error: "Usuario no encontrado" });
+    }
+
+    res.status(200).json(formatUserResponse(user));
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "Error actualizando usuario" });
+  }
+});
+
+// Apuntarse a un evento
+app.post("/users/:userId/joined-events/:eventId", async (req, res) => {
+  try {
+    const { userId, eventId } = req.params;
+
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({ error: "Usuario no encontrado" });
+    }
+
+    const event = await findEventByIdentifier(eventId);
+    if (!event) {
+      return res.status(404).json({ error: "Evento no encontrado" });
+    }
+
+    await addUserToEvent(user, event);
+
+    const updatedUser = await User.findById(userId)
+      .select("-passwordHash")
+      .populate("joinedEvents");
+
+    const updatedEvent = await Event.findById(event._id);
+
+    res.status(200).json({
+      message: "Te has apuntado al evento",
+      user: formatUserResponse(updatedUser),
+      event: updatedEvent,
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "Error al apuntarse al evento" });
+  }
+});
+
+// Salir de un evento apuntado
+app.delete("/users/:userId/joined-events/:eventId", async (req, res) => {
+  try {
+    const { userId, eventId } = req.params;
+
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({ error: "Usuario no encontrado" });
+    }
+
+    const event = await findEventByIdentifier(eventId);
+    if (event) {
+      await removeUserFromEvent(user, event);
+    } else {
+      user.joinedEvents = user.joinedEvents.filter(
+        (id) => id.toString() !== eventId
+      );
+      await user.save();
+    }
+
+    const updatedUser = await User.findById(userId)
+      .select("-passwordHash")
+      .populate("joinedEvents");
+
+    res.status(200).json(formatUserResponse(updatedUser));
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "Error al salir del evento" });
+  }
+});
+
 // Logout de usuario
 app.post("/logout", async (req, res) => {
   try {
@@ -518,6 +728,197 @@ app.get("/events", async (req, res) => {
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: "Error obteniendo eventos" });
+  }
+});
+
+const buildEventUrl = (type, title) => {
+  const slug = title
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/(^-|-$)/g, "");
+
+  const prefixes = {
+    coches: "/calendario/concentraciones-de-coches/",
+    motos: "/calendario/concentraciones-de-motos/",
+    competicion: "/calendario/competicion/",
+    feria: "/calendario/ferias/",
+  };
+
+  return `${prefixes[type] || "/calendario/eventos/"}${slug}`;
+};
+
+// Crear nuevo evento
+app.post("/events", async (req, res) => {
+  try {
+    const {
+      title,
+      start,
+      end,
+      type,
+      description,
+      url,
+      location,
+      creatorId,
+    } = req.body;
+
+    if (!title || !start || !end || !type) {
+      return res.status(400).json({ error: "Faltan campos obligatorios" });
+    }
+
+    if (!location || !Array.isArray(location) || location.length === 0) {
+      return res.status(400).json({
+        error: "Debes seleccionar una ubicación en el mapa",
+      });
+    }
+
+    const loc = location[0];
+    if (!loc.latitude || !loc.longitude) {
+      return res.status(400).json({ error: "Ubicación incompleta" });
+    }
+
+    const lastEvent = await Event.findOne().sort({ id: -1 }).select("id");
+    const nextId = lastEvent ? lastEvent.id + 1 : 1;
+
+    const eventUrl = url || buildEventUrl(type, title);
+    const moderators = creatorId ? [creatorId] : [];
+
+    const newEvent = new Event({
+      id: nextId,
+      title: title.trim(),
+      start: new Date(start),
+      end: new Date(end),
+      url: eventUrl,
+      type,
+      icon: null,
+      description: (description || title).trim(),
+      attendees: [],
+      location,
+      moderators,
+    });
+
+    await newEvent.save();
+
+    if (creatorId) {
+      await User.findByIdAndUpdate(creatorId, {
+        $addToSet: { managedEvents: newEvent._id },
+      });
+    }
+
+    res.status(201).json(newEvent);
+  } catch (error) {
+    console.error(error);
+    if (error.code === 11000) {
+      return res.status(400).json({ error: "Ya existe un evento con ese id" });
+    }
+    res.status(500).json({ error: "Error creando evento" });
+  }
+});
+
+// Actualizar evento (solo moderadores)
+app.patch("/events/:eventId", async (req, res) => {
+  try {
+    const { moderatorId, title, description, type, start, end, location } =
+      req.body;
+
+    if (!moderatorId) {
+      return res.status(400).json({ error: "moderatorId es obligatorio" });
+    }
+
+    const event = await findEventByIdentifier(req.params.eventId);
+    if (!event) {
+      return res.status(404).json({ error: "Evento no encontrado" });
+    }
+
+    if (!isEventModerator(event, moderatorId)) {
+      return res.status(403).json({ error: "No tienes permiso para editar este evento" });
+    }
+
+    if (title !== undefined) event.title = title.trim();
+    if (description !== undefined) event.description = description.trim();
+    if (type !== undefined) event.type = type;
+    if (start !== undefined) event.start = new Date(start);
+    if (end !== undefined) event.end = new Date(end);
+    if (location !== undefined && Array.isArray(location) && location.length > 0) {
+      event.location = location;
+    }
+
+    if (title && type) {
+      event.url = buildEventUrl(event.type, event.title);
+    }
+
+    await event.save();
+    res.status(200).json(event);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "Error actualizando evento" });
+  }
+});
+
+// Eliminar asistente de un evento (solo moderadores)
+app.delete("/events/:eventId/attendees/:attendeeId", async (req, res) => {
+  try {
+    const moderatorId = req.query.moderatorId || req.body?.moderatorId;
+
+    if (!moderatorId) {
+      return res.status(400).json({ error: "moderatorId es obligatorio" });
+    }
+
+    const event = await findEventByIdentifier(req.params.eventId);
+    if (!event) {
+      return res.status(404).json({ error: "Evento no encontrado" });
+    }
+
+    if (!isEventModerator(event, moderatorId)) {
+      return res.status(403).json({
+        error: "No tienes permiso para gestionar asistentes",
+      });
+    }
+
+    const attendeeRef = decodeURIComponent(req.params.attendeeId);
+    if (!event.attendees.includes(attendeeRef)) {
+      return res.status(404).json({ error: "Asistente no encontrado en el evento" });
+    }
+
+    await removeAttendeeFromEvent(event, attendeeRef);
+
+    const updatedEvent = await Event.findById(event._id);
+    res.status(200).json(updatedEvent);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "Error eliminando asistente" });
+  }
+});
+
+// Resolver nombres de asistentes
+app.get("/events/:eventId/attendees", async (req, res) => {
+  try {
+    const event = await findEventByIdentifier(req.params.eventId);
+    if (!event) {
+      return res.status(404).json({ error: "Evento no encontrado" });
+    }
+
+    const resolved = await Promise.all(
+      event.attendees.map(async (attendeeRef) => {
+        if (mongoose.Types.ObjectId.isValid(attendeeRef)) {
+          const u = await User.findById(attendeeRef).select("username email");
+          if (u) {
+            return {
+              id: attendeeRef,
+              username: u.username,
+              email: u.email,
+            };
+          }
+        }
+        return { id: attendeeRef, username: attendeeRef, email: null };
+      })
+    );
+
+    res.status(200).json(resolved);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "Error obteniendo asistentes" });
   }
 });
 
