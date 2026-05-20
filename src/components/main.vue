@@ -84,12 +84,12 @@
 
       <!-- Vista Mapa -->
       <div v-if="currentView === 'map'" class="view-container">
-        <MapView/>
+        <MapView @open-event="openEventFromMap" />
       </div>
 
       <!-- Vista Eventos -->
       <div v-if="currentView === 'events'" class="view-container">
-        <EventsView />
+        <EventsView :initial-event="eventFromMap" />
       </div>
 
       <!-- Vista Foro -->
@@ -173,7 +173,8 @@ export default {
       messages: [],
       messageInput: '',
       conversationId: null,
-      showProfileMenu: false
+      showProfileMenu: false,
+      eventFromMap: null
     };
   },
   mounted() {
@@ -221,6 +222,14 @@ export default {
   methods: {
     switchView(viewName) {
       this.currentView = viewName;
+      if (viewName !== "events") {
+        this.eventFromMap = null;
+      }
+    },
+
+    openEventFromMap(event) {
+      this.eventFromMap = event;
+      this.currentView = "events";
     },
     handleLogin(user) {
       this.isLoggedIn = user.status === true;

@@ -126,6 +126,12 @@
 <script>
 export default {
   name: "events-view",
+  props: {
+    initialEvent: {
+      type: Object,
+      default: null,
+    },
+  },
   data() {
     return {
       events: [],
@@ -134,8 +140,16 @@ export default {
       notificationClass: ""
     };
   },
+  watch: {
+    initialEvent: {
+      handler() {
+        this.applyInitialEvent();
+      },
+    },
+  },
   async mounted() {
     await this.loadEvents();
+    this.applyInitialEvent();
   },
   methods: {
     async loadEvents() {
@@ -153,6 +167,21 @@ export default {
         this.notification = "No se pudieron cargar los eventos";
         this.notificationClass = "error";
       }
+    },
+
+    applyInitialEvent() {
+      if (!this.initialEvent) return;
+
+      const targetId = this.initialEvent.id;
+      const targetMongoId = this.initialEvent._id;
+
+      const match = this.events.find(
+        (e) =>
+          (targetId != null && e.id === targetId) ||
+          (targetMongoId && e._id === targetMongoId)
+      );
+
+      this.selectEvent(match || this.initialEvent);
     },
 
     selectEvent(event) {

@@ -20,28 +20,36 @@
         </div>
       </div>
 
-      <button class="filter-btn" @click="selectFilter('coches')">
+      <button
+        class="filter-btn"
+        :class="{ 'filter-btn--hidden': isTypeHidden('coches') }"
+        @click="selectFilter('coches')"
+      >
         Concentración Coches
       </button>
 
-      <button class="filter-btn" @click="selectFilter('motos')">
+      <button
+        class="filter-btn"
+        :class="{ 'filter-btn--hidden': isTypeHidden('motos') }"
+        @click="selectFilter('motos')"
+      >
         Concentración Motos
       </button>
-
-      <!-- Competición -->
-      <div class="filter-group">
-        <button class="filter-btn" @click="toggleCompeticion">
+      <button
+      class="filter-btn"
+            @click="selectCompeticion('rally')"
+            
+            :class="{ 'filter-btn--hidden': isTypeHidden('competicion') }">
           Competición
         </button>
-        <div v-if="showCompeticion" class="submenu">
-          <button @click="selectCompeticion('rally')" class="submenu-btn">Rally</button>
-          <button @click="selectCompeticion('circuito')" class="submenu-btn">Circuito</button>
-          <button @click="selectCompeticion('drift')" class="submenu-btn">Drift</button>
-          
-        </div>
-      </div>
+       
+      
 
-      <button class="filter-btn" @click="selectFilter('ferias')">
+      <button
+        class="filter-btn"
+        :class="{ 'filter-btn--hidden': isTypeHidden('feria') }"
+        @click="selectFilter('feria')"
+      >
         Ferias
       </button>
 
@@ -63,6 +71,7 @@ mapboxgl.accessToken = 'pk.eyJ1IjoiYWx2YXJvZCIsImEiOiJjbXBiemtremUwMmV3MnFzYjd6d
 
 export default {
   name: "map-view",
+  emits: ["open-event"],
   props: {
     msg: String,
   },
@@ -77,11 +86,10 @@ export default {
       showUbicacion: false,
       showCompeticion: false,
       manualLocation: "",
-      activeFilter: null,
+      hiddenTypes: [],
       userLocation: null,
       events: [],
-      markers: [],
-      popups: []
+      eventMarkers: []
     };
   },
   async mounted() {
@@ -99,10 +107,8 @@ export default {
   beforeUnmount() {
     // Remover listener de resize
     window.removeEventListener('resize', this.onWindowResize);
-    // Limpiar popups
-    this.popups.forEach(popup => popup.remove());
-    this.popups = [];
-    this.markers = [];
+    this.eventMarkers.forEach(({ marker }) => marker.remove());
+    this.eventMarkers = [];
     if (this.map) {
       this.map = null;
     }
@@ -130,23 +136,30 @@ export default {
       this.userLocation = this.manualLocation;
       this.manualLocation = "";
     },
-    
- createMarkerElement() {
-  
-  const el = document.createElement('div');
+    getMarkerColor(eventType) {
+      const colors = {
+        coches: "#ff8c00",
+        motos: "#e53935",
+        competicion: "#22c55e",
+        feria: "#2196f3",
+      };
+      return colors[eventType] || "#9e9e9e";
+    },
 
-  el.style.width = '22px';
-  el.style.height = '22px';
-  el.style.backgroundImage = `url('${require('../assets/transport.png')}')`;
-  el.style.backgroundSize = 'contain';
-  el.style.backgroundRepeat = 'no-repeat';
-  el.style.backgroundPosition = 'center';
-  el.style.cursor = 'pointer';
-  el.style.filter = 'drop-shadow(0 0 6px orange)';
-  // No agregar position absolute ni transform - Mapbox GL lo maneja
+    createMarkerElement(eventType) {
+      const color = this.getMarkerColor(eventType);
+      const el = document.createElement("div");
 
-  return el;
-},
+      el.style.width = "18px";
+      el.style.height = "18px";
+      el.style.borderRadius = "50%";
+      el.style.backgroundColor = color;
+      el.style.border = "2px solid rgba(255, 255, 255, 0.9)";
+      el.style.boxShadow = `0 0 8px ${color}`;
+      el.style.cursor = "pointer";
+
+      return el;
+    },
 
     activateGPS() {
       if ("geolocation" in navigator) {
@@ -172,19 +185,64 @@ export default {
       }
     },
 
-    selectFilter(filterType) {
-      this.activeFilter = filterType;
-      this.showUbicacion = false;
-      this.showCompeticion = false;
-      this.notification = `Filtro aplicado: ${filterType}`;
-      console.log(`Filter selected: ${filterType}`);
+    normalizeEventType(type) {
+      if (!type) return "";
+      const t = String(type).toLowerCase();
+      if (t === "ferias") return "feria";
+      return t;
     },
 
-    selectCompeticion(tipo) {
-      this.activeFilter = `competicion-${tipo}`;
+    inferTypeFromUrl(event) {
+      const url = (event.url || "").toLowerCase();
+      if (url.includes("/concentraciones-de-coches/")) return "coches";
+      if (url.includes("/concentraciones-de-motos/")) return "motos";
+      if (url.includes("/calendario/competicion/") || url.includes("/competicion/")) {
+        return "competicion";
+      }
+      if (url.includes("/feria") || url.includes("/ferias")) return "feria";
+      return "";
+    },
+
+    getEventType(event) {
+      return this.normalizeEventType(event.type) || this.inferTypeFromUrl(event);
+    },
+
+    isTypeHidden(type) {
+      return this.hiddenTypes.includes(this.normalizeEventType(type));
+    },
+
+    isEventHidden(event) {
+      const type = this.getEventType(event);
+      return type ? this.hiddenTypes.includes(type) : false;
+    },
+
+    selectFilter(filterType) {
+      const type = this.normalizeEventType(filterType);
+      this.showUbicacion = false;
       this.showCompeticion = false;
-      this.notification = `Competición seleccionada: ${tipo}`;
-      console.log(`Competition type selected: ${tipo}`);
+
+      if (this.hiddenTypes.includes(type)) {
+        this.hiddenTypes = this.hiddenTypes.filter((t) => t !== type);
+        this.notification = `Mostrando eventos: ${type}`;
+      } else {
+        this.hiddenTypes.push(type);
+        this.notification = `Ocultando eventos: ${type}`;
+      }
+
+      this.updateMarkerVisibility();
+    },
+
+    selectCompeticion() {
+      this.selectFilter("competicion");
+      this.showCompeticion = false;
+    },
+
+    updateMarkerVisibility() {
+      this.eventMarkers.forEach(({ marker, event }) => {
+        const el = marker.getElement();
+        if (!el) return;
+        el.style.display = this.isEventHidden(event) ? "none" : "block";
+      });
     },
 
     initializeMap() {
@@ -203,61 +261,65 @@ export default {
         zoom: 13
       });
 
-      // Esperar a que el mapa esté cargado
       this.map.on('load', () => {
-        // Crear un marcador por cada evento
-        this.events.forEach(event => {
-          if (!event.location || event.location.length === 0) return;
-
-          const loc = event.location[0];
-          const lat = parseFloat(loc.latitude);
-          const lng = parseFloat(loc.longitude);
-
-          if (isNaN(lat) || isNaN(lng)) return;
-
-          const fechaInicio = new Date(event.start).toLocaleDateString("es-ES");
-
-          // Crear elemento del marcador
-          const markerEl = this.createMarkerElement();
-
-          // Crear popup
-          const popupContent = document.createElement('div');
-          popupContent.className = 'mapbox-popup-content';
-          popupContent.innerHTML = `
-            <div style="padding: 10px; max-width: 200px;">
-              <b style="font-size: 1.1em; color: #333;">${event.title}</b><br>
-              <span style="color: #666; font-size: 0.9em;">${fechaInicio}</span><br><br>
-              <p style="color: #555; margin: 5px 0; font-size: 0.9em;">${event.description}</p><br>
-              <button onclick="alert('Apuntado correctamente')" 
-                style="width: 100%; padding: 8px; background-color: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer;">
-                Asistir
-              </button>
-            </div>
-          `;
-
-          const popup = new mapboxgl.Popup({ offset: 25, closeButton: true })
-            .setDOMContent(popupContent);
-
-          // Crear marcador y agregarlo al mapa
-          const marker = new mapboxgl.Marker({
-  element: this.createMarkerElement(),
-  anchor: 'center'
-})
-  .setLngLat([lng, lat])
-  .setPopup(popup)
-  .addTo(this.map);
-
-          this.markers.push(marker);
-          this.popups.push(popup);
-
-          // Mostrar popup al hacer clic en el marcador
-          markerEl.addEventListener('click', () => {
-            marker.togglePopup();
-          });
+        this.events.forEach((event) => {
+          this.addEventMarker(event);
         });
+        this.updateMarkerVisibility();
       });
     },
-    
+
+
+    addEventMarker(event) {
+      if (!event.location || event.location.length === 0) return;
+
+      const loc = event.location[0];
+      const lat = parseFloat(loc.latitude);
+      const lng = parseFloat(loc.longitude);
+
+      if (isNaN(lat) || isNaN(lng)) return;
+
+      const fechaInicio = new Date(event.start).toLocaleDateString("es-ES");
+      const descripcion = typeof event.description === "string"
+        ? event.description.replace(/<[^>]*>/g, "").slice(0, 120)
+        : "";
+
+      const popupContent = document.createElement("div");
+      popupContent.className = "mapbox-popup-content";
+      popupContent.innerHTML = `
+        <div style="padding: 10px; max-width: 200px;">
+          <b style="font-size: 1.1em; color: #333;">${event.title}</b><br>
+          <span style="color: #666; font-size: 0.9em;">${fechaInicio}</span><br><br>
+          <p style="color: #555; margin: 5px 0; font-size: 0.9em;">${descripcion}</p><br>
+          <button
+            class="map-popup-info-btn"
+            style="width: 100%; padding: 8px; background-color: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer;">
+            Más información
+          </button>
+        </div>
+      `;
+
+      const infoBtn = popupContent.querySelector(".map-popup-info-btn");
+      infoBtn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        this.$emit("open-event", event);
+      });
+
+      const popup = new mapboxgl.Popup({ offset: 25, closeButton: true })
+        .setDOMContent(popupContent);
+
+      const eventType = this.getEventType(event);
+      const marker = new mapboxgl.Marker({
+        element: this.createMarkerElement(eventType),
+        anchor: "center",
+      })
+        .setLngLat([lng, lat])
+        .setPopup(popup)
+        .addTo(this.map);
+
+      this.eventMarkers.push({ marker, event });
+    },
+
     async createUser() {
       if (this.password !== this.confirmpassword) {
         this.notification = "Las contraseñas no coinciden";
@@ -474,6 +536,12 @@ a {
 
 .filter-btn:active {
   transform: translateY(0);
+}
+
+.filter-btn--hidden {
+  opacity: 0.55;
+  background: rgba(255, 80, 80, 0.25);
+  border-color: rgba(255, 120, 120, 0.5);
 }
 
 .submenu {
