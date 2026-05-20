@@ -45,22 +45,33 @@
             </button>
           </li>
           <li>
+            <div class="profile-group">
+        <button class="profile-btn" @click="toggleProfileMenu">
+          {{ isLoggedIn ? 'Perfil' : 'Iniciar sesión' }}
+        </button>
+        <div v-if="showProfileMenu" class="submenu">
+          <template v-if="isLoggedIn">
             <button
-              class="nav-btn"
+              class="submenu-btn"
               :class="{ active: currentView === 'profile' }"
-              @click="switchView('profile')"
+              @click="selectOption('profile')"
             >
-              Perfil
+              Ver Perfil
             </button>
+            <button @click="selectOption('myevents')" class="submenu-btn">Mis Eventos</button>
+            <button @click="selectOption('settings')" class="submenu-btn">Configuración</button>
+            <button @click="selectOption('logout')" class="submenu-btn logout-option">Cerrar sesión</button>
+          </template>
+          <template v-else>
+            <button @click="selectOption('login')" class="submenu-btn">Iniciar sesión</button>
+            <button @click="selectOption('register')" class="submenu-btn">Registrarse</button>
+          </template>
+        </div>
+      </div>
           </li>
         </ul>
 
-        <div class="navbar-right">
-          <div v-if="isLoggedIn" class="user-info">
-            <span class="user-name">{{ currentUser.username }}</span>
-            <button class="logout-btn" @click="logout">Cerrar sesión</button>
-          </div>
-        </div>
+
       </div>
     </nav>
 
@@ -161,7 +172,8 @@ export default {
       chatOpen: false,
       messages: [],
       messageInput: '',
-      conversationId: null
+      conversationId: null,
+      showProfileMenu: false
     };
   },
   mounted() {
@@ -241,6 +253,35 @@ export default {
           this.loadMessages();
         })
         .catch(error => console.error('Error cargando conversación:', error));
+    },
+        toggleProfileMenu() {
+      this.showProfileMenu = !this.showProfileMenu;
+    },
+    selectOption(option) {
+      this.showProfileMenu = false;
+      switch(option) {
+        case 'profile':
+          this.switchView('profile');
+          break;
+        case 'myevents':
+          this.switchView('events');
+          break;
+        case 'settings':
+          // Opción de configuración - puedes agregar una nueva vista si es necesario
+          console.log('Configuración seleccionada');
+          break;
+        case 'logout':
+          this.logout();
+          break;
+        case 'login':
+          this.switchView('profile');
+          break;
+        case 'register':
+          this.switchView('newUser');
+          break;
+        default:
+          break;
+      }
     },
     loadMessages() {
       if (!this.conversationId) return;
@@ -341,12 +382,7 @@ export default {
   -webkit-app-region: drag;
 }
 
-.navbar-right {
-  flex: 0;
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-}
+
 
 .user-info {
   display: flex;
@@ -400,6 +436,9 @@ export default {
   padding: 0.8rem 1.5rem;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
   -webkit-app-region: drag;
+  position: relative;
+  z-index: 1000;
+  overflow: visible;
 }
 
 .navbar-content {
@@ -426,6 +465,11 @@ export default {
   flex: 1;
   justify-content: center;
   -webkit-app-region: no-drag;
+  overflow: visible;
+}
+
+.nav-menu li:last-child {
+  margin-left: auto;
 }
 
 .nav-btn {
@@ -456,9 +500,106 @@ export default {
   box-shadow: 0 0 15px rgba(100, 200, 255, 0.3);
 }
 
-.navbar-right {
-  flex: 0;
+/* ===== PROFILE GROUP & SUBMENU ===== */
+.profile-group {
+  position: relative;
+  display: flex;
+  align-items: center;
+  overflow: visible;
 }
+
+.profile-btn {
+  font-family: "Inter", sans-serif;
+  padding: 0.6rem 1.2rem;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(100, 200, 255, 0.3);
+  border-radius: 0.6rem;
+  color: rgba(255, 255, 255, 0.8);
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-size: 0.95rem;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.profile-btn:hover {
+  background: rgba(100, 200, 255, 0.2);
+  border-color: rgba(100, 200, 255, 0.6);
+  color: rgba(100, 200, 255, 1);
+  transform: translateY(-2px);
+}
+
+.profile-btn:active {
+  transform: scale(0.95);
+}
+
+.submenu {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  margin-top: 0.5rem;
+  background: rgba(20, 20, 40, 0.98);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(100, 200, 255, 0.3);
+  border-radius: 0.6rem;
+  min-width: 180px;
+  z-index: 999999;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
+  animation: slideDown 0.2s ease;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.submenu-btn {
+  display: block;
+  width: 100%;
+  padding: 0.7rem 1rem;
+  background: transparent;
+  border: none;
+  color: rgba(255, 255, 255, 0.8);
+  text-align: left;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-family: "Inter", sans-serif;
+  font-size: 0.95rem;
+  font-weight: 500;
+}
+
+.submenu-btn:hover {
+  background: rgba(100, 200, 255, 0.15);
+  color: rgba(100, 200, 255, 1);
+  padding-left: 1.2rem;
+}
+
+.submenu-btn:active {
+  background: rgba(100, 200, 255, 0.25);
+}
+
+.submenu-btn.logout-option {
+  border-top: 1px solid rgba(100, 200, 255, 0.2);
+  color: rgba(255, 150, 150, 0.9);
+}
+
+.submenu-btn.logout-option:hover {
+  background: rgba(255, 100, 100, 0.15);
+  color: rgba(255, 150, 150, 1);
+}
+
+.submenu-btn.active {
+  background: rgba(100, 200, 255, 0.25);
+  color: rgba(150, 220, 255, 1);
+}
+
 
 /* ===== CONTENIDO PRINCIPAL ===== */
 .main-content {
