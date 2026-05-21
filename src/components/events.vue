@@ -1,12 +1,12 @@
 <template>
   <div class="events-container">
-    <button id="back-button" @click="$emit('back')">Atrás</button>
+    <!--<button id="back-button" @click="$emit('back')">Atrás</button>-->
     
     <div class="content-wrapper">
       <!-- LISTA DE EVENTOS -->
       <div class="events-list-section">
         <div class="list-header">
-          <h2>Eventos Disponibles</h2>
+          <h2>Eventos</h2>
           <button
             v-if="currentUser"
             type="button"
@@ -16,9 +16,9 @@
             + Crear evento
           </button>
         </div>
-        <p v-if="notification" id="notification" :class="notificationClass">
+       <!-- <p v-if="notification" id="notification" :class="notificationClass">
           {{ notification }}
-        </p>
+        </p>-->
         
         <div class="events-list">
           <div
@@ -506,11 +506,6 @@ export default {
 .type-carmeet {
   background: rgba(255, 165, 0, 0.5);
   color: #ffb347;
-}
-
-.type-competicion {
-  background: rgba(220, 20, 60, 0.5);
-  color: #ff6b6b;
 }
 
 .type-feria {

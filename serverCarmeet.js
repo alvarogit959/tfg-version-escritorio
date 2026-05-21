@@ -410,6 +410,55 @@ const isEventModerator = (event, userId) => {
   });
 };
 
+const isAdminUser = async (userId) => {
+  if (!userId) return false;
+  const user = await User.findById(userId).select("role");
+  return user?.role === "admin";
+};
+
+const canManageEvent = async (event, actorId) => {
+  if (!actorId) return false;
+  if (await isAdminUser(actorId)) return true;
+  return isEventModerator(event, actorId);
+};
+
+const deleteEventCompletely = async (event) => {
+  const eventId = event._id;
+  await User.updateMany(
+    {},
+    {
+      $pull: {
+        joinedEvents: eventId,
+        managedEvents: eventId,
+      },
+    }
+  );
+  await Event.findByIdAndDelete(eventId);
+};
+
+const purgeUserFromAllEvents = async (user) => {
+  const userIdStr = user._id.toString();
+  const events = await Event.find({
+    $or: [
+      { attendees: userIdStr },
+      { attendees: user.username },
+      { attendees: user.email },
+      { moderators: user._id },
+    ],
+  });
+
+  for (const event of events) {
+    event.attendees = event.attendees.filter(
+      (a) =>
+        a !== userIdStr && a !== user.username && a !== user.email
+    );
+    event.moderators = event.moderators.filter(
+      (m) => m.toString() !== userIdStr
+    );
+    await event.save();
+  }
+};
+
 const removeAttendeeFromEvent = async (event, attendeeRef) => {
   event.attendees = event.attendees.filter((a) => a !== attendeeRef);
   await event.save();
@@ -424,6 +473,23 @@ const removeAttendeeFromEvent = async (event, attendeeRef) => {
     }
   }
 };
+
+// Listar usuarios (solo admin)
+app.get("/users", async (req, res) => {
+  try {
+    const { adminId } = req.query;
+
+    if (!adminId || !(await isAdminUser(adminId))) {
+      return res.status(403).json({ error: "Solo administradores pueden listar usuarios" });
+    }
+
+    const users = await User.find().select("-passwordHash").sort({ createdAt: -1 });
+    res.status(200).json(users.map(formatUserResponse));
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "Error obteniendo usuarios" });
+  }
+});
 
 // Obtener perfil de usuario
 app.get("/users/:userId", async (req, res) => {
@@ -482,6 +548,35 @@ app.patch("/users/:userId", async (req, res) => {
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: "Error actualizando usuario" });
+  }
+});
+
+// Eliminar usuario permanentemente (solo admin)
+app.delete("/users/:userId", async (req, res) => {
+  try {
+    const adminId = req.query.adminId || req.body?.adminId;
+    const targetId = req.params.userId;
+
+    if (!adminId || !(await isAdminUser(adminId))) {
+      return res.status(403).json({ error: "Solo administradores pueden eliminar usuarios" });
+    }
+
+    if (adminId === targetId) {
+      return res.status(400).json({ error: "No puedes eliminar tu propia cuenta desde el panel admin" });
+    }
+
+    const user = await User.findById(targetId);
+    if (!user) {
+      return res.status(404).json({ error: "Usuario no encontrado" });
+    }
+
+    await purgeUserFromAllEvents(user);
+    await User.findByIdAndDelete(targetId);
+
+    res.status(200).json({ message: "Usuario eliminado permanentemente" });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "Error eliminando usuario" });
   }
 });
 
@@ -831,7 +926,7 @@ app.patch("/events/:eventId", async (req, res) => {
       return res.status(404).json({ error: "Evento no encontrado" });
     }
 
-    if (!isEventModerator(event, moderatorId)) {
+    if (!(await canManageEvent(event, moderatorId))) {
       return res.status(403).json({ error: "No tienes permiso para editar este evento" });
     }
 
@@ -870,7 +965,7 @@ app.delete("/events/:eventId/attendees/:attendeeId", async (req, res) => {
       return res.status(404).json({ error: "Evento no encontrado" });
     }
 
-    if (!isEventModerator(event, moderatorId)) {
+    if (!(await canManageEvent(event, moderatorId))) {
       return res.status(403).json({
         error: "No tienes permiso para gestionar asistentes",
       });
@@ -888,6 +983,32 @@ app.delete("/events/:eventId/attendees/:attendeeId", async (req, res) => {
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: "Error eliminando asistente" });
+  }
+});
+
+// Eliminar evento (moderador del evento o admin)
+app.delete("/events/:eventId", async (req, res) => {
+  try {
+    const moderatorId = req.query.moderatorId || req.body?.moderatorId;
+
+    if (!moderatorId) {
+      return res.status(400).json({ error: "moderatorId es obligatorio" });
+    }
+
+    const event = await findEventByIdentifier(req.params.eventId);
+    if (!event) {
+      return res.status(404).json({ error: "Evento no encontrado" });
+    }
+
+    if (!(await canManageEvent(event, moderatorId))) {
+      return res.status(403).json({ error: "No tienes permiso para eliminar este evento" });
+    }
+
+    await deleteEventCompletely(event);
+    res.status(200).json({ message: "Evento eliminado" });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "Error eliminando evento" });
   }
 });
 

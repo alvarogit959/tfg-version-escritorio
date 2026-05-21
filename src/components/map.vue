@@ -4,7 +4,7 @@
     <!--<img id="image"  src="../assets/transport.png">
     <h3>CarMeet Club</h3>-->
   
-    <p id="notifications">{{ notification }}</p>
+    <!-- <p id="notifications">{{ notification }}</p> -->
 
     <!--FILTROS -->
     <div class="filters-container">
@@ -138,10 +138,10 @@ export default {
     },
     getMarkerColor(eventType) {
       const colors = {
-        coches: "#ff8c00",
-        motos: "#e53935",
-        competicion: "#22c55e",
-        feria: "#2196f3",
+        coches: " #667eea",
+        motos: "#B03B0C",
+        competicion: "#31BD5C",
+        feria: "#F0EC3C",
       };
       return colors[eventType] || "#9e9e9e";
     },
@@ -154,8 +154,8 @@ export default {
       el.style.height = "18px";
       el.style.borderRadius = "50%";
       el.style.backgroundColor = color;
-      el.style.border = "2px solid rgba(255, 255, 255, 0.9)";
-      el.style.boxShadow = `0 0 8px ${color}`;
+      el.style.border = "1px solid rgba(220, 210, 240, 0.9)";
+      el.style.boxShadow = `0 0 10px ${color}`;
       el.style.cursor = "pointer";
 
       return el;
@@ -271,6 +271,10 @@ export default {
 
 
     addEventMarker(event) {
+      if (!this.map) {
+    console.warn("Mapa no inicializado todavía!!!");
+    return;
+  }
       if (!event.location || event.location.length === 0) return;
 
       const loc = event.location[0];
@@ -287,13 +291,13 @@ export default {
       const popupContent = document.createElement("div");
       popupContent.className = "mapbox-popup-content";
       popupContent.innerHTML = `
-        <div style="padding: 10px; max-width: 200px;">
-          <b style="font-size: 1.1em; color: #333;">${event.title}</b><br>
-          <span style="color: #666; font-size: 0.9em;">${fechaInicio}</span><br><br>
-          <p style="color: #555; margin: 5px 0; font-size: 0.9em;">${descripcion}</p><br>
+        <div style="padding: 10px; max-width: 200px;background: linear-gradient(135deg, #000000 0%, #2E144A 100%);">
+          <b style="font-size: 1.1em; color:white">${event.title}</b><br>
+          <span style="color: white; font-size: 0.9em;">${fechaInicio}</span><br><br>
+          <p style="color: white; margin: 5px 0; font-size: 0.9em;">${descripcion}</p><br>
           <button
             class="map-popup-info-btn"
-            style="width: 100%; padding: 8px; background-color: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer;">
+            style="width: 100%; padding: 8px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; border-radius: 0.2rem; cursor: pointer; transition: transform 0.2s, box-shadow 0.2s;">
             Más información
           </button>
         </div>
@@ -375,8 +379,28 @@ export default {
 };
 </script>
 
-<!-- Add "scoped" attribute to limit CSS to this component only -->
 <style scoped>
+/*TEST*/
+
+
+
+.mapboxgl-popup-tip {
+  border-top-color: #2E144A !important;
+  border-bottom-color: #2E144A !important;
+}
+:deep(.mapboxgl-popup-close-button) {
+  color: white;
+  font-size: 18px;
+}
+
+:deep(.mapboxgl-popup-close-button:hover) {
+  background: transparent;
+  color: #ccc;
+}
+:deep(.mapboxgl-popup-content) {
+  background: linear-gradient(135deg, #000000 0%, #2E144A 100%) !important;
+}
+/*FIN   TEST*/
 .mainarea {
   display: flex;
   flex-direction: column;
@@ -398,8 +422,6 @@ export default {
   justify-content: flex-start;
   color: rgb(255, 255, 255);
   padding: 1rem;
-  
-
   -webkit-app-region: no-drag;
 }
 .glass {
@@ -486,25 +508,23 @@ a {
 }
 
 #map {
-  width: 99%;
-  height: calc(100vh - 260px);
+  width: 100%;
+  height: calc(100vh - 220px);
   overflow: hidden;
-  min-height: 400px;
+
+  max-height: 100vh;
 }
+
+
 
 .filters-container {
   display: flex;
   flex-direction: row;
-  
   gap: 0.8rem;
   width: 95%;
   justify-content: center;
   align-items: center;
   padding: 1rem;
-  background: rgba(255, 255, 255, 0.08);
-  border-radius: 1rem;
-  margin: 1rem 0;
-  border: 1px solid rgba(255, 255, 255, 0.2);
 }
 
 .filter-group {
@@ -513,7 +533,6 @@ a {
 }
 
 .filter-btn {
-
   font-family: "Inter", sans-serif;
   padding: 0.7rem 1rem;
   cursor: pointer;
@@ -522,7 +541,7 @@ a {
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
   border: 1px solid rgba(255, 255, 255, 0.25);
-  border-radius: 0.8rem;
+  border-radius: 0.2rem;
   color: white;
   font-size: 0.95rem;
   white-space: nowrap;
@@ -552,7 +571,7 @@ a {
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
   border: 1px solid rgba(255, 255, 255, 0.25);
-  border-radius: 0.8rem;
+  border-radius: 0.4rem;
   padding: 0.8rem;
   min-width: 200px;
   z-index: 100;
@@ -571,7 +590,7 @@ a {
   background: rgba(255, 255, 255, 0.1);
   backdrop-filter: blur(12px);
   border: 1px solid rgba(255, 255, 255, 0.2);
-  border-radius: 0.6rem;
+  border-radius: 0.2rem;
   color: white;
   text-align: left;
   font-size: 0.9rem;
@@ -588,7 +607,7 @@ a {
 
   background: rgba(255, 255, 255, 0.1);
   border: 1px solid rgba(255, 255, 255, 0.2);
-  border-radius: 0.6rem;
+  border-radius: 0.2rem;
   color: white;
   font-size: 0.9rem;
   box-sizing: border-box;

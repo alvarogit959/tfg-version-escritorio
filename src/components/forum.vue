@@ -1,6 +1,6 @@
 <template>
   <div class="forum-container">
-    <h2>Foro de CarMeet Club</h2>
+    <h2>Foro</h2>
     
     <div class="notification-area" v-if="notification">
       <p :class="notificationClass">{{ notification }}</p>
@@ -165,6 +165,8 @@ h2 {
   margin: 0 0 1.5rem 0;
   font-size: 1.8rem;
   color: white;
+  justify-content: left;
+  display:flex;
 }
 
 h3 {

@@ -1,10 +1,10 @@
 <template>
   <div class="mainarea">
-    <h1>{{ msg }}</h1>
+    <!--<h1>{{ msg }}</h1>-->
     <!--<img id="image"  src="../assets/transport.png">
     <h3>CarMeet Club</h3>-->
   
-    <p id="notifications">{{ notification }}</p>
+    <!-- <p id="notifications">{{ notification }}</p> -->
 
     <!--FILTROS -->
     <div class="filters-container">
@@ -316,7 +316,6 @@ this.map.on('zoomend', () => {
 .mainarea {
   display: flex;
   flex-direction: column;
-  row-gap: 0.1rem;
   width: 100%;
   height: 100%;
   background: linear-gradient(
@@ -324,20 +323,13 @@ this.map.on('zoomend', () => {
     rgba(255,255,255,0.12),
     rgba(0, 0, 0, 0.726)
   );
-
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
-  border: 3px solid rgba(175, 175, 175, 0.2);
   /*border-radius: 16px;*/
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.25);
-
   align-items: center;
-  justify-content: flex-start;
   /*border-radius: 3rem;*/
   color: rgb(255, 255, 255);
-  padding: 1rem;
-  
-
   -webkit-app-region: no-drag;
 }
 .glass {
@@ -350,19 +342,14 @@ this.map.on('zoomend', () => {
     0 8px 32px rgba(0, 0, 0, 0.25),
     inset 0 0 0 1px rgba(255, 255, 255, 0.1);
 
-  border-radius: 1rem;
+
   color: white;
 } 
-#image{width: 9rem; 
-  height: 9rem; 
-  object-fit: contain;
-    margin-top: -3rem;
-  margin-bottom: -3rem;
+#image{ 
+
 }
 #notifications{
- margin-top: -0.5rem; 
-  margin-bottom: -0.02rem;
-padding: 0;
+
 }
 
 h3{  font-family: "Inter", sans-serif;
@@ -424,14 +411,11 @@ a {
 }
 
 #map {
-  width: 99%;
-  height: 35rem;
- /* border-radius: 1rem;*/
-
-  /*border: 2px solid rgba(255, 255, 255, 0.3);*/
- /* box-shadow: 0 8px 32px rgba(0, 0, 0, 0.25);*/
+  width: 100%;
+  height: calc(100vh - 220px);
   overflow: hidden;
-  z-index: 1;
+
+  max-height: 100vh;
 }
 
 .filters-container {

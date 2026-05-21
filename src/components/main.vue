@@ -65,6 +65,14 @@
             >
               Mis Eventos
             </button>
+            <button
+              v-if="isAdmin"
+              @click="selectOption('admin')"
+              class="submenu-btn admin-menu-item"
+              :class="{ active: currentView === 'admin' }"
+            >
+              Panel Admin
+            </button>
             <button @click="selectOption('settings')" class="submenu-btn">Configuración</button>
             <button @click="selectOption('logout')" class="submenu-btn logout-option">Cerrar sesión</button>
           </template>
@@ -85,7 +93,7 @@
     <div class="main-content">
       <!-- Vista Inicio -->
       <div v-if="currentView === 'inicio'" class="view-container">
-        <InicioView msg="Inicio - CarMeet Club" />
+         <InicioView/>
       </div>
 
       <!-- Vista Mapa -->
@@ -118,12 +126,35 @@
         />
       </div>
 
+      <!-- Perfil de otro usuario -->
+      <div v-if="currentView === 'user'" class="view-container">
+        <UserView
+          v-if="viewUserId"
+          :view-user-id="viewUserId"
+          :current-user="currentUser"
+          @back="closeUserView"
+          @open-own-profile="openOwnProfile"
+        />
+      </div>
+
+      <!-- Panel administración -->
+      <div v-if="currentView === 'admin'" class="view-container">
+        <AdminPanelView
+          v-if="isLoggedIn && isAdmin && currentUser"
+          :admin-id="currentUser.id"
+          @view-user="openUserProfile"
+          @events-changed="onAdminEventsChanged"
+        />
+        <p v-else class="access-denied">Acceso solo para administradores</p>
+      </div>
+
       <!-- Mis Eventos -->
       <div v-if="currentView === 'myevents'" class="view-container">
         <MyEventsView
           v-if="isLoggedIn && currentUser"
           :user-id="currentUser.id"
           @events-updated="handleProfileUpdated"
+          @view-user="openUserProfile"
         />
         <LoginView
           v-else
@@ -174,7 +205,15 @@
       <div class="chat-messages">
         <div v-for="msg in messages" :key="msg.id" class="message" :class="msg.type">
           <div class="message-content">
-            <span v-if="msg.type === 'bot'" class="message-sender">{{ msg.senderName }}</span>
+            <button
+              v-if="msg.type === 'bot' && msg.senderId"
+              type="button"
+              class="message-sender profile-link-chat"
+              @click="openUserProfile(msg.senderId)"
+            >
+              {{ msg.senderName }}
+            </button>
+            <span v-else-if="msg.type === 'bot'" class="message-sender">{{ msg.senderName }}</span>
             <p>{{ msg.text }}</p>
             <span class="message-time">{{ new Date(msg.sentAt).toLocaleTimeString() }}</span>
           </div>
@@ -204,6 +243,9 @@ import ProfileView from './profile.vue';
 import MyEventsView from './myEvents.vue';
 import NewEventView from './newEvent.vue';
 import newUser from './newUser.vue';
+import UserView from './user.vue';
+import AdminPanelView from './adminPanel.vue';
+import { isAdminRole } from '../utils/api.js';
 import { io } from "socket.io-client";
 const socket = io("http://localhost:5000");
 export default {
@@ -217,7 +259,14 @@ export default {
     ProfileView,
     MyEventsView,
     NewEventView,
-    newUser
+    newUser,
+    UserView,
+    AdminPanelView
+  },
+  computed: {
+    isAdmin() {
+      return isAdminRole(this.currentUser?.role);
+    },
   },
   data() {
     return {
@@ -229,7 +278,9 @@ export default {
       messageInput: '',
       conversationId: null,
       showProfileMenu: false,
-      eventFromMap: null
+      eventFromMap: null,
+      viewUserId: null,
+      returnViewAfterUser: 'inicio'
     };
   },
   mounted() {
@@ -266,10 +317,9 @@ export default {
       const user = JSON.parse(savedUser);
       this.isLoggedIn = user.status === true;
       this.currentUser = user;
-      
-      // Cargar conversación grupal
-      if (this.isLoggedIn) {
-        this.loadGroupConversation();
+
+      if (this.isLoggedIn && user.id) {
+        this.refreshCurrentUserFromServer(user.id);
       }
     }
   },
@@ -280,6 +330,35 @@ export default {
       if (viewName !== "events") {
         this.eventFromMap = null;
       }
+      if (viewName !== "user") {
+        this.viewUserId = null;
+      }
+    },
+
+    openUserProfile(userId) {
+      if (!userId) return;
+      const id = String(userId);
+      if (this.currentView !== 'user') {
+        this.returnViewAfterUser = this.currentView;
+      }
+      this.viewUserId = id;
+      this.currentView = 'user';
+      this.showProfileMenu = false;
+    },
+
+    closeUserView() {
+      const back = this.returnViewAfterUser || 'inicio';
+      this.viewUserId = null;
+      this.switchView(back);
+    },
+
+    openOwnProfile() {
+      this.viewUserId = null;
+      this.switchView('profile');
+    },
+
+    onAdminEventsChanged() {
+      // Refrescar datos si hace falta en otras vistas
     },
 
     openEventFromMap(event) {
@@ -293,11 +372,35 @@ export default {
     handleLogin(user) {
       this.isLoggedIn = user.status === true;
       this.currentUser = user;
+      localStorage.setItem('user', JSON.stringify(user));
+      localStorage.setItem('isLoggedIn', 'true');
 
-      // Cargar conversación grupal y agregar como participante
       this.loadGroupConversation();
-
       this.switchView('inicio');
+    },
+
+    async refreshCurrentUserFromServer(userId) {
+      try {
+        const res = await fetch(`http://localhost:5000/users/${userId}`);
+        if (!res.ok) return;
+        const data = await res.json();
+        this.currentUser = {
+          id: data.id,
+          username: data.username,
+          email: data.email,
+          role: data.role,
+          location: data.location,
+          profileImage: data.profileImage,
+          bio: data.bio,
+          status: data.status,
+        };
+        localStorage.setItem('user', JSON.stringify(this.currentUser));
+        if (this.isLoggedIn) {
+          this.loadGroupConversation();
+        }
+      } catch (e) {
+        console.error('Error refrescando usuario:', e);
+      }
     },
 
     handleProfileUpdated(user) {
@@ -347,6 +450,9 @@ export default {
           break;
         case 'myevents':
           this.switchView('myevents');
+          break;
+        case 'admin':
+          this.switchView('admin');
           break;
         case 'settings':
           // Opción de configuración - puedes agregar una nueva vista si es necesario
@@ -460,8 +566,13 @@ export default {
   flex-direction: column;
   width: 100%;
   height: 100%;
-  background: linear-gradient(135deg, rgba(10, 10, 20, 1), rgba(20, 20, 40, 1));
+  /* background: linear-gradient(135deg, rgba(10, 10, 20, 1), rgba(20, 20, 40, 1)); */
   -webkit-app-region: drag;
+  ackground-image: url('@/assets/newbackground.svg');
+  background-size: cover; 
+  background-position: center;
+  background-repeat: no-repeat;
+  background-attachment: fixed;
 }
 
 
@@ -477,7 +588,7 @@ export default {
 }
 
 .user-name {
-  color: rgba(100, 200, 255, 0.9);
+  color: rgba(255, 149, 100, 0.9);
   font-family: "Inter", sans-serif;
   font-weight: 500;
   white-space: nowrap;
@@ -488,7 +599,7 @@ export default {
   font-family: "Inter", sans-serif;
   padding: 0.5rem 1rem;
   background: rgba(255, 100, 100, 0.2);
-  border: 1px solid rgba(255, 100, 100, 0.5);
+  border: 1px solid rgba(253, 50, 50, 0.5);
   border-radius: 0.5rem;
   color: rgba(255, 150, 150, 0.9);
   cursor: pointer;
@@ -509,12 +620,10 @@ export default {
   transform: scale(0.95);
 }
 
-/* ===== BARRA DE NAVEGACIÓN ===== */
 .navbar {
-  background: rgba(20, 20, 40, 0.95);
+  background: rgba(20, 20, 40, 0);
   backdrop-filter: blur(15px);
   -webkit-backdrop-filter: blur(15px);
-  border-bottom: 2px solid rgba(100, 200, 255, 0.3);
   padding: 0.8rem 1.5rem;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
   -webkit-app-region: drag;
@@ -533,7 +642,7 @@ export default {
 }
 
 .navbar-logo h2 {
-  color: rgba(100, 200, 255, 0.9);
+  color: rgba(255, 149, 100, 0.836);
   font-size: 1.3rem;
   font-weight: bold;
   font-family: "Inter", sans-serif;
@@ -556,11 +665,11 @@ export default {
 
 .nav-btn {
   font-family: "Inter", sans-serif;
-  padding: 0.6rem 1.2rem;
+  padding: 0.6rem 2.2rem;
   background: rgba(255, 255, 255, 0.1);
-  border: 1px solid rgba(100, 200, 255, 0.3);
-  border-radius: 0.6rem;
-  color: rgba(255, 255, 255, 0.8);
+  border: 1px solid rgba(255, 162, 100, 0.3);
+  border-radius: 0.2rem;
+  color: rgb(255, 208, 186);
   cursor: pointer;
   transition: all 0.3s ease;
   font-size: 0.95rem;
@@ -569,17 +678,17 @@ export default {
 }
 
 .nav-btn:hover {
-  background: rgba(100, 200, 255, 0.2);
-  border-color: rgba(100, 200, 255, 0.6);
-  color: rgba(100, 200, 255, 1);
+  background: rgba(255, 162, 100, 0.2);
+  border-color: rgba(255, 162, 100, 0.6);
+  color: rgba(255, 162, 100, 1);
   transform: translateY(-2px);
 }
 
 .nav-btn.active {
-  background: rgba(100, 200, 255, 0.4);
-  border-color: rgba(100, 200, 255, 0.8);
-  color: rgba(150, 220, 255, 1);
-  box-shadow: 0 0 15px rgba(100, 200, 255, 0.3);
+  background: rgba(212, 154, 105, 0.932);
+  border-color: rgba(197, 41, 30, 0.8);
+  color: rgba(0, 0, 0, 0.9);
+  box-shadow: 0 0 15px rgba(255, 102, 0, 0.507);
 }
 
 /* ===== PROFILE GROUP & SUBMENU ===== */
@@ -593,9 +702,9 @@ export default {
 .profile-btn {
   font-family: "Inter", sans-serif;
   padding: 0.6rem 1.2rem;
-  background: rgba(255, 255, 255, 0.1);
-  border: 1px solid rgba(100, 200, 255, 0.3);
-  border-radius: 0.6rem;
+  background: rgba(103, 12, 139, 0.377);
+  border: 1px solid rgba(171, 87, 226, 0.3);
+  border-radius: 0.2rem;
   color: rgba(255, 255, 255, 0.8);
   cursor: pointer;
   transition: all 0.3s ease;
@@ -605,9 +714,9 @@ export default {
 }
 
 .profile-btn:hover {
-  background: rgba(100, 200, 255, 0.2);
-  border-color: rgba(100, 200, 255, 0.6);
-  color: rgba(100, 200, 255, 1);
+  background: rgba(255, 162, 100, 0.2);
+  border-color: rgba(255, 162, 100, 0.6);
+  color: rgba(255, 162, 100, 1);
   transform: translateY(-2px);
 }
 
@@ -682,6 +791,33 @@ export default {
   color: rgba(150, 220, 255, 1);
 }
 
+.submenu-btn.admin-menu-item {
+  color: rgba(220, 180, 255, 0.95);
+}
+
+.submenu-btn.admin-menu-item:hover {
+  background: rgba(180, 120, 255, 0.2);
+}
+
+.access-denied {
+  color: rgba(255, 150, 150, 0.9);
+  padding: 2rem;
+  -webkit-app-region: no-drag;
+}
+
+.profile-link-chat {
+  background: none;
+  border: none;
+  padding: 0 12px 4px 12px;
+  color: rgba(150, 220, 255, 0.95);
+  cursor: pointer;
+  text-decoration: underline;
+  font-size: 0.8rem;
+  font-weight: 600;
+  font-family: "Inter", sans-serif;
+  text-align: left;
+}
+
 
 /* ===== CONTENIDO PRINCIPAL ===== */
 .main-content {
@@ -690,7 +826,6 @@ export default {
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 1rem;
   -webkit-app-region: no-drag;
 }
 
@@ -765,18 +900,18 @@ export default {
 /* ===== BOTÓN CHAT FLOTANTE ===== */
 .chat-button {
   position: fixed;
-  bottom: 20px;
+  bottom: 40px;
   right: 20px;
   width: 100px;
   height: 50px;
-  border-radius: 5%;
-  background: rgb(64, 32, 122);
+  border-radius: 0.2rem;
+  background: rgba(26, 6, 61, 0.774);
   border: 2px solid rgb(120, 85, 201);
   color: rgb(231, 231, 231);
   font-size: 1.5rem;
   cursor: pointer;
   transition: all 0.3s ease;
-  box-shadow: 0 4px 15px rgba(146, 61, 226, 0.4);
+  box-shadow: 0 4px 15px rgba(146, 61, 226, 0.596);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -785,9 +920,9 @@ export default {
 }
 
 .chat-button:hover {
-  background: rgb(255, 170, 100);
-  color: rgb(77, 14, 14);
-  box-shadow: 0 6px 25px rgba(255, 193, 100, 0.6);
+  background: rgb(154, 100, 255);
+  color: rgb(47, 14, 77);
+  box-shadow: 0 6px 25px rgba(159, 100, 255, 0.6);
   transform: scale(1.1);
 }
 

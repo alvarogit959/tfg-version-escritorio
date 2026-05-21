@@ -101,7 +101,15 @@
                   :key="att.id"
                   class="attendee-row"
                 >
-                  <span>{{ att.username }}</span>
+                  <button
+                    v-if="att.id && mongooseIdLike(att.id)"
+                    type="button"
+                    class="profile-link"
+                    @click="$emit('view-user', att.id)"
+                  >
+                    {{ att.username }}
+                  </button>
+                  <span v-else>{{ att.username }}</span>
                   <span v-if="att.email" class="attendee-email">{{ att.email }}</span>
                   <button
                     type="button"
@@ -183,7 +191,7 @@ export default {
       required: true,
     },
   },
-  emits: ["events-updated"],
+  emits: ["events-updated", "view-user"],
   data() {
     return {
       joinedEvents: [],
@@ -234,6 +242,10 @@ export default {
   methods: {
     eventKey(event) {
       return eventIdentifier(event) || String(event);
+    },
+
+    mongooseIdLike(id) {
+      return /^[a-f\d]{24}$/i.test(String(id));
     },
 
     attendeesFor(event) {
@@ -703,6 +715,16 @@ h1 {
 
 .remove-attendee-btn:disabled {
   opacity: 0.5;
+}
+
+.profile-link {
+  background: none;
+  border: none;
+  color: rgba(150, 220, 255, 1);
+  cursor: pointer;
+  text-decoration: underline;
+  padding: 0;
+  font-size: inherit;
 }
 
 .no-attendees,

@@ -41,6 +41,10 @@ export function isUserAttending(event, user) {
   );
 }
 
+export function isAdminRole(role) {
+  return role === "admin";
+}
+
 export function isEventModerator(event, userId) {
   if (!event?.moderators?.length || !userId) return false;
   const uid = String(userId);
