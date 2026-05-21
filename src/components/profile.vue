@@ -4,85 +4,96 @@
       {{ notification }}
     </p>
 
-    <div v-if="loading" class="loading">Cargando perfil...</div>
+    <div v-if="loading" class="loading">
+      <span class="loading-spinner" />
+      Cargando perfil...
+    </div>
 
     <template v-else-if="profile">
-      <div class="profile-header">
-        <div class="avatar-section">
-          <img
-            v-if="form.profileImage && !imageError"
-            :src="form.profileImage"
-            alt="Foto de perfil"
-            class="avatar"
-            @error="onImageError"
-          />
-          <div v-else class="avatar avatar-placeholder">
-            {{ form.username.charAt(0).toUpperCase() }}
+
+      <div class="profile-hero">
+        <div class="hero-glow" />
+        <div class="profile-header">
+          <div class="avatar-wrap">
+            <img
+              v-if="form.profileImage && !imageError"
+              :src="form.profileImage"
+              alt="Foto de perfil"
+              class="avatar"
+              @error="onImageError"
+            />
+            <div v-else class="avatar avatar-placeholder">
+              {{ form.username.charAt(0).toUpperCase() }}
+            </div>
+          </div>
+          <div class="header-info">
+            <h1>{{ form.username }}</h1>
+            <p class="email">{{ profile.email }}</p>
+            <span class="role-badge" :class="{ admin: profile.role === 'admin' }">
+              {{ profile.role }}
+            </span>
           </div>
         </div>
-        <div class="header-info">
-          <h1>{{ form.username }}</h1>
-          <p class="email">{{ profile.email }}</p>
-          <span class="role-badge">{{ profile.role }}</span>
+
+        <div class="stats-row">
+          <div class="stat-card">
+            <span class="stat-value">{{ joinedEventsList.length }}</span>
+            <span class="stat-label">Eventos apuntados</span>
+          </div>
+          <div class="stat-card">
+            <span class="stat-value">{{ memberSinceYear }}</span>
+            <span class="stat-label">Miembro desde</span>
+          </div>
+          <div v-if="profile.location?.city || profile.location?.country" class="stat-card">
+            <span class="stat-value stat-location">
+              {{ profile.location.city || "—" }}
+            </span>
+            <span class="stat-label">{{ profile.location.country || "Ubicación" }}</span>
+          </div>
         </div>
       </div>
 
-      <form class="profile-form" @submit.prevent="saveProfile">
-        <div class="form-group">
-          <label for="username">Nombre de usuario</label>
-          <input
-            id="username"
-            v-model="form.username"
-            type="text"
-            required
-            placeholder="Tu nombre de usuario"
-          />
-        </div>
+      <!-- Edición -->
+      <section class="panel-card">
+        <h2 class="section-title">Editar perfil</h2>
+        <form class="profile-form" @submit.prevent="saveProfile">
+          <div class="form-group">
+            <label for="username">Nombre de usuario</label>
+            <input
+              id="username"
+              v-model="form.username"
+              type="text"
+              required
+              placeholder="Tu nombre de usuario"
+            />
+          </div>
 
-        <div class="form-group">
-          <label for="profileImage">URL de imagen de perfil</label>
-          <input
-            id="profileImage"
-            v-model="form.profileImage"
-            type="url"
-            placeholder="https://..."
-            @input="imageError = false"
-          />
-        </div>
+          <div class="form-group">
+            <label for="bio">Biografía</label>
+            <textarea
+              id="bio"
+              v-model="form.bio"
+              rows="4"
+              placeholder="Cuéntanos sobre ti, tu coche, tus eventos favoritos..."
+            />
+          </div>
 
-        <div class="form-group">
-          <label for="bio">Biografía</label>
-          <textarea
-            id="bio"
-            v-model="form.bio"
-            rows="4"
-            placeholder="Cuéntanos sobre ti..."
-          />
-        </div>
+          <button type="submit" class="save-btn" :disabled="saving">
+            {{ saving ? "Guardando..." : "Guardar cambios" }}
+          </button>
+        </form>
+      </section>
 
-        <div class="readonly-info">
-          <p><strong>Email:</strong> {{ profile.email }}</p>
-          <p v-if="profile.location">
-            <strong>Ubicación:</strong>
-            {{ profile.location.city || "—" }},
-            {{ profile.location.country || "—" }}
-          </p>
-          <p>
-            <strong>Miembro desde:</strong>
-            {{ formatDate(profile.createdAt) }}
-          </p>
-        </div>
+      <!-- Eventos apuntados -->
+      <section class="panel-card joined-events-section">
+        <h2 class="section-title">Eventos apuntados</h2>
+        <p class="section-hint">Eventos a los que te has inscrito como asistente.</p>
 
-        <button type="submit" class="save-btn" :disabled="saving">
-          {{ saving ? "Guardando..." : "Guardar cambios" }}
-        </button>
-      </form>
-
-      <section class="joined-events-section">
-        <h2>Eventos apuntados</h2>
         <div v-if="joinedEventsList.length === 0" class="no-events">
           <p>No estás apuntado a ningún evento</p>
+          <p class="hint">Explora la sección Eventos para apuntarte.</p>
         </div>
+
         <ul v-else class="joined-events-list">
           <li
             v-for="event in joinedEventsList"
@@ -98,7 +109,7 @@
                 v-if="event.location && event.location.length > 0"
                 class="event-location"
               >
-                📍 {{ event.location[0].location }}
+                {{ event.location[0].location }}
               </p>
             </div>
             <button
@@ -156,6 +167,10 @@ export default {
         return { _id: e, title: "Evento" };
       });
     },
+    memberSinceYear() {
+      if (!this.profile?.createdAt) return "—";
+      return new Date(this.profile.createdAt).getFullYear();
+    },
   },
   watch: {
     userId: {
@@ -184,6 +199,7 @@ export default {
           profileImage: data.profileImage || "",
           bio: data.bio || "",
         };
+        this.imageError = false;
       } catch (error) {
         console.error(error);
         this.showNotification(error.message, "error");
@@ -207,7 +223,7 @@ export default {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             username: this.form.username.trim(),
-            profileImage: this.form.profileImage.trim(),
+            profileImage: (this.form.profileImage || "").trim(),
             bio: this.form.bio.trim(),
           }),
         });
@@ -258,6 +274,7 @@ export default {
     formatDate(date) {
       if (!date) return "—";
       return new Date(date).toLocaleDateString("es-ES", {
+        weekday: "short",
         day: "numeric",
         month: "long",
         year: "numeric",
@@ -280,170 +297,349 @@ export default {
 .profile-container {
   display: flex;
   flex-direction: column;
-  align-items: center;
   width: 100%;
   height: 100%;
   overflow-y: auto;
-  padding: 1.5rem 2rem;
-  color: white;
-  background: linear-gradient(
-    135deg,
-    rgba(255, 255, 255, 0.12),
-    rgba(0, 0, 0, 0.726)
-  );
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  border: 3px solid rgba(175, 175, 175, 0.2);
-  border-radius: 1rem;
+  padding: 1rem 1.25rem 1.5rem;
+  color: rgb(255, 208, 186);
+  font-family: "Inter", sans-serif;
   box-sizing: border-box;
   -webkit-app-region: no-drag;
+  gap: 1rem;
+}
+
+.profile-container::-webkit-scrollbar {
+  width: 6px;
+}
+
+.profile-container::-webkit-scrollbar-thumb {
+  background: linear-gradient(
+    180deg,
+    rgba(255, 162, 100, 0.6),
+    rgba(197, 41, 30, 0.5)
+  );
+  border-radius: 10px;
 }
 
 .notification {
-  padding: 0.8rem 1rem;
-  border-radius: 0.6rem;
-  margin-bottom: 1rem;
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  padding: 0.65rem 1rem;
+  border-radius: 0.2rem;
+
+  font-size: 0.9rem;
 }
 
 .notification.success {
-  background: rgba(76, 175, 80, 0.3);
+  background: linear-gradient(
+    90deg,
+    rgba(76, 175, 80, 0.3),
+    rgba(56, 142, 60, 0.2)
+  );
+  color: #c8f5c8;
 }
 
 .notification.error {
-  background: rgba(244, 67, 54, 0.3);
+  background: linear-gradient(
+    90deg,
+    rgba(244, 67, 54, 0.35),
+    rgba(197, 41, 30, 0.25)
+  );
+  color: #ffccbc;
 }
 
 .loading,
-.error-state,
-.no-events {
-  text-align: center;
-  padding: 2rem;
-  opacity: 0.85;
-}
-
-.profile-header {
+.error-state {
   display: flex;
   align-items: center;
-  gap: 1.5rem;
-  margin-bottom: 2rem;
+  justify-content: center;
+  gap: 0.75rem;
+  padding: 3rem;
+  color: rgba(255, 208, 186, 0.75);
 }
 
-.avatar-section {
-  flex-shrink: 0;
+.loading-spinner {
+  width: 22px;
+  height: 22px;
+
+  border-top-color: rgba(255, 149, 100, 1);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
 }
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+
+.profile-hero {
+  width: 80%;
+  align-self: center;
+  position: relative;
+
+
+
+  background: 
+    rgba(30, 18, 45, 0.92) 0%,
+
+  ;
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+
+  padding: 1.5rem 1.5rem 1.25rem;
+}
+
+
+
+.profile-header {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 1.35rem;
+  margin-bottom: 1.25rem;
+}
+
+
 
 .avatar {
-  width: 96px;
-  height: 96px;
+  width: 100px;
+  height: 100px;
   border-radius: 50%;
   object-fit: cover;
-  border: 3px solid rgba(255, 255, 255, 0.4);
+  display: block;
+  border: 3px solid rgba(20, 20, 40, 0.8);
 }
 
 .avatar-placeholder {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgba(255, 255, 255, 0.2);
-  font-size: 2.5rem;
+  background: linear-gradient(
+    160deg,
+    rgba(28, 14, 34, 0.6),
+    rgba(197, 41, 30, 0.7)
+  );
+  font-size: 2.6rem;
   font-weight: 700;
+  color: rgba(255, 230, 210, 1);
 }
 
 .header-info h1 {
-  margin: 0 0 0.3rem;
-  font-size: 1.8rem;
+  margin: 0 0 0.35rem;
+  font-size: 1.85rem;
+  font-weight: 700;
+  background: linear-gradient(
+    90deg,
+    rgba(255, 230, 200, 1),
+    rgba(255, 149, 100, 1)
+  );
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
 }
 
 .email {
-  margin: 0 0 0.5rem;
-  opacity: 0.8;
+  margin: 0 0 0.6rem;
+  font-size: 0.95rem;
+  color: rgba(255, 208, 186, 0.8);
 }
 
 .role-badge {
   display: inline-block;
-  padding: 0.25rem 0.7rem;
-  background: rgba(255, 255, 255, 0.15);
-  border-radius: 1rem;
-  font-size: 0.85rem;
+  padding: 0.3rem 0.85rem;
+  font-size: 0.8rem;
+  font-weight: 600;
   text-transform: capitalize;
+  border-radius: 0.2rem;
+  background: linear-gradient(
+    90deg,
+    rgba(103, 12, 139, 0.5),
+    rgba(80, 30, 100, 0.4)
+  );
+
+  color: rgba(255, 220, 255, 0.95);
+}
+
+.role-badge.admin {
+  background: linear-gradient(
+    90deg,
+    rgba(255, 162, 100, 0.55),
+    rgba(212, 154, 105, 0.7)
+  );
+  border-color: rgba(197, 41, 30, 0.7);
+  color: rgba(30, 10, 5, 0.95);
+  box-shadow: 0 0 12px rgba(255, 102, 0, 0.35);
+}
+
+.stats-row {
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 0.65rem;
+}
+
+.stat-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: 0.85rem 0.75rem;
+  background: linear-gradient(
+    180deg,
+    rgba(0, 0, 0, 0.25),
+    rgba(0, 0, 0, 0.08)
+  );
+  border: 1px solid rgba(255, 162, 100, 0.25);
+  border-radius: 0.2rem;
+}
+
+.stat-value {
+  font-size: 1.5rem;
+  font-weight: 700;
+  background: linear-gradient(
+    180deg,
+    rgba(255, 230, 200, 1),
+    rgba(255, 149, 100, 1)
+  );
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  line-height: 1.2;
+}
+
+.stat-value.stat-location {
+  font-size: 1.1rem;
+}
+
+.stat-label {
+  margin-top: 0.25rem;
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: rgba(255, 208, 186, 0.6);
+}
+
+/* ===== Paneles ===== */
+.panel-card {
+  align-self: center;
+  width: 80%;
+
+  backdrop-filter: blur(15px);
+  -webkit-backdrop-filter: blur(15px);
+
+  border-radius: 0.2rem;
+  padding: 1.25rem 1.35rem;
+
+}
+
+.section-title {
+  
+  margin: 0 0 1rem;
+  padding-bottom: 0.65rem;
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: rgba(255, 149, 100, 0.95);
+
+}
+
+.section-hint {
+  margin: -0.5rem 0 1rem;
+  font-size: 0.88rem;
+  color: rgba(255, 208, 186, 0.55);
 }
 
 .profile-form {
-  max-width: 520px;
+  width: 80%;
+  justify-self: center;
+  align-self: center;
   display: flex;
   flex-direction: column;
   gap: 1rem;
-  margin-bottom: 2.5rem;
+  max-width: 560px;
 }
 
 .form-group {
+  
   display: flex;
   flex-direction: column;
-  gap: 0.4rem;
+  gap: 0.35rem;
 }
 
 .form-group label {
-  font-size: 0.9rem;
-  opacity: 0.9;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: rgba(255, 149, 100, 0.95);
 }
 
 .form-group input,
 .form-group textarea {
   font-family: "Inter", sans-serif;
   padding: 0.75rem 1rem;
-  background: rgba(255, 255, 255, 0.12);
-  border: 1px solid rgba(255, 255, 255, 0.25);
-  border-radius: 0.8rem;
-  color: white;
+  background: linear-gradient(
+    180deg,
+    rgba(0, 0, 0, 0.08),
+    rgba(0, 0, 0, 0.15)
+  );
+  border: 1px solid rgba(255, 162, 100, 0.3);
+  border-radius: 0.2rem;
+  color: rgb(255, 230, 210);
   outline: none;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
 .form-group input::placeholder,
 .form-group textarea::placeholder {
-  color: rgba(255, 255, 255, 0.5);
+  color: rgba(255, 208, 186, 0.4);
 }
 
 .form-group input:focus,
 .form-group textarea:focus {
-  border-color: rgba(255, 255, 255, 0.5);
-}
-
-.readonly-info {
-  padding: 1rem;
-  background: rgba(255, 255, 255, 0.06);
-  border-radius: 0.8rem;
-  font-size: 0.95rem;
-  line-height: 1.6;
-}
-
-.readonly-info p {
-  margin: 0.3rem 0;
+  border-color: rgba(255, 149, 100, 0.8);
+  box-shadow: 0 0 0 2px rgba(255, 102, 0, 0.2);
 }
 
 .save-btn {
-  align-self: flex-start;
-  padding: 0.8rem 1.5rem;
-  background: rgba(33, 150, 243, 0.5);
-  border: 1px solid rgba(255, 255, 255, 0.3);
-  border-radius: 0.8rem;
-  color: white;
+
+  padding: 0.8rem 1.6rem;
+  font-family: "Inter", sans-serif;
+  font-size: 0.95rem;
+  font-weight: 600;
+  border-radius: 0.2rem;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all 0.3s ease;
+  background: linear-gradient(
+    135deg,
+    rgb(21, 132, 151),
+    rgba(9, 66, 99, 0.85)
+  );
+  border: 1px solid rgba(70, 107, 230, 0.8);
+  color: rgba(255, 255, 255, 0.95);
+  box-shadow: 0 4px 16px rgba(33, 71, 241, 0.35);
 }
 
 .save-btn:hover:not(:disabled) {
-  background: rgba(33, 150, 243, 0.75);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 22px rgba(255, 102, 0, 0.5);
+  filter: brightness(1.05);
 }
 
 .save-btn:disabled {
-  opacity: 0.6;
+  opacity: 0.55;
   cursor: not-allowed;
+  transform: none;
 }
 
-.joined-events-section h2 {
-  margin: 0 0 1rem;
-  font-size: 1.3rem;
+/* ===== Eventos apuntados ===== */
+.no-events {
+  text-align: center;
+  padding: 1.5rem;
+  color: rgba(255, 208, 186, 0.55);
+}
+
+.no-events .hint {
+  margin-top: 0.4rem;
+  font-size: 0.88rem;
+  opacity: 0.8;
 }
 
 .joined-events-list {
@@ -452,8 +648,7 @@ export default {
   margin: 0;
   display: flex;
   flex-direction: column;
-  gap: 0.8rem;
-  max-width: 640px;
+  gap: 0.65rem;
 }
 
 .joined-event-item {
@@ -461,41 +656,91 @@ export default {
   justify-content: space-between;
   align-items: center;
   gap: 1rem;
-  padding: 1rem 1.2rem;
-  background: rgba(255, 255, 255, 0.08);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  border-radius: 0.8rem;
+  padding: 1rem 1.15rem;
+  background: linear-gradient(
+    90deg,
+    rgba(255, 162, 100, 0.1),
+    rgba(255, 255, 255, 0.04)
+  );
+
+
+  border-radius: 0.2rem;
+  transition: transform 0.2s ease, border-color 0.2s ease;
+}
+
+.joined-event-item:hover {
+  border-color: rgba(255, 162, 100, 0.45);
+  transform: translateX(4px);
 }
 
 .event-info h3 {
-  margin: 0 0 0.3rem;
+  margin: 0 0 0.25rem;
   font-size: 1.05rem;
+  color: rgb(255, 230, 210);
 }
 
-.event-date,
+.event-date {
+  margin: 0.1rem 0;
+  font-size: 0.88rem;
+  color: rgba(255, 208, 186, 0.8);
+}
+
 .event-location {
-  margin: 0.15rem 0;
-  font-size: 0.9rem;
-  opacity: 0.85;
+  margin: 0.1rem 0 0;
+  font-size: 0.82rem;
+  color: rgba(255, 149, 100, 0.85);
 }
 
 .leave-btn {
   flex-shrink: 0;
   padding: 0.5rem 1rem;
-  background: rgba(244, 67, 54, 0.35);
-  border: 1px solid rgba(255, 120, 120, 0.5);
-  border-radius: 0.6rem;
-  color: white;
+  font-family: "Inter", sans-serif;
+  font-size: 0.85rem;
+  font-weight: 500;
+  background: linear-gradient(
+    135deg,
+    rgba(0, 0, 0, 0.6),
+    rgba(0, 0, 0, 0.5)
+  );
+  border: 1px solid rgba(255, 30, 0, 0.568);
+  border-radius: 0.1rem;
+  color: rgb(255, 190, 178);
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all 0.25s ease;
 }
 
 .leave-btn:hover:not(:disabled) {
-  background: rgba(244, 67, 54, 0.55);
+  background: linear-gradient(
+    135deg,
+    rgba(120, 30, 30, 0.7),
+    rgba(220, 50, 40, 0.6)
+  );
+  box-shadow: 0 0 10px rgba(197, 41, 30, 0.4);
 }
 
 .leave-btn:disabled {
-  opacity: 0.6;
+  opacity: 0.5;
   cursor: not-allowed;
+}
+
+@media (max-width: 600px) {
+  .profile-header {
+    flex-direction: column;
+    text-align: center;
+  }
+
+  .header-info h1 {
+    font-size: 1.5rem;
+  }
+
+  .joined-event-item {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .leave-btn {
+    width: 100%;
+    text-align: center;
+  }
 }
 </style>
