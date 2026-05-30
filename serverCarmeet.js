@@ -159,10 +159,46 @@ const userSchema = new mongoose.Schema({
     type: Boolean,
     default: false,
   },
+  friends: {
+    type: [mongoose.Schema.Types.ObjectId],
+    ref: "User",
+    default: [],
+  },
 });
 
 // Modelo para la colección "users"
 const User = mongoose.model("User", userSchema);
+
+// Solicitudes de amistad (colección friendrequests)
+const friendRequestSchema = new mongoose.Schema({
+  from: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "User",
+    required: true,
+  },
+  to: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "User",
+    required: true,
+  },
+  status: {
+    type: String,
+    enum: ["pending", "accepted", "declined"],
+    default: "pending",
+  },
+  createdAt: {
+    type: Date,
+    default: Date.now,
+  },
+  respondedAt: {
+    type: Date,
+    default: null,
+  },
+});
+
+friendRequestSchema.index({ from: 1, to: 1 }, { unique: true });
+
+const FriendRequest = mongoose.model("FriendRequest", friendRequestSchema);
 
 // Esquema para conversaciones
 const conversationSchema = new mongoose.Schema({
@@ -345,6 +381,14 @@ app.post("/login", async (req, res) => {
   }
 });
 
+const formatUserPublic = (user) => ({
+  id: user._id,
+  username: user.username,
+  profileImage: user.profileImage || "",
+  bio: user.bio || "",
+  role: user.role,
+});
+
 const formatUserResponse = (user) => ({
   id: user._id,
   username: user.username,
@@ -357,7 +401,52 @@ const formatUserResponse = (user) => ({
   joinedEvents: user.joinedEvents,
   managedEvents: user.managedEvents,
   createdAt: user.createdAt,
+  friends: user.friends,
 });
+
+const privateRoomName = (conversationId) =>
+  `private-${conversationId.toString()}`;
+
+const findPrivateConversation = async (userId1, userId2) => {
+  const id1 = new mongoose.Types.ObjectId(userId1);
+  const id2 = new mongoose.Types.ObjectId(userId2);
+  return Conversation.findOne({
+    type: "private",
+    participants: { $all: [id1, id2] },
+    $expr: { $eq: [{ $size: "$participants" }, 2] },
+  });
+};
+
+const getOrCreatePrivateConversation = async (userId1, userId2) => {
+  let conv = await findPrivateConversation(userId1, userId2);
+  if (!conv) {
+    conv = new Conversation({
+      type: "private",
+      participants: [
+        new mongoose.Types.ObjectId(userId1),
+        new mongoose.Types.ObjectId(userId2),
+      ],
+      lastMessage: {},
+    });
+    await conv.save();
+  }
+  return conv;
+};
+
+const areFriends = async (userId1, userId2) => {
+  const user = await User.findById(userId1).select("friends");
+  if (!user?.friends?.length) return false;
+  return user.friends.some((id) => id.toString() === userId2.toString());
+};
+
+const addFriendship = async (userId1, userId2) => {
+  await User.findByIdAndUpdate(userId1, {
+    $addToSet: { friends: userId2 },
+  });
+  await User.findByIdAndUpdate(userId2, {
+    $addToSet: { friends: userId1 },
+  });
+};
 
 const findEventByIdentifier = async (identifier) => {
   if (mongoose.Types.ObjectId.isValid(identifier)) {
@@ -491,6 +580,34 @@ app.get("/users", async (req, res) => {
   }
 });
 
+// Buscar usuarios por nombre (para añadir amigos)
+app.get("/users/search", async (req, res) => {
+  try {
+    const { username, currentUserId } = req.query;
+
+    if (!username || !String(username).trim()) {
+      return res.status(400).json({
+        error: "Indica un nombre de usuario para buscar",
+      });
+    }
+
+    const regex = new RegExp(String(username).trim(), "i");
+    const filter = {
+      username: regex,
+      ...(currentUserId ? { _id: { $ne: currentUserId } } : {}),
+    };
+
+    const users = await User.find(filter)
+      .select("username profileImage bio role")
+      .limit(15);
+
+    res.status(200).json(users.map(formatUserPublic));
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "Error buscando usuarios" });
+  }
+});
+
 // Obtener perfil de usuario
 app.get("/users/:userId", async (req, res) => {
   try {
@@ -551,6 +668,321 @@ app.patch("/users/:userId", async (req, res) => {
   }
 });
 
+// Estado de relación entre dos usuarios (amistad / solicitud)
+app.get("/users/:userId/relationship/:otherUserId", async (req, res) => {
+  try {
+    const { userId, otherUserId } = req.params;
+
+    if (userId === otherUserId) {
+      return res.status(200).json({ isSelf: true });
+    }
+
+    const isFriend = await areFriends(userId, otherUserId);
+
+    const incoming = await FriendRequest.findOne({
+      from: otherUserId,
+      to: userId,
+      status: "pending",
+    });
+
+    const outgoing = await FriendRequest.findOne({
+      from: userId,
+      to: otherUserId,
+      status: "pending",
+    });
+
+    res.status(200).json({
+      isFriend,
+      pendingIncoming: !!incoming,
+      pendingOutgoing: !!outgoing,
+      incomingRequestId: incoming?._id || null,
+      outgoingRequestId: outgoing?._id || null,
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "Error obteniendo relación" });
+  }
+});
+
+// Listar amigos
+app.get("/users/:userId/friends", async (req, res) => {
+  try {
+    const user = await User.findById(req.params.userId)
+      .select("friends")
+      .populate("friends", "username profileImage bio role status");
+
+    if (!user) {
+      return res.status(404).json({ error: "Usuario no encontrado" });
+    }
+
+    const friends = (user.friends || []).map((f) =>
+      f?._id ? formatUserPublic(f) : null
+    ).filter(Boolean);
+
+    res.status(200).json(friends);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "Error obteniendo amigos" });
+  }
+});
+
+// Solicitudes de amistad (entrantes y salientes pendientes)
+app.get("/users/:userId/friend-requests", async (req, res) => {
+  try {
+    const userId = req.params.userId;
+
+    const incoming = await FriendRequest.find({
+      to: userId,
+      status: "pending",
+    })
+      .populate("from", "username profileImage bio")
+      .sort({ createdAt: -1 });
+
+    const outgoing = await FriendRequest.find({
+      from: userId,
+      status: "pending",
+    })
+      .populate("to", "username profileImage bio")
+      .sort({ createdAt: -1 });
+
+    res.status(200).json({
+      incoming: incoming.map((r) => ({
+        id: r._id,
+        from: formatUserPublic(r.from),
+        status: r.status,
+        createdAt: r.createdAt,
+      })),
+      outgoing: outgoing.map((r) => ({
+        id: r._id,
+        to: formatUserPublic(r.to),
+        status: r.status,
+        createdAt: r.createdAt,
+      })),
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "Error obteniendo solicitudes" });
+  }
+});
+
+// Enviar solicitud de amistad
+app.post("/users/:userId/friend-requests", async (req, res) => {
+  try {
+    const fromId = req.params.userId;
+    const { toUserId, username } = req.body;
+
+    if (!toUserId && !username) {
+      return res.status(400).json({
+        error: "Indica toUserId o username del destinatario",
+      });
+    }
+
+    let target = null;
+    if (toUserId) {
+      target = await User.findById(toUserId);
+    } else {
+      target = await User.findOne({
+        username: String(username).trim(),
+      });
+    }
+
+    if (!target) {
+      return res.status(404).json({ error: "Usuario no encontrado" });
+    }
+
+    const toId = target._id.toString();
+
+    if (fromId === toId) {
+      return res.status(400).json({ error: "No puedes añadirte a ti mismo" });
+    }
+
+    if (await areFriends(fromId, toId)) {
+      return res.status(400).json({ error: "Ya sois amigos" });
+    }
+
+    const reversePending = await FriendRequest.findOne({
+      from: toId,
+      to: fromId,
+      status: "pending",
+    });
+
+    if (reversePending) {
+      return res.status(400).json({
+        error: "Esa persona ya te envió una solicitud. Acéptala en Amigos.",
+        requestId: reversePending._id,
+      });
+    }
+
+    let request = await FriendRequest.findOne({ from: fromId, to: toId });
+
+    if (request?.status === "pending") {
+      return res.status(400).json({ error: "Solicitud ya enviada" });
+    }
+
+    if (request?.status === "accepted") {
+      return res.status(400).json({ error: "Ya sois amigos" });
+    }
+
+    if (request) {
+      request.status = "pending";
+      request.respondedAt = null;
+      request.createdAt = new Date();
+      await request.save();
+    } else {
+      request = new FriendRequest({ from: fromId, to: toId });
+      await request.save();
+    }
+
+    const populated = await FriendRequest.findById(request._id).populate(
+      "to",
+      "username profileImage bio"
+    );
+
+    res.status(201).json({
+      id: populated._id,
+      to: formatUserPublic(populated.to),
+      status: populated.status,
+      createdAt: populated.createdAt,
+    });
+  } catch (error) {
+    console.error(error);
+    if (error.code === 11000) {
+      return res.status(400).json({ error: "Solicitud ya existente" });
+    }
+    res.status(500).json({ error: "Error enviando solicitud" });
+  }
+});
+
+// Aceptar o rechazar solicitud
+app.patch("/friend-requests/:requestId", async (req, res) => {
+  try {
+    const { userId, action } = req.body;
+
+    if (!userId || !["accept", "decline"].includes(action)) {
+      return res.status(400).json({
+        error: "userId y action (accept|decline) son obligatorios",
+      });
+    }
+
+    const request = await FriendRequest.findById(req.params.requestId);
+
+    if (!request) {
+      return res.status(404).json({ error: "Solicitud no encontrada" });
+    }
+
+    if (request.to.toString() !== userId.toString()) {
+      return res.status(403).json({
+        error: "Solo el destinatario puede responder la solicitud",
+      });
+    }
+
+    if (request.status !== "pending") {
+      return res.status(400).json({ error: "La solicitud ya fue respondida" });
+    }
+
+    request.status = action === "accept" ? "accepted" : "declined";
+    request.respondedAt = new Date();
+    await request.save();
+
+    if (action === "accept") {
+      await addFriendship(request.from, request.to);
+      await getOrCreatePrivateConversation(request.from, request.to);
+    }
+
+    res.status(200).json({
+      id: request._id,
+      status: request.status,
+      message:
+        action === "accept"
+          ? "Solicitud aceptada. Ya podéis chatear en privado."
+          : "Solicitud rechazada",
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "Error respondiendo solicitud" });
+  }
+});
+
+// Eliminar amigo
+app.delete("/users/:userId/friends/:friendId", async (req, res) => {
+  try {
+    const { userId, friendId } = req.params;
+
+    await User.findByIdAndUpdate(userId, {
+      $pull: { friends: friendId },
+    });
+    await User.findByIdAndUpdate(friendId, {
+      $pull: { friends: userId },
+    });
+
+    res.status(200).json({ message: "Amigo eliminado" });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "Error eliminando amigo" });
+  }
+});
+
+// Conversaciones privadas del usuario
+app.get("/users/:userId/conversations/private", async (req, res) => {
+  try {
+    const userId = new mongoose.Types.ObjectId(req.params.userId);
+
+    const conversations = await Conversation.find({
+      type: "private",
+      participants: userId,
+    })
+      .populate("participants", "username profileImage")
+      .sort({ "lastMessage.sentAt": -1 });
+
+    const list = conversations.map((conv) => {
+      const other = conv.participants.find(
+        (p) => p._id.toString() !== userId.toString()
+      );
+      return {
+        conversationId: conv._id,
+        otherUser: other ? formatUserPublic(other) : null,
+        lastMessage: conv.lastMessage,
+      };
+    });
+
+    res.status(200).json(list);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "Error obteniendo chats privados" });
+  }
+});
+
+// Obtener o crear chat privado con un amigo
+app.post("/users/:userId/conversations/private", async (req, res) => {
+  try {
+    const userId = req.params.userId;
+    const { friendId } = req.body;
+
+    if (!friendId) {
+      return res.status(400).json({ error: "friendId es obligatorio" });
+    }
+
+    if (!(await areFriends(userId, friendId))) {
+      return res.status(403).json({
+        error: "Solo puedes chatear con usuarios que son tus amigos",
+      });
+    }
+
+    const conversation = await getOrCreatePrivateConversation(userId, friendId);
+    const other = await User.findById(friendId).select(
+      "username profileImage bio"
+    );
+
+    res.status(200).json({
+      conversationId: conversation._id,
+      otherUser: formatUserPublic(other),
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "Error abriendo chat privado" });
+  }
+});
+
 // Eliminar usuario permanentemente (solo admin)
 app.delete("/users/:userId", async (req, res) => {
   try {
@@ -571,6 +1003,13 @@ app.delete("/users/:userId", async (req, res) => {
     }
 
     await purgeUserFromAllEvents(user);
+    await FriendRequest.deleteMany({
+      $or: [{ from: targetId }, { to: targetId }],
+    });
+    await User.updateMany(
+      { friends: targetId },
+      { $pull: { friends: targetId } }
+    );
     await User.findByIdAndDelete(targetId);
 
     res.status(200).json({ message: "Usuario eliminado permanentemente" });
@@ -749,10 +1188,19 @@ app.post("/messages", async (req, res) => {
       "username profileImage"
     );
 
-    // Emitir a todos los clientes conectados
-    io.to("group-chat").emit("new-message", populatedMessage);
+    const conversation = await Conversation.findById(conversationId).select(
+      "type"
+    );
 
-    // Responder al cliente
+    if (conversation?.type === "private") {
+      io.to(privateRoomName(conversationId)).emit(
+        "new-message",
+        populatedMessage
+      );
+    } else {
+      io.to("group-chat").emit("new-message", populatedMessage);
+    }
+
     res.status(201).json(populatedMessage);
 
   } catch (error) {
@@ -1012,6 +1460,46 @@ app.delete("/events/:eventId", async (req, res) => {
   }
 });
 
+// Resolver nombres de moderadores / organizadores del evento
+app.get("/events/:eventId/moderators", async (req, res) => {
+  try {
+    const event = await findEventByIdentifier(req.params.eventId);
+    if (!event) {
+      return res.status(404).json({ error: "Evento no encontrado" });
+    }
+
+    const populated = await Event.findById(event._id)
+      .populate("moderators", "username email role profileImage")
+      .select("moderators");
+
+    let resolved = (populated.moderators || []).map((m) => ({
+      id: m._id,
+      username: m.username,
+      email: m.email,
+      role: m.role,
+      profileImage: m.profileImage || "",
+    }));
+
+    if (resolved.length === 0) {
+      const organizers = await User.find({ managedEvents: event._id }).select(
+        "username email role profileImage"
+      );
+      resolved = organizers.map((u) => ({
+        id: u._id,
+        username: u.username,
+        email: u.email,
+        role: u.role,
+        profileImage: u.profileImage || "",
+      }));
+    }
+
+    res.status(200).json(resolved);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "Error obteniendo organizadores" });
+  }
+});
+
 // Resolver nombres de asistentes
 app.get("/events/:eventId/attendees", async (req, res) => {
   try {
@@ -1057,6 +1545,16 @@ io.on("connection", (socket) => {
   socket.on("join-group-chat", (userId) => {
     socket.join("group-chat");
     console.log(`${userId} se unió al chat grupal`);
+  });
+
+  socket.on("join-private-chat", ({ conversationId }) => {
+    if (!conversationId) return;
+    socket.join(privateRoomName(conversationId));
+  });
+
+  socket.on("leave-private-chat", ({ conversationId }) => {
+    if (!conversationId) return;
+    socket.leave(privateRoomName(conversationId));
   });
   
   // Evento: nuevo mensaje

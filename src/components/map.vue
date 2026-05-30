@@ -16,7 +16,7 @@
         <div v-if="showUbicacion" class="submenu">
           <button @click="activateGPS" class="submenu-btn">Activar GPS</button>
           <input v-model="manualLocation" type="text" placeholder="Escribe tu ubicación">
-          <button @click="closeUbicacion" class="submenu-btn">✓ Aplicar</button>
+          <button @click="closeUbicacion" class="submenu-btn">Aplicar</button>
         </div>
       </div>
 
@@ -89,7 +89,8 @@ export default {
       hiddenTypes: [],
       userLocation: null,
       events: [],
-      eventMarkers: []
+      eventMarkers: [],
+      userMarker: null
     };
   },
   async mounted() {
@@ -110,6 +111,7 @@ export default {
     this.eventMarkers.forEach(({ marker }) => marker.remove());
     this.eventMarkers = [];
     if (this.map) {
+      this.map.remove();
       this.map = null;
     }
   },
@@ -130,12 +132,53 @@ export default {
       this.showUbicacion = false;
     },
 
-    closeUbicacion() {
-      this.showUbicacion = false;
-      this.notification = `Ubicación establecida: ${this.manualLocation}`;
-      this.userLocation = this.manualLocation;
-      this.manualLocation = "";
-    },
+    async closeUbicacion() {
+
+if (!this.manualLocation.trim()) return;
+
+try {
+
+  const response = await fetch(
+    `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(this.manualLocation)}.json?access_token=${mapboxgl.accessToken}`
+  );
+
+  const data = await response.json();
+
+  if (!data.features.length) {
+    this.notification = "Ubicación no encontrada";
+    return;
+  }
+
+  const [lng, lat] = data.features[0].center;
+
+  this.userLocation = {
+    lat,
+    lng
+  };
+
+  this.map.flyTo({
+    center: [lng, lat],
+    zoom: 13,
+    duration: 1500
+  });
+//TEST MARCADOR
+if (this.userMarker) {
+  this.userMarker.remove();
+}
+
+this.userMarker = new mapboxgl.Marker({
+  color: "#0099ff"
+})
+  .setLngLat([lng, lat])
+  .addTo(this.map);
+
+  this.showUbicacion = false;
+  this.manualLocation = "";
+
+} catch (error) {
+  console.error(error);
+}
+},
     getMarkerColor(eventType) {
       const colors = {
         coches: " #667eea",
@@ -160,30 +203,77 @@ export default {
 
       return el;
     },
+    //
+    async fallbackLocation() {
+  const res = await fetch("https://ipapi.co/json/");
+  const data = await res.json();
 
-    activateGPS() {
-      if ("geolocation" in navigator) {
-        navigator.geolocation.getCurrentPosition(
-          (position) => {
-            const { latitude, longitude } = position.coords;
-            this.userLocation = `${latitude.toFixed(4)}, ${longitude.toFixed(4)}`;
-            this.notification = `GPS Activado: ${this.userLocation}`;
-            this.map.flyTo({
-              center: [longitude, latitude],
-              zoom: 13,
-              duration: 1500
-            });
-            this.showUbicacion = false;
-          },
-          (error) => {
-            this.notification = "No se pudo obtener la ubicación";
-            console.error(error);
-          }
-        );
-      } else {
-        this.notification = "Geolocalización no disponible";
+  const lat = data.latitude;
+  const lng = data.longitude;
+
+  this.map.flyTo({
+    center: [lng, lat],
+    zoom: 10,
+    duration: 1500
+  });
+
+  // marcador usuario
+  if (this.userMarker) {
+    this.userMarker.remove();
+  }
+
+  this.userMarker = new mapboxgl.Marker({
+    color: "#0099ff"
+  })
+    .setLngLat([lng, lat])
+    .addTo(this.map);
+
+  this.notification = "Ubicación por IP";
+},
+activateGPS() {
+  if (!this.map) {
+    this.notification = "Mapa no inicializado";
+    return;
+  }
+
+  navigator.geolocation.getCurrentPosition(
+    (pos) => {
+      const { latitude, longitude } = pos.coords;
+
+      this.map.flyTo({
+        center: [longitude, latitude],
+        zoom: 13,
+        duration: 1500
+      });
+
+      // marcador usuario
+      if (this.userMarker) {
+        this.userMarker.remove();
       }
+
+      this.userMarker = new mapboxgl.Marker({
+        color: "#0099ff"
+      })
+        .setLngLat([longitude, latitude])
+        .addTo(this.map);
+
+      this.notification = "Ubicación GPS obtenida";
     },
+
+    async (error) => {
+      console.warn("GPS falló:", error);
+
+      // 👉 fallback automático
+      await this.fallbackLocation();
+    },
+
+    {
+      enableHighAccuracy: false,
+      timeout: 10000,
+      maximumAge: 0
+    }
+  );
+},
 
     normalizeEventType(type) {
       if (!type) return "";

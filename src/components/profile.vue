@@ -245,9 +245,7 @@ export default {
 
     async leaveEvent(event) {
       const eventId = this.eventKey(event);
-      if (!confirm(`¿Salir del evento "${event.title || "este evento"}"?`)) {
-        return;
-      }
+      
 
       this.leavingEventId = eventId;
 

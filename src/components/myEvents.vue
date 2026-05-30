@@ -37,7 +37,7 @@
               v-if="event.location && event.location.length > 0"
               class="event-location"
             >
-              📍 {{ event.location[0].location }}
+               {{ event.location[0].location }}
             </p>
             <p class="event-preview">{{ eventPreview(event) }}</p>
 
@@ -157,7 +157,7 @@
               v-if="event.location && event.location.length > 0"
               class="event-location"
             >
-              📍 {{ event.location[0].location }}
+               {{ event.location[0].location }}
             </p>
             <p class="event-preview">{{ eventPreview(event) }}</p>
             <button

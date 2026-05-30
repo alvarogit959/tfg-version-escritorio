@@ -32,6 +32,43 @@
         </div>
       </div>
 
+      <div v-if="!isOwnProfile && currentUser?.id" class="friend-actions">
+        <button
+          v-if="relationship.isFriend"
+          type="button"
+          class="action-btn chat-btn"
+          @click="openPrivateChat"
+        >
+          Abrir chat privado
+        </button>
+        <button
+          v-else-if="relationship.pendingIncoming"
+          type="button"
+          class="action-btn accept-btn"
+          :disabled="friendActionLoading"
+          @click="acceptIncoming"
+        >
+          Aceptar solicitud de amistad
+        </button>
+        <button
+          v-else-if="relationship.pendingOutgoing"
+          type="button"
+          class="action-btn pending-btn"
+          disabled
+        >
+          Solicitud enviada
+        </button>
+        <button
+          v-else-if="!relationship.isSelf"
+          type="button"
+          class="action-btn add-btn"
+          :disabled="friendActionLoading"
+          @click="sendFriendRequest"
+        >
+          {{ friendActionLoading ? "..." : "Añadir amigo" }}
+        </button>
+      </div>
+
       <div class="readonly-info">
         <p v-if="showEmail">
           <strong>Email:</strong> {{ profile.email }}
@@ -116,11 +153,13 @@ export default {
       default: null,
     },
   },
-  emits: ["back", "open-own-profile"],
+  emits: ["back", "open-own-profile", "open-private-chat"],
   data() {
     return {
       profile: null,
+      relationship: {},
       loading: true,
+      friendActionLoading: false,
       notification: "",
       notificationClass: "",
       imageError: false,
@@ -168,6 +207,7 @@ export default {
 
       try {
         this.profile = await apiJson(`/users/${this.viewUserId}`);
+        await this.loadRelationship();
       } catch (error) {
         console.error(error);
         this.showNotification(error.message, "error");
@@ -175,6 +215,68 @@ export default {
       } finally {
         this.loading = false;
       }
+    },
+
+    async loadRelationship() {
+      if (!this.currentUser?.id || this.isOwnProfile) {
+        this.relationship = { isSelf: true };
+        return;
+      }
+      try {
+        this.relationship = await apiJson(
+          `/users/${this.currentUser.id}/relationship/${this.viewUserId}`
+        );
+      } catch {
+        this.relationship = {};
+      }
+    },
+
+    async sendFriendRequest() {
+      this.friendActionLoading = true;
+      try {
+        await apiJson(`/users/${this.currentUser.id}/friend-requests`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ toUserId: this.viewUserId }),
+        });
+        this.showNotification("Solicitud de amistad enviada", "success");
+        await this.loadRelationship();
+      } catch (error) {
+        this.showNotification(error.message, "error");
+      } finally {
+        this.friendActionLoading = false;
+      }
+    },
+
+    async acceptIncoming() {
+      if (!this.relationship.incomingRequestId) return;
+      this.friendActionLoading = true;
+      try {
+        await apiJson(`/friend-requests/${this.relationship.incomingRequestId}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            userId: this.currentUser.id,
+            action: "accept",
+          }),
+        });
+        this.showNotification("¡Ahora sois amigos!", "success");
+        await this.loadRelationship();
+      } catch (error) {
+        this.showNotification(error.message, "error");
+      } finally {
+        this.friendActionLoading = false;
+      }
+    },
+
+    openPrivateChat() {
+      this.$emit("open-private-chat", {
+        otherUser: {
+          id: this.profile.id,
+          username: this.profile.username,
+          profileImage: this.profile.profileImage,
+        },
+      });
     },
 
     onImageError() {
@@ -245,6 +347,10 @@ export default {
   background: rgba(244, 67, 54, 0.3);
 }
 
+.notification.success {
+  background: rgba(76, 175, 80, 0.25);
+}
+
 .loading,
 .error-state {
   text-align: center;
@@ -304,6 +410,46 @@ export default {
 .bio.empty {
   opacity: 0.55;
   font-style: italic;
+}
+
+.friend-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 1.25rem;
+}
+
+.action-btn {
+  padding: 0.6rem 1.1rem;
+  font-family: inherit;
+  font-weight: 600;
+  border-radius: 0.2rem;
+  cursor: pointer;
+  border: 1px solid rgba(255, 162, 100, 0.45);
+  transition: all 0.25s ease;
+}
+
+.add-btn,
+.accept-btn {
+  background: linear-gradient(135deg, rgba(255, 180, 100, 1), rgba(197, 41, 30, 0.85));
+  color: rgba(20, 8, 5, 0.95);
+}
+
+.chat-btn {
+  background: rgba(103, 12, 139, 0.45);
+  color: rgba(255, 220, 255, 1);
+  border-color: rgba(171, 87, 226, 0.5);
+}
+
+.pending-btn {
+  background: rgba(255, 255, 255, 0.08);
+  color: rgba(255, 208, 186, 0.6);
+  cursor: not-allowed;
+}
+
+.action-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
 }
 
 .readonly-info {

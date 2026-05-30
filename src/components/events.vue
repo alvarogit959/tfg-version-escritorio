@@ -79,6 +79,17 @@
                 </div>
               </div>
 
+              <div
+                v-if="selectedEvent.location && selectedEvent.location.length > 0"
+                class="event-map-block"
+              >
+                <label class="map-label">Ubicación en el mapa</label>
+                <EventMiniMap
+                  :key="'map-' + eventKey(selectedEvent)"
+                  :event="selectedEvent"
+                />
+              </div>
+
               <div class="event-info">
                 <div class="info-group">
                   <label>Descripción</label>
@@ -105,6 +116,36 @@
                     {{ selectedEvent.location[0].latitude }},
                     {{ selectedEvent.location[0].longitude }}
                   </p>
+                </div>
+
+                <div class="info-group">
+                  <label>
+                    Organizadores
+                    <template v-if="!loadingModerators">
+                      ({{ resolvedModerators.length }})
+                    </template>
+                  </label>
+                  <div v-if="loadingModerators" class="attendees-loading">
+                    Cargando organizadores...
+                  </div>
+                  <div
+                    v-else-if="resolvedModerators.length > 0"
+                    class="moderators-list"
+                  >
+                    <button
+                      v-for="mod in resolvedModerators"
+                      :key="mod.id"
+                      type="button"
+                      class="moderator-badge"
+                      :class="{ 'is-admin': mod.role === 'admin' }"
+                      @click="$emit('view-user', mod.id)"
+                    >
+                      <span class="mod-name">{{ mod.username }}</span>
+                      <span v-if="mod.role === 'admin'" class="mod-role">Admin</span>
+                      <span v-else class="mod-role">Moderador</span>
+                    </button>
+                  </div>
+                  <p v-else class="no-attendees">Sin organizadores asignados</p>
                 </div>
 
                 <div class="info-group">
@@ -163,9 +204,11 @@ import {
   isUserAttending,
   userIdFrom,
 } from "../utils/api.js";
+import EventMiniMap from "./EventMiniMap.vue";
 
 export default {
   name: "events-view",
+  components: { EventMiniMap },
   props: {
     initialEvent: {
       type: Object,
@@ -176,13 +219,15 @@ export default {
       default: null,
     },
   },
-  emits: ["events-updated", "create-event"],
+  emits: ["events-updated", "create-event", "view-user"],
   data() {
     return {
       events: [],
       selectedEvent: null,
       resolvedAttendees: [],
+      resolvedModerators: [],
       loadingAttendees: false,
+      loadingModerators: false,
       notification: "",
       notificationClass: "",
       attending: false,
@@ -244,12 +289,33 @@ export default {
 
     async selectEvent(event) {
       this.selectedEvent = event;
-      await this.loadAttendeesForSelected();
+      await Promise.all([
+        this.loadAttendeesForSelected(),
+        this.loadModeratorsForSelected(),
+      ]);
     },
 
     closeDetail() {
       this.selectedEvent = null;
       this.resolvedAttendees = [];
+      this.resolvedModerators = [];
+    },
+
+    async loadModeratorsForSelected() {
+      if (!this.selectedEvent) return;
+
+      const eventId = eventIdentifier(this.selectedEvent);
+      this.loadingModerators = true;
+      this.resolvedModerators = [];
+
+      try {
+        this.resolvedModerators = await apiJson(`/events/${eventId}/moderators`);
+      } catch (error) {
+        console.error(error);
+        this.resolvedModerators = [];
+      } finally {
+        this.loadingModerators = false;
+      }
     },
 
     async loadAttendeesForSelected() {
@@ -611,6 +677,19 @@ export default {
   align-self: center;
 }
 
+.event-map-block {
+  margin-bottom: 1rem;
+}
+
+.map-label {
+  display: block;
+  font-size: 0.85rem;
+  font-weight: 600;
+  font-family: "Inter", sans-serif;
+  color: rgba(255, 149, 100, 0.95);
+  margin-bottom: 0.45rem;
+}
+
 .images-gallery {
   margin-bottom: 1.25rem;
 }
@@ -677,6 +756,64 @@ export default {
   padding: 0.3rem 0.65rem;
   border-radius: 0.2rem;
   font-size: 0.82rem;
+}
+
+.moderators-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  margin-top: 0.35rem;
+}
+
+.moderator-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.35rem 0.7rem;
+  background: linear-gradient(
+    90deg,
+    rgba(255, 162, 100, 0.2),
+    rgba(255, 162, 100, 0.08)
+  );
+  border: 1px solid rgba(255, 162, 100, 0.45);
+  border-radius: 0.2rem;
+  color: rgb(255, 230, 210);
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 0.82rem;
+  transition: background 0.2s ease, transform 0.2s ease;
+}
+
+.moderator-badge:hover {
+  background: rgba(255, 162, 100, 0.28);
+  transform: translateY(-1px);
+}
+
+.moderator-badge.is-admin {
+  border-color: rgba(255, 193, 7, 0.55);
+  background: linear-gradient(
+    90deg,
+    rgba(255, 193, 7, 0.25),
+    rgba(255, 162, 100, 0.12)
+  );
+}
+
+.mod-name {
+  font-weight: 600;
+}
+
+.mod-role {
+  font-size: 0.68rem;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  opacity: 0.75;
+  padding: 0.1rem 0.35rem;
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 0.15rem;
+}
+
+.moderator-badge.is-admin .mod-role {
+  color: rgba(255, 220, 120, 1);
 }
 
 .attendees-loading,
