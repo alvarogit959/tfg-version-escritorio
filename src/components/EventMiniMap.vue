@@ -19,6 +19,7 @@ export default {
     return {
       map: null,
       marker: null,
+      resizeTimer: null,
     };
   },
   watch: {
@@ -36,7 +37,16 @@ export default {
     });
   },
   beforeUnmount() {
+    if (this.resizeTimer) {
+      clearTimeout(this.resizeTimer);
+      this.resizeTimer = null;
+    }
+    if (this.marker) {
+      this.marker.remove();
+      this.marker = null;
+    }
     if (this.map) {
+      this.map.stop();
       this.map.off();
       this.map.remove();
       this.map = null;
@@ -60,6 +70,8 @@ export default {
         zoomControl: true,
         attributionControl: true,
         scrollWheelZoom: true,
+        zoomAnimation: false,
+        markerZoomAnimation: false,
       });
 
       L.tileLayer(
@@ -101,9 +113,9 @@ export default {
           `<b>${this.event.title || "Evento"}</b><br>${loc.location || ""}`
         );
 
-      this.map.setView([lat, lng], zoom, { animate: false });
+      this.map.setView([lat, lng], zoom, { animate: false, reset: true });
 
-      setTimeout(() => {
+      this.resizeTimer = setTimeout(() => {
         if (this.map) {
           this.map.invalidateSize();
         }

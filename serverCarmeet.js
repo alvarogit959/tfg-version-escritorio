@@ -389,6 +389,24 @@ const formatUserPublic = (user) => ({
   role: user.role,
 });
 
+const todayStart = () => {
+  const now = new Date();
+  return new Date(now.getFullYear(), now.getMonth(), now.getDate());
+};
+
+const isUpcomingEvent = (event) => {
+  if (!event || !event.end) return true;
+  return new Date(event.end) >= todayStart();
+};
+
+const filterUpcomingEvents = (events) => {
+  if (!Array.isArray(events)) return events;
+  return events.filter((event) => {
+    if (!event || typeof event !== "object" || !event.end) return true;
+    return isUpcomingEvent(event);
+  });
+};
+
 const formatUserResponse = (user) => ({
   id: user._id,
   username: user.username,
@@ -398,8 +416,8 @@ const formatUserResponse = (user) => ({
   profileImage: user.profileImage,
   bio: user.bio,
   status: user.status,
-  joinedEvents: user.joinedEvents,
-  managedEvents: user.managedEvents,
+  joinedEvents: filterUpcomingEvents(user.joinedEvents),
+  managedEvents: filterUpcomingEvents(user.managedEvents),
   createdAt: user.createdAt,
   friends: user.friends,
 });
@@ -562,6 +580,17 @@ const removeAttendeeFromEvent = async (event, attendeeRef) => {
     }
   }
 };
+//TEST UBICACIÓN: 
+app.get("/api/location", async (req, res) => {
+  try {
+    const r = await fetch("https://ipwho.is/");
+    const data = await r.json();
+
+    res.json(data);
+  } catch (err) {
+    res.status(500).json({ error: "failed" });
+  }
+});
 
 // Listar usuarios (solo admin)
 app.get("/users", async (req, res) => {
@@ -620,7 +649,9 @@ app.get("/users/:userId", async (req, res) => {
       return res.status(404).json({ error: "Usuario no encontrado" });
     }
 
-    const moderatedEvents = await Event.find({ moderators: user._id });
+    const moderatedEvents = filterUpcomingEvents(
+      await Event.find({ moderators: user._id })
+    );
 
     res.status(200).json({
       ...formatUserResponse(user),
@@ -1266,8 +1297,8 @@ app.post("/conversations/:conversationId/add-participant", async (req, res) => {
 //Todos los eventos
 app.get("/events", async (req, res) => {
   try {
-    const events = await Event.find();
-    res.json(events);
+    const events = await Event.find().sort({ start: 1 });
+    res.json(filterUpcomingEvents(events));
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: "Error obteniendo eventos" });

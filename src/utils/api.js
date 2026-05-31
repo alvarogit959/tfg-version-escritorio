@@ -56,10 +56,29 @@ export function isEventModerator(event, userId) {
 
 export function normalizeEventList(events) {
   if (!events?.length) return [];
-  return events.map((e) => {
-    if (e && typeof e === "object" && (e.title || e._id)) return e;
-    return { _id: e, title: "Evento" };
-  });
+  return events
+    .map((e) => {
+      if (e && typeof e === "object" && (e.title || e._id)) return e;
+      return { _id: e, title: "Evento" };
+    })
+    .filter(isUpcomingEvent);
+}
+
+export function isUpcomingEvent(event) {
+  if (!event?.end) return true;
+
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  const eventEnd = new Date(event.end);
+  if (Number.isNaN(eventEnd.getTime())) return true;
+
+  return eventEnd >= today;
+}
+
+export function upcomingEvents(events) {
+  if (!events?.length) return [];
+  return events.filter(isUpcomingEvent);
 }
 
 export function toDatetimeLocal(iso) {

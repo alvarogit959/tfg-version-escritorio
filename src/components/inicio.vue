@@ -58,6 +58,7 @@
 
 <script>
 import L from 'leaflet';
+import { upcomingEvents } from "../utils/api.js";
 //const nombre = "Evento CarMeet";
 //const fecha = "20/05/2026";
 /*
@@ -97,7 +98,10 @@ export default {
     });
   },
   beforeUnmount() {
+    this.markers.forEach((marker) => marker.remove());
+    this.markers = [];
     if (this.map) {
+      this.map.stop();
       this.map.off();
       this.map.remove();
       this.map = null;
@@ -139,7 +143,7 @@ export default {
             const { latitude, longitude } = position.coords;
             this.userLocation = `${latitude.toFixed(4)}, ${longitude.toFixed(4)}`;
             this.notification = `GPS Activado: ${this.userLocation}`;
-            this.map.setView([latitude, longitude], 13);
+            this.map.setView([latitude, longitude], 13, { animate: false });
             this.showUbicacion = false;
           },
           (error) => {
@@ -176,8 +180,11 @@ export default {
       }
 
 //UBICACION INICIO
-      this.map = L.map('map');
-      this.map.setView([42.2383, -8.7292], 13);
+      this.map = L.map('map', {
+        zoomAnimation: false,
+        markerZoomAnimation: false,
+      });
+      this.map.setView([42.2383, -8.7292], 13, { animate: false });
 
     //capa de OpenStreetMap
     //Cambiar color aqui??
@@ -239,11 +246,12 @@ this.events.forEach(event => {
   this.markers.push(marker);
 });
 this.map.on('zoomend', () => {
+  if (!this.map) return;
   const zoom = this.map.getZoom();
   const newIcon = this.createCarIcon(zoom);
 
   this.markers.forEach(marker => {
-    marker.setIcon(newIcon);
+    if (marker) marker.setIcon(newIcon);
   });
 });
     },
@@ -292,7 +300,7 @@ this.map.on('zoomend', () => {
     async loadEvents() {
   try {
     const res = await fetch("http://localhost:5000/events");
-    this.events = await res.json();
+    this.events = upcomingEvents(await res.json());
     console.log("Eventos cargados:", this.events);
   } catch (error) {
     console.error("Error cargando eventos:", error);

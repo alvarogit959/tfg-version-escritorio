@@ -175,7 +175,9 @@
 import {
   apiJson,
   eventIdentifier,
+  isUpcomingEvent,
   toDatetimeLocal,
+  upcomingEvents,
 } from "../utils/api.js";
 
 export default {
@@ -247,7 +249,7 @@ export default {
 
     async loadEvents() {
       try {
-        this.events = await apiJson("/events");
+        this.events = upcomingEvents(await apiJson("/events"));
         await Promise.all(this.events.map((ev) => this.loadAttendees(ev)));
       } catch (error) {
         this.showNotification(error.message, "error");
@@ -321,9 +323,13 @@ export default {
             location: this.buildLocationPayload(event),
           }),
         });
-        this.events = this.events.map((e) =>
-          this.eventKey(e) === eventId ? updated : e
-        );
+        if (isUpcomingEvent(updated)) {
+          this.events = this.events.map((e) =>
+            this.eventKey(e) === eventId ? updated : e
+          );
+        } else {
+          this.events = this.events.filter((e) => this.eventKey(e) !== eventId);
+        }
         this.editingId = null;
         this.showNotification("Evento actualizado", "success");
         this.$emit("events-changed");
@@ -705,5 +711,17 @@ h1 {
 .self-tag {
   font-size: 0.85rem;
   opacity: 0.65;
+}
+.admin-panel::-webkit-scrollbar {
+  width: 6px;
+}
+
+.admin-panel::-webkit-scrollbar-thumb {
+  background: linear-gradient(
+    180deg,
+    rgba(255, 162, 100, 0.6),
+    rgba(197, 41, 30, 0.5)
+  );
+  border-radius: 10px;
 }
 </style>

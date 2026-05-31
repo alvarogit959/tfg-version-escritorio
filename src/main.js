@@ -15,4 +15,3 @@ L.Icon.Default.mergeOptions({
 const app = createApp(App)
 app.use(router)
 app.mount('#app')
-app.commandLine.appendSwitch('enable-features', 'Geolocation');

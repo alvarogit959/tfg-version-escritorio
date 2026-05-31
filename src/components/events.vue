@@ -15,13 +15,85 @@
           </button>
         </div>
 
-        <p v-if="notification" class="notification" :class="notificationClass">
+        <div class="events-controls">
+          <div class="location-controls">
+            <button
+              type="button"
+              class="control-btn"
+              :disabled="locating"
+              @click="activateLocation"
+            >
+              Usar ubicación
+            </button>
+            <span v-if="userLocation" class="location-status">
+              Ubicación activa
+            </span>
+            <span v-else class="location-status muted">
+              Sin ubicación
+            </span>
+          </div>
+
+          <div class="filter-controls">
+            <button
+              v-for="type in eventTypeFilters"
+              :key="type.value"
+              type="button"
+              class="type-filter-btn"
+              :class="{ active: selectedTypes.includes(type.value) }"
+              @click="toggleTypeFilter(type.value)"
+            >
+              {{ type.label }}
+            </button>
+          </div>
+
+          <div class="date-controls">
+            <label>
+              <span>Desde</span>
+              <input v-model="dateFrom" type="date">
+            </label>
+            <label>
+              <span>Hasta</span>
+              <input v-model="dateTo" type="date">
+            </label>
+            <button
+              type="button"
+              class="clear-date-btn"
+              :disabled="!dateFrom && !dateTo"
+              @click="clearDateFilters"
+            >
+              Limpiar
+            </button>
+          </div>
+
+          <div class="sort-control">
+            <span>Ordenar</span>
+            <button
+              type="button"
+              class="sort-btn"
+              :class="{ active: sortMode === 'date' }"
+              @click="setSortMode('date')"
+            >
+              Fecha
+            </button>
+            <button
+              type="button"
+              class="sort-btn"
+              :class="{ active: sortMode === 'distance' }"
+              :disabled="locating"
+              @click="setSortMode('distance')"
+            >
+              Distancia
+            </button>
+          </div>
+        </div>
+
+    <!--    <p v-if="notification" class="notification" :class="notificationClass">
           {{ notification }}
-        </p>
+        </p>-->
 
         <div class="events-list">
           <div
-            v-for="event in events"
+            v-for="event in displayedEvents"
             :key="eventKey(event)"
             class="event-card"
             @click="selectEvent(event)"
@@ -37,11 +109,14 @@
             >
               {{ event.location[0].location }}
             </p>
+            <p v-if="userLocation && eventDistanceKm(event) !== null" class="event-distance">
+              A {{ eventDistanceKm(event) }} km
+            </p>
             <p class="event-preview">{{ eventPreview(event) }}</p>
           </div>
 
-          <div v-if="events.length === 0" class="no-events">
-            <p>No hay eventos disponibles</p>
+          <div v-if="displayedEvents.length === 0" class="no-events">
+            <p>No hay eventos disponibles con estos filtros</p>
           </div>
         </div>
       </div>
@@ -201,7 +276,9 @@
 import {
   apiJson,
   eventIdentifier,
+  isUpcomingEvent,
   isUserAttending,
+  upcomingEvents,
   userIdFrom,
 } from "../utils/api.js";
 import EventMiniMap from "./EventMiniMap.vue";
@@ -231,11 +308,40 @@ export default {
       notification: "",
       notificationClass: "",
       attending: false,
+      userLocation: null,
+      locating: false,
+      sortMode: "date",
+      dateFrom: "",
+      dateTo: "",
+      selectedTypes: ["coches", "motos", "competicion", "feria"],
+      eventTypeFilters: [
+        { value: "coches", label: "Coches" },
+        { value: "motos", label: "Motos" },
+        { value: "competicion", label: "Competición" },
+        { value: "feria", label: "Ferias" },
+      ],
     };
   },
   computed: {
     isAttendingSelected() {
       return isUserAttending(this.selectedEvent, this.currentUser);
+    },
+
+    displayedEvents() {
+      const filtered = this.events.filter((event) =>
+        this.selectedTypes.includes(this.getEventType(event)) &&
+        this.isEventInsideDateRange(event)
+      );
+
+      return [...filtered].sort((a, b) => {
+        if (this.sortMode === "distance" && this.userLocation) {
+          const distanceA = this.getEventDistanceValue(a);
+          const distanceB = this.getEventDistanceValue(b);
+          return distanceA - distanceB;
+        }
+
+        return this.getEventDateValue(a) - this.getEventDateValue(b);
+      });
     },
   },
   watch: {
@@ -254,9 +360,221 @@ export default {
       return eventIdentifier(event) || event.id;
     },
 
+    normalizeEventType(type) {
+      if (!type) return "";
+      const normalized = String(type).toLowerCase();
+      if (normalized === "ferias") return "feria";
+      if (normalized === "rally") return "competicion";
+      if (normalized === "competición") return "competicion";
+      if (normalized === "carmeet") return "coches";
+      return normalized;
+    },
+
+    inferTypeFromUrl(event) {
+      const url = (event.url || "").toLowerCase();
+      if (url.includes("/concentraciones-de-coches-y-motos/")) return "coches";
+      if (url.includes("/concentraciones-de-coches/")) return "coches";
+      if (url.includes("/concentraciones-de-motos/")) return "motos";
+      if (url.includes("/calendario/competicion/") || url.includes("/competicion/")) {
+        return "competicion";
+      }
+      if (url.includes("/feria") || url.includes("/ferias")) return "feria";
+      return "";
+    },
+
+    getEventType(event) {
+      return this.normalizeEventType(event.type) || this.inferTypeFromUrl(event);
+    },
+
+    toggleTypeFilter(type) {
+      if (this.selectedTypes.includes(type)) {
+        this.selectedTypes = this.selectedTypes.filter((t) => t !== type);
+      } else {
+        this.selectedTypes = [...this.selectedTypes, type];
+      }
+    },
+
+    async setSortMode(mode) {
+      if (mode === "distance" && !this.userLocation) {
+        await this.activateLocation();
+      }
+
+      if (mode === "distance" && !this.userLocation) return;
+      this.sortMode = mode;
+    },
+
+    async activateLocation() {
+  this.locating = true;
+
+  try {
+    const location = await this.getBrowserLocation();
+    this.setUserLocation(location, "Ubicación activada");
+
+  } catch (error) {
+    console.warn("GPS falló:", error);
+
+    //fallback sin API externa
+    const location = {
+      lat: 42.2406,
+      lng: -8.7823
+    };
+
+    this.setUserLocation(location, "Ubicación aproximada (Cangas)");
+  } finally {
+    this.locating = false;
+  }
+},
+
+    getBrowserLocation() {
+      if (!navigator.geolocation) {
+        return Promise.reject(new Error("Geolocalización no disponible"));
+      }
+
+      return new Promise((resolve, reject) => {
+        navigator.geolocation.getCurrentPosition(
+          (pos) => {
+            resolve({
+              lat: pos.coords.latitude,
+              lng: pos.coords.longitude,
+            });
+          },
+          reject,
+          {
+            enableHighAccuracy: false,
+            timeout: 10000,
+            maximumAge: 0,
+          }
+        );
+      });
+    },
+
+
+    setUserLocation(location, message) {
+      this.userLocation = location;
+      this.sortMode = "distance";
+      this.notification = message;
+      this.notificationClass = "success";
+    },
+
+    activateLocationOld() {
+      if (!navigator.geolocation) {
+        this.notification = "Tu dispositivo no permite usar ubicación";
+        this.notificationClass = "error";
+        return;
+      }
+
+      navigator.geolocation.getCurrentPosition(
+        (pos) => {
+          this.userLocation = {
+            lat: pos.coords.latitude,
+            lng: pos.coords.longitude,
+          };
+          this.sortMode = "distance";
+          this.notification = "Ubicación activada";
+          this.notificationClass = "success";
+        },
+        (error) => {
+          console.warn("No se pudo obtener la ubicación:", error);
+          this.notification = "No se pudo obtener tu ubicación";
+          this.notificationClass = "error";
+        },
+        {
+          enableHighAccuracy: false,
+          timeout: 10000,
+          maximumAge: 0,
+        }
+      );
+    },
+
+    getEventCoordinates(event) {
+      const loc = event.location?.[0];
+      if (!loc) return null;
+
+      const lat = parseFloat(loc.latitude);
+      const lng = parseFloat(loc.longitude);
+      if (Number.isNaN(lat) || Number.isNaN(lng)) return null;
+
+      return { lat, lng };
+    },
+
+    getDistanceKm(from, to) {
+      const earthRadiusKm = 6371;
+      const toRadians = (degrees) => degrees * (Math.PI / 180);
+      const dLat = toRadians(to.lat - from.lat);
+      const dLng = toRadians(to.lng - from.lng);
+      const lat1 = toRadians(from.lat);
+      const lat2 = toRadians(to.lat);
+
+      const a =
+        Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+        Math.cos(lat1) * Math.cos(lat2) *
+        Math.sin(dLng / 2) * Math.sin(dLng / 2);
+
+      return earthRadiusKm * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    },
+
+    getEventDistanceValue(event) {
+      if (!this.userLocation) return Number.POSITIVE_INFINITY;
+
+      const eventCoordinates = this.getEventCoordinates(event);
+      if (!eventCoordinates) return Number.POSITIVE_INFINITY;
+
+      return this.getDistanceKm(this.userLocation, eventCoordinates);
+    },
+
+    getEventDateValue(event) {
+      const rawDate = event.start || event.startDate || event.date;
+      const timestamp = new Date(rawDate).getTime();
+      return Number.isNaN(timestamp) ? Number.POSITIVE_INFINITY : timestamp;
+    },
+
+    getEventEndDateValue(event) {
+      const rawDate = event.end || event.start || event.startDate || event.date;
+      const timestamp = new Date(rawDate).getTime();
+      return Number.isNaN(timestamp) ? Number.POSITIVE_INFINITY : timestamp;
+    },
+
+    getDateStartValue(date) {
+      if (!date) return null;
+      const value = new Date(`${date}T00:00:00`).getTime();
+      return Number.isNaN(value) ? null : value;
+    },
+
+    getDateEndValue(date) {
+      if (!date) return null;
+      const value = new Date(`${date}T23:59:59.999`).getTime();
+      return Number.isNaN(value) ? null : value;
+    },
+
+    isEventInsideDateRange(event) {
+      const from = this.getDateStartValue(this.dateFrom);
+      const to = this.getDateEndValue(this.dateTo);
+      if (from === null && to === null) return true;
+
+      const eventStart = this.getEventDateValue(event);
+      const eventEnd = this.getEventEndDateValue(event);
+      if (!Number.isFinite(eventStart) && !Number.isFinite(eventEnd)) return false;
+
+      if (from !== null && eventEnd < from) return false;
+      if (to !== null && eventStart > to) return false;
+      return true;
+    },
+
+    clearDateFilters() {
+      this.dateFrom = "";
+      this.dateTo = "";
+    },
+
+    eventDistanceKm(event) {
+      const distance = this.getEventDistanceValue(event);
+      if (!Number.isFinite(distance)) return null;
+
+      return distance < 10 ? distance.toFixed(1) : Math.round(distance);
+    },
+
     async loadEvents() {
       try {
-        this.events = await apiJson("/events");
+        this.events = upcomingEvents(await apiJson("/events"));
         this.notification = "";
       } catch (error) {
         console.error("Error cargando eventos:", error);
@@ -402,6 +720,10 @@ export default {
           (updatedEvent._id && e._id === updatedEvent._id) ||
           e.id === updatedEvent.id
       );
+      if (!isUpcomingEvent(updatedEvent)) {
+        if (idx >= 0) this.events.splice(idx, 1);
+        return;
+      }
       if (idx >= 0) {
         this.events[idx] = updatedEvent;
       }
@@ -481,6 +803,108 @@ export default {
   background: rgba(255, 162, 100, 1);
   box-shadow: 0 0 12px rgba(255, 102, 0, 0.4);
   transform: translateY(-2px);
+}
+
+.events-controls {
+  display: grid;
+  grid-template-columns: minmax(170px, auto) 1fr minmax(280px, auto) minmax(150px, auto);
+  gap: 0.75rem;
+  align-items: center;
+  margin-bottom: 0.75rem;
+}
+
+.location-controls,
+.filter-controls,
+.date-controls,
+.sort-control {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+}
+
+.filter-controls {
+  flex-wrap: wrap;
+}
+
+.control-btn,
+.type-filter-btn,
+.sort-btn,
+.clear-date-btn,
+.date-controls input {
+  font-family: "Inter", sans-serif;
+  border-radius: 0.2rem;
+  border: 1px solid rgba(255, 162, 100, 0.35);
+  background: rgba(255, 255, 255, 0.08);
+  color: rgb(255, 230, 210);
+}
+
+.control-btn,
+.type-filter-btn,
+.sort-btn,
+.clear-date-btn {
+  padding: 0.48rem 0.75rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.control-btn:hover,
+.type-filter-btn:hover,
+.sort-btn:hover:not(:disabled),
+.clear-date-btn:hover:not(:disabled) {
+  background: rgba(255, 162, 100, 0.18);
+  border-color: rgba(255, 162, 100, 0.55);
+}
+
+.type-filter-btn.active,
+.sort-btn.active {
+  background: rgba(255, 162, 100, 0.85);
+  border-color: rgba(197, 41, 30, 0.8);
+  color: rgba(0, 0, 0, 0.9);
+  font-weight: 600;
+}
+
+.control-btn:disabled,
+.sort-btn:disabled,
+.clear-date-btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.date-controls {
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.date-controls label {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  color: rgba(255, 208, 186, 0.75);
+  font-size: 0.8rem;
+}
+
+.date-controls input {
+  height: 2.05rem;
+  padding: 0 0.45rem;
+  color-scheme: dark;
+  outline: none;
+}
+
+.location-status {
+  font-size: 0.78rem;
+  color: rgba(184, 245, 184, 0.9);
+  white-space: nowrap;
+}
+
+.location-status.muted {
+  color: rgba(255, 208, 186, 0.5);
+}
+
+.sort-control {
+  justify-content: flex-end;
+  color: rgba(255, 208, 186, 0.75);
+  font-size: 0.8rem;
 }
 
 .notification {
@@ -582,6 +1006,13 @@ export default {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.event-distance {
+  margin: 0.15rem 0;
+  font-size: 0.8rem;
+  color: rgba(184, 245, 184, 0.85);
+  font-weight: 600;
 }
 
 .event-preview {
@@ -868,5 +1299,15 @@ export default {
 .detail-slide-leave-to {
   transform: translateX(100%);
   opacity: 0;
+}
+
+@media (max-width: 900px) {
+  .events-controls {
+    grid-template-columns: 1fr;
+  }
+
+  .sort-control {
+    justify-content: flex-start;
+  }
 }
 </style>

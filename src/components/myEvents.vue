@@ -179,6 +179,7 @@
 import {
   apiJson,
   eventIdentifier,
+  isUpcomingEvent,
   normalizeEventList,
   toDatetimeLocal,
 } from "../utils/api.js";
@@ -375,8 +376,13 @@ export default {
 
     updateEventInLists(updated) {
       const id = this.eventKey(updated);
-      const updateList = (list) =>
-        list.map((e) => (this.eventKey(e) === id ? updated : e));
+      const updateList = (list) => {
+        if (!isUpcomingEvent(updated)) {
+          return list.filter((e) => this.eventKey(e) !== id);
+        }
+
+        return list.map((e) => (this.eventKey(e) === id ? updated : e));
+      };
 
       this.moderatedEvents = updateList(this.moderatedEvents);
       this.joinedEvents = updateList(this.joinedEvents);
@@ -751,5 +757,17 @@ h1 {
 .leave-btn:disabled {
   opacity: 0.6;
   cursor: not-allowed;
+}
+.my-events-container::-webkit-scrollbar {
+  width: 6px;
+}
+
+.my-events-container::-webkit-scrollbar-thumb {
+  background: linear-gradient(
+    180deg,
+    rgba(255, 162, 100, 0.6),
+    rgba(197, 41, 30, 0.5)
+  );
+  border-radius: 10px;
 }
 </style>

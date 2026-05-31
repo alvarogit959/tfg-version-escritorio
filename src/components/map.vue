@@ -56,6 +56,41 @@
       <button v-if="false" class="filter-btn" @click="selectFilter('talleres')">
         Talleres
       </button>
+
+      <div class="distance-filter">
+        <div class="distance-filter__header">
+          <span>Rango</span>
+          <strong>{{ distanceKm }} km</strong>
+        </div>
+        <input
+          v-model.number="distanceKm"
+          class="distance-slider"
+          type="range"
+          min="5"
+          max="600"
+          step="5"
+          @input="updateRangeFilter"
+        >
+      </div>
+
+      <div class="date-filter">
+        <label>
+          <span>Desde</span>
+          <input v-model="dateFrom" type="date" @input="updateMarkerVisibility">
+        </label>
+        <label>
+          <span>Hasta</span>
+          <input v-model="dateTo" type="date" @input="updateMarkerVisibility">
+        </label>
+        <button
+          type="button"
+          class="date-clear-btn"
+          :disabled="!dateFrom && !dateTo"
+          @click="clearDateFilters"
+        >
+          Limpiar
+        </button>
+      </div>
     </div>
 
     <div id="map"></div>
@@ -67,6 +102,7 @@
 <script>
 import mapboxgl from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
+import { upcomingEvents } from "../utils/api.js";
 mapboxgl.accessToken = 'pk.eyJ1IjoiYWx2YXJvZCIsImEiOiJjbXBiemtremUwMmV3MnFzYjd6d3c1c291In0.SgpTdV6EiabbSeRDcXg24w';
 
 export default {
@@ -88,9 +124,15 @@ export default {
       manualLocation: "",
       hiddenTypes: [],
       userLocation: null,
+      distanceKm: 50,
+      dateFrom: "",
+      dateTo: "",
       events: [],
       eventMarkers: [],
-      userMarker: null
+      userMarker: null,
+      rangeSourceId: "event-range-source",
+      rangeFillLayerId: "event-range-fill",
+      rangeLineLayerId: "event-range-line"
     };
   },
   async mounted() {
@@ -172,6 +214,7 @@ this.userMarker = new mapboxgl.Marker({
   .setLngLat([lng, lat])
   .addTo(this.map);
 
+  this.updateRangeFilter();
   this.showUbicacion = false;
   this.manualLocation = "";
 
@@ -204,31 +247,24 @@ this.userMarker = new mapboxgl.Marker({
       return el;
     },
     //
-    async fallbackLocation() {
-  const res = await fetch("https://ipapi.co/json/");
-  const data = await res.json();
+async fallbackLocation() {
+  const lat = 42.2406;
+  const lng = -8.7823;
 
-  const lat = data.latitude;
-  const lng = data.longitude;
+  this.userLocation = { lat, lng };
 
   this.map.flyTo({
     center: [lng, lat],
-    zoom: 10,
-    duration: 1500
+    zoom: 10
   });
 
-  // marcador usuario
-  if (this.userMarker) {
-    this.userMarker.remove();
-  }
+  if (this.userMarker) this.userMarker.remove();
 
-  this.userMarker = new mapboxgl.Marker({
-    color: "#0099ff"
-  })
+  this.userMarker = new mapboxgl.Marker({ color: "#0099ff" })
     .setLngLat([lng, lat])
     .addTo(this.map);
 
-  this.notification = "Ubicación por IP";
+  this.notification = "Ubicación aproximada (Cangas)";
 },
 activateGPS() {
   if (!this.map) {
@@ -239,6 +275,10 @@ activateGPS() {
   navigator.geolocation.getCurrentPosition(
     (pos) => {
       const { latitude, longitude } = pos.coords;
+      this.userLocation = {
+        lat: latitude,
+        lng: longitude
+      };
 
       this.map.flyTo({
         center: [longitude, latitude],
@@ -257,6 +297,7 @@ activateGPS() {
         .setLngLat([longitude, latitude])
         .addTo(this.map);
 
+      this.updateRangeFilter();
       this.notification = "Ubicación GPS obtenida";
     },
 
@@ -303,7 +344,9 @@ activateGPS() {
 
     isEventHidden(event) {
       const type = this.getEventType(event);
-      return type ? this.hiddenTypes.includes(type) : false;
+      if (type && this.hiddenTypes.includes(type)) return true;
+      if (!this.isEventInsideDateRange(event)) return true;
+      return !this.isEventInsideRange(event);
     },
 
     selectFilter(filterType) {
@@ -335,6 +378,166 @@ activateGPS() {
       });
     },
 
+    updateRangeFilter() {
+      this.updateDistanceCircle();
+      this.updateMarkerVisibility();
+    },
+
+    getEventCoordinates(event) {
+      const loc = event.location?.[0];
+      if (!loc) return null;
+
+      const lat = parseFloat(loc.latitude);
+      const lng = parseFloat(loc.longitude);
+      if (Number.isNaN(lat) || Number.isNaN(lng)) return null;
+
+      return { lat, lng };
+    },
+
+    getDistanceKm(from, to) {
+      const earthRadiusKm = 6371;
+      const toRadians = (degrees) => degrees * (Math.PI / 180);
+      const dLat = toRadians(to.lat - from.lat);
+      const dLng = toRadians(to.lng - from.lng);
+      const lat1 = toRadians(from.lat);
+      const lat2 = toRadians(to.lat);
+
+      const a =
+        Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+        Math.cos(lat1) * Math.cos(lat2) *
+        Math.sin(dLng / 2) * Math.sin(dLng / 2);
+
+      return earthRadiusKm * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    },
+
+    isEventInsideRange(event) {
+      if (!this.userLocation) return true;
+
+      const eventCoordinates = this.getEventCoordinates(event);
+      if (!eventCoordinates) return false;
+
+      return this.getDistanceKm(this.userLocation, eventCoordinates) <= this.distanceKm;
+    },
+
+    getEventDateValue(event) {
+      const rawDate = event.start || event.startDate || event.date;
+      const timestamp = new Date(rawDate).getTime();
+      return Number.isNaN(timestamp) ? Number.POSITIVE_INFINITY : timestamp;
+    },
+
+    getEventEndDateValue(event) {
+      const rawDate = event.end || event.start || event.startDate || event.date;
+      const timestamp = new Date(rawDate).getTime();
+      return Number.isNaN(timestamp) ? Number.POSITIVE_INFINITY : timestamp;
+    },
+
+    getDateStartValue(date) {
+      if (!date) return null;
+      const value = new Date(`${date}T00:00:00`).getTime();
+      return Number.isNaN(value) ? null : value;
+    },
+
+    getDateEndValue(date) {
+      if (!date) return null;
+      const value = new Date(`${date}T23:59:59.999`).getTime();
+      return Number.isNaN(value) ? null : value;
+    },
+
+    isEventInsideDateRange(event) {
+      const from = this.getDateStartValue(this.dateFrom);
+      const to = this.getDateEndValue(this.dateTo);
+      if (from === null && to === null) return true;
+
+      const eventStart = this.getEventDateValue(event);
+      const eventEnd = this.getEventEndDateValue(event);
+      if (!Number.isFinite(eventStart) && !Number.isFinite(eventEnd)) return false;
+
+      if (from !== null && eventEnd < from) return false;
+      if (to !== null && eventStart > to) return false;
+      return true;
+    },
+
+    clearDateFilters() {
+      this.dateFrom = "";
+      this.dateTo = "";
+      this.updateMarkerVisibility();
+    },
+
+    createCircleGeoJson(center, radiusKm, points = 96) {
+      const coordinates = [];
+      const lat = center.lat * Math.PI / 180;
+      const lng = center.lng * Math.PI / 180;
+      const angularDistance = radiusKm / 6371;
+
+      for (let i = 0; i <= points; i++) {
+        const bearing = (i * 360 / points) * Math.PI / 180;
+        const pointLat = Math.asin(
+          Math.sin(lat) * Math.cos(angularDistance) +
+          Math.cos(lat) * Math.sin(angularDistance) * Math.cos(bearing)
+        );
+        const pointLng = lng + Math.atan2(
+          Math.sin(bearing) * Math.sin(angularDistance) * Math.cos(lat),
+          Math.cos(angularDistance) - Math.sin(lat) * Math.sin(pointLat)
+        );
+
+        coordinates.push([
+          pointLng * 180 / Math.PI,
+          pointLat * 180 / Math.PI
+        ]);
+      }
+
+      return {
+        type: "FeatureCollection",
+        features: [
+          {
+            type: "Feature",
+            geometry: {
+              type: "Polygon",
+              coordinates: [coordinates]
+            }
+          }
+        ]
+      };
+    },
+
+    updateDistanceCircle() {
+      if (!this.map || !this.map.isStyleLoaded() || !this.userLocation) return;
+
+      const data = this.createCircleGeoJson(this.userLocation, this.distanceKm);
+      const source = this.map.getSource(this.rangeSourceId);
+
+      if (source) {
+        source.setData(data);
+        return;
+      }
+
+      this.map.addSource(this.rangeSourceId, {
+        type: "geojson",
+        data
+      });
+
+      this.map.addLayer({
+        id: this.rangeFillLayerId,
+        type: "fill",
+        source: this.rangeSourceId,
+        paint: {
+          "fill-color": "#0099ff",
+          "fill-opacity": 0.14
+        }
+      });
+
+      this.map.addLayer({
+        id: this.rangeLineLayerId,
+        type: "line",
+        source: this.rangeSourceId,
+        paint: {
+          "line-color": "#55c7ff",
+          "line-opacity": 0.9,
+          "line-width": 2
+        }
+      });
+    },
+
     initializeMap() {
       // Verify DOM element exists
       const mapContainer = document.getElementById('map');
@@ -355,6 +558,7 @@ activateGPS() {
         this.events.forEach((event) => {
           this.addEventMarker(event);
         });
+        this.updateDistanceCircle();
         this.updateMarkerVisibility();
       });
     },
@@ -365,13 +569,10 @@ activateGPS() {
     console.warn("Mapa no inicializado todavía!!!");
     return;
   }
-      if (!event.location || event.location.length === 0) return;
+      const eventCoordinates = this.getEventCoordinates(event);
+      if (!eventCoordinates) return;
 
-      const loc = event.location[0];
-      const lat = parseFloat(loc.latitude);
-      const lng = parseFloat(loc.longitude);
-
-      if (isNaN(lat) || isNaN(lng)) return;
+      const { lat, lng } = eventCoordinates;
 
       const fechaInicio = new Date(event.start).toLocaleDateString("es-ES");
       const descripcion = typeof event.description === "string"
@@ -458,7 +659,7 @@ activateGPS() {
     async loadEvents() {
   try {
     const res = await fetch("http://localhost:5000/events");
-    this.events = await res.json();
+    this.events = upcomingEvents(await res.json());
     console.log("Eventos cargados:", this.events);
   } catch (error) {
     console.error("Error cargando eventos:", error);
@@ -599,7 +800,7 @@ a {
 
 #map {
   width: 100%;
-  height: calc(100vh - 220px);
+  height: calc(100vh - 250px);
   overflow: hidden;
 
   max-height: 100vh;
@@ -651,6 +852,91 @@ a {
   opacity: 0.55;
   background: rgba(255, 80, 80, 0.25);
   border-color: rgba(255, 120, 120, 0.5);
+}
+
+.distance-filter {
+  min-width: 180px;
+  padding: 0.55rem 0.8rem;
+  background: rgba(255, 255, 255, 0.12);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  border-radius: 0.2rem;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.25);
+}
+
+.distance-filter__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.8rem;
+  margin-bottom: 0.35rem;
+  font-family: "Inter", sans-serif;
+  font-size: 0.85rem;
+  white-space: nowrap;
+}
+
+.distance-filter__header strong {
+  color: #55c7ff;
+  font-size: 0.95rem;
+}
+
+.distance-slider {
+  width: 100%;
+  height: 0.35rem;
+  padding: 0;
+  accent-color: #55c7ff;
+  cursor: pointer;
+  border: none;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.25);
+  box-shadow: none;
+}
+
+.date-filter {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  flex-wrap: wrap;
+  min-width: 280px;
+  padding: 0.45rem 0.65rem;
+  background: rgba(255, 255, 255, 0.12);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  border-radius: 0.2rem;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.25);
+}
+
+.date-filter label {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-family: "Inter", sans-serif;
+  font-size: 0.8rem;
+  color: rgba(255, 255, 255, 0.82);
+}
+
+.date-filter input {
+  width: 7.7rem;
+  height: 2rem;
+  padding: 0 0.45rem;
+  border-radius: 0.2rem;
+  color-scheme: dark;
+  font-size: 0.8rem;
+}
+
+.date-clear-btn {
+  width: auto;
+  padding: 0.48rem 0.7rem;
+  border-radius: 0.2rem;
+  font-size: 0.8rem;
+  white-space: nowrap;
+}
+
+.date-clear-btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
 }
 
 .submenu {

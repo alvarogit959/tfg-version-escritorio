@@ -80,7 +80,6 @@
             >
               Panel Admin
             </button>
-            <button @click="selectOption('settings')" class="submenu-btn">Configuración</button>
             <button @click="selectOption('logout')" class="submenu-btn logout-option">Cerrar sesión</button>
           </template>
           <template v-else>
@@ -274,14 +273,14 @@
             <div v-for="msg in messages" :key="msg.id" class="message" :class="msg.type">
               <div class="message-content">
                 <button
-                  v-if="msg.type === 'bot' && msg.senderId"
+                  v-if="msg.type === 'me' && msg.senderId"
                   type="button"
                   class="message-sender profile-link-chat"
                   @click="openUserProfile(msg.senderId)"
                 >
                   {{ msg.senderName }}
                 </button>
-                <span v-else-if="msg.type === 'bot'" class="message-sender">{{ msg.senderName }}</span>
+                <span v-else-if="msg.type === 'me'" class="message-sender">{{ msg.senderName }}</span>
                 <p>{{ msg.text }}</p>
                 <span class="message-time">{{ new Date(msg.sentAt).toLocaleTimeString() }}</span>
               </div>
@@ -632,10 +631,6 @@ export default {
           break;
         case 'admin':
           this.switchView('admin');
-          break;
-        case 'settings':
-          // Opción de configuración - puedes agregar una nueva vista si es necesario
-          console.log('Configuración seleccionada');
           break;
         case 'logout':
           this.logout();
