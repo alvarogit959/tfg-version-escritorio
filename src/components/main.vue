@@ -6,9 +6,9 @@
         <div class="navbar-logo">
           <h2>CarMeet Club</h2>
         </div>
-        
+
         <ul class="nav-menu">
-            <li>
+          <li>
             <button
               class="nav-btn"
               :class="{ active: currentView === 'inicio' }"
@@ -41,57 +41,64 @@
               :class="{ active: currentView === 'forum' }"
               @click="switchView('forum')"
             >
-              Rutas 
+              Rutas
             </button>
           </li>
           <li>
             <div class="profile-group">
-        <button class="profile-btn" @click="toggleProfileMenu">
-          {{ isLoggedIn ? 'Perfil' : 'Iniciar sesión' }}
-        </button>
-        <div v-if="showProfileMenu" class="submenu">
-          <template v-if="isLoggedIn">
-            <button
-              class="submenu-btn"
-              :class="{ active: currentView === 'profile' }"
-              @click="selectOption('profile')"
-            >
-              Ver Perfil
-            </button>
-            <button
-              @click="selectOption('myevents')"
-              class="submenu-btn"
-              :class="{ active: currentView === 'myevents' }"
-            >
-              Mis Eventos
-            </button>
-            <button
-              @click="selectOption('friends')"
-              class="submenu-btn"
-              :class="{ active: currentView === 'friends' }"
-            >
-              Amigos
-            </button>
-            <button
-              v-if="isAdmin"
-              @click="selectOption('admin')"
-              class="submenu-btn admin-menu-item"
-              :class="{ active: currentView === 'admin' }"
-            >
-              Panel Admin
-            </button>
-            <button @click="selectOption('logout')" class="submenu-btn logout-option">Cerrar sesión</button>
-          </template>
-          <template v-else>
-            <button @click="selectOption('login')" class="submenu-btn">Iniciar sesión</button>
-            <button @click="selectOption('register')" class="submenu-btn">Registrarse</button>
-          </template>
-        </div>
-      </div>
+              <button class="profile-btn" @click="toggleProfileMenu">
+                {{ isLoggedIn ? "Perfil" : "Iniciar sesión" }}
+              </button>
+              <div v-if="showProfileMenu" class="submenu">
+                <template v-if="isLoggedIn">
+                  <button
+                    class="submenu-btn"
+                    :class="{ active: currentView === 'profile' }"
+                    @click="selectOption('profile')"
+                  >
+                    Ver Perfil
+                  </button>
+                  <button
+                    @click="selectOption('myevents')"
+                    class="submenu-btn"
+                    :class="{ active: currentView === 'myevents' }"
+                  >
+                    Mis Eventos
+                  </button>
+                  <button
+                    @click="selectOption('friends')"
+                    class="submenu-btn"
+                    :class="{ active: currentView === 'friends' }"
+                  >
+                    Amigos
+                  </button>
+                  <button
+                    v-if="isAdmin"
+                    @click="selectOption('admin')"
+                    class="submenu-btn admin-menu-item"
+                    :class="{ active: currentView === 'admin' }"
+                  >
+                    Panel Admin
+                  </button>
+                  <button
+                    @click="selectOption('logout')"
+                    class="submenu-btn logout-option"
+                  >
+                    Cerrar sesión
+                  </button>
+                </template>
+                <template v-else>
+                  <button @click="selectOption('login')" class="submenu-btn">
+                    Iniciar sesión
+                  </button>
+                  <button @click="selectOption('register')" class="submenu-btn">
+                    Registrarse
+                  </button>
+                </template>
+              </div>
+            </div>
           </li>
         </ul>
-
-
       </div>
     </nav>
 
@@ -99,7 +106,7 @@
     <div class="main-content">
       <!-- Vista Inicio -->
       <div v-if="currentView === 'inicio'" class="view-container">
-         <InicioView/>
+        <InicioView />
       </div>
 
       <!-- Vista Mapa -->
@@ -190,7 +197,10 @@
         />
       </div>
       <div v-if="currentView === 'newUser'" class="view-container">
-        <newUser @back="switchView('profile')" @userCreated="switchView('profile')"/>  
+        <newUser
+          @back="switchView('profile')"
+          @userCreated="switchView('profile')"
+        />
       </div>
 
       <div v-if="currentView === 'friends'" class="view-container">
@@ -208,8 +218,8 @@
       </div>
     </div>
 
-<!--BOTON CHAT-->
-    <button 
+    <!--BOTON CHAT-->
+    <button
       v-if="isLoggedIn"
       class="chat-button"
       @click="toggleChat"
@@ -224,7 +234,9 @@
       <aside class="chat-sidebar">
         <div class="sidebar-header">
           <span>Chats</span>
-          <button type="button" class="sidebar-close" @click="toggleChat">✕</button>
+          <button type="button" class="sidebar-close" @click="toggleChat">
+            ✕
+          </button>
         </div>
         <ul class="chat-list">
           <li>
@@ -248,7 +260,9 @@
               :class="{ active: privateChatFriend?.id === friend.id }"
               @click="startPrivateChatWith(friend)"
             >
-              <span class="chat-avatar">{{ friend.username.charAt(0).toUpperCase() }}</span>
+              <span class="chat-avatar">{{
+                friend.username.charAt(0).toUpperCase()
+              }}</span>
               <span class="chat-list-info">
                 <span class="chat-list-name">{{ friend.username }}</span>
                 <span class="chat-list-preview">Privado</span>
@@ -256,7 +270,6 @@
             </button>
           </li>
         </ul>
-
       </aside>
 
       <section class="chat-conversation">
@@ -270,7 +283,12 @@
 
         <template v-else>
           <div class="chat-messages" ref="chatMessages">
-            <div v-for="msg in messages" :key="msg.id" class="message" :class="msg.type">
+            <div
+              v-for="msg in messages"
+              :key="msg.id"
+              class="message"
+              :class="msg.type"
+            >
               <div class="message-content">
                 <button
                   v-if="msg.type === 'me' && msg.senderId"
@@ -280,9 +298,11 @@
                 >
                   {{ msg.senderName }}
                 </button>
-                <span v-else-if="msg.type === 'me'" class="message-sender">{{ msg.senderName }}</span>
+                <span class="message-sender">{{ msg.senderName }}</span>
                 <p>{{ msg.text }}</p>
-                <span class="message-time">{{ new Date(msg.sentAt).toLocaleTimeString() }}</span>
+                <span class="message-time">{{
+                  new Date(msg.sentAt).toLocaleTimeString()
+                }}</span>
               </div>
             </div>
           </div>
@@ -302,24 +322,24 @@
 </template>
 
 <script>
-import 'mapbox-gl/dist/mapbox-gl.css';
-import InicioView from './inicio.vue';
-import MapView from './map.vue';
-import EventsView from './events.vue';
-import ForumView from './forum.vue';
-import LoginView from './login-view.vue';
-import ProfileView from './profile.vue';
-import MyEventsView from './myEvents.vue';
-import NewEventView from './newEvent.vue';
-import newUser from './newUser.vue';
-import UserView from './user.vue';
-import AdminPanelView from './adminPanel.vue';
-import FriendsView from './friends.vue';
-import { apiJson, isAdminRole } from '../utils/api.js';
+import "mapbox-gl/dist/mapbox-gl.css";
+import InicioView from "./inicio.vue";
+import MapView from "./map.vue";
+import EventsView from "./events.vue";
+import ForumView from "./forum.vue";
+import LoginView from "./login-view.vue";
+import ProfileView from "./profile.vue";
+import MyEventsView from "./myEvents.vue";
+import NewEventView from "./newEvent.vue";
+import newUser from "./newUser.vue";
+import UserView from "./user.vue";
+import AdminPanelView from "./adminPanel.vue";
+import FriendsView from "./friends.vue";
+import { apiJson, isAdminRole } from "../utils/api.js";
 import { io } from "socket.io-client";
 const socket = io("http://localhost:5000");
 export default {
-  name: 'main-view',
+  name: "main-view",
   components: {
     InicioView,
     MapView,
@@ -332,7 +352,7 @@ export default {
     newUser,
     UserView,
     AdminPanelView,
-    FriendsView
+    FriendsView,
   },
   computed: {
     isAdmin() {
@@ -352,13 +372,13 @@ export default {
   },
   data() {
     return {
-      currentView: 'inicio',
+      currentView: "inicio",
       isLoggedIn: false,
       currentUser: null,
       chatOpen: false,
-      chatMode: 'group',
+      chatMode: "group",
       messages: [],
-      messageInput: '',
+      messageInput: "",
       conversationId: null,
       groupConversationId: null,
       privateChatFriend: null,
@@ -366,12 +386,15 @@ export default {
       showProfileMenu: false,
       eventFromMap: null,
       viewUserId: null,
-      returnViewAfterUser: 'inicio'
+      returnViewAfterUser: "inicio",
     };
   },
   watch: {
-    messages() {
-      this.scrollToBottom();
+    messages: {
+      handler() {
+        this.scrollToBottom();
+      },
+      deep: true,
     },
     chatOpen(isOpen) {
       if (isOpen) {
@@ -383,32 +406,34 @@ export default {
     },
   },
   mounted() {
-    const savedLoginState = localStorage.getItem('isLoggedIn');
-    const savedUser = localStorage.getItem('user');
+    const savedLoginState = localStorage.getItem("isLoggedIn");
+    const savedUser = localStorage.getItem("user");
     socket.on("new-message", (msg) => {
-  const msgConvId = String(msg.conversationId?._id || msg.conversationId || "");
-  if (this.conversationId && msgConvId !== String(this.conversationId)) {
-    return;
-  }
+      const msgConvId = String(
+        msg.conversationId?._id || msg.conversationId || "",
+      );
+      if (this.conversationId && msgConvId !== String(this.conversationId)) {
+        return;
+      }
 
-  const exists = this.messages.some(m => m.id === msg._id);
-  if (exists) return;
+      const exists = this.messages.some((m) => m.id === msg._id);
+      if (exists) return;
 
-  this.messages.push({
-    id: msg._id,
-    text: msg.text,
-    senderId: msg.senderId._id || msg.senderId,
-    senderName: msg.senderId.username || "Usuario",
-    senderImage: msg.senderId.profileImage || "",
-    type:
-      (msg.senderId._id || msg.senderId) === this.currentUser?.id
-        ? "user"
-        : "bot",
-    sentAt: msg.sentAt
-  });
-});
+      this.messages.push({
+        id: msg._id,
+        text: msg.text,
+        senderId: msg.senderId._id || msg.senderId,
+        senderName: msg.senderId.username || "Usuario",
+        senderImage: msg.senderId.profileImage || "",
+        type:
+          (msg.senderId._id || msg.senderId) === this.currentUser?.id
+            ? "user"
+            : "bot",
+        sentAt: msg.sentAt,
+      });
+    });
 
-    if (savedLoginState === 'true' && savedUser) {
+    if (savedLoginState === "true" && savedUser) {
       const user = JSON.parse(savedUser);
       this.isLoggedIn = user.status === true;
       this.currentUser = user;
@@ -418,7 +443,7 @@ export default {
       }
     }
   },
-  
+
   methods: {
     scrollToBottom() {
       this.$nextTick(() => {
@@ -443,23 +468,23 @@ export default {
     openUserProfile(userId) {
       if (!userId) return;
       const id = String(userId);
-      if (this.currentView !== 'user') {
+      if (this.currentView !== "user") {
         this.returnViewAfterUser = this.currentView;
       }
       this.viewUserId = id;
-      this.currentView = 'user';
+      this.currentView = "user";
       this.showProfileMenu = false;
     },
 
     closeUserView() {
-      const back = this.returnViewAfterUser || 'inicio';
+      const back = this.returnViewAfterUser || "inicio";
       this.viewUserId = null;
       this.switchView(back);
     },
 
     openOwnProfile() {
       this.viewUserId = null;
-      this.switchView('profile');
+      this.switchView("profile");
     },
 
     onAdminEventsChanged() {
@@ -477,11 +502,11 @@ export default {
     handleLogin(user) {
       this.isLoggedIn = user.status === true;
       this.currentUser = user;
-      localStorage.setItem('user', JSON.stringify(user));
-      localStorage.setItem('isLoggedIn', 'true');
+      localStorage.setItem("user", JSON.stringify(user));
+      localStorage.setItem("isLoggedIn", "true");
 
       this.loadGroupConversation();
-      this.switchView('inicio');
+      this.switchView("inicio");
     },
 
     async refreshCurrentUserFromServer(userId) {
@@ -499,12 +524,12 @@ export default {
           bio: data.bio,
           status: data.status,
         };
-        localStorage.setItem('user', JSON.stringify(this.currentUser));
+        localStorage.setItem("user", JSON.stringify(this.currentUser));
         if (this.isLoggedIn) {
           this.loadGroupConversation();
         }
       } catch (e) {
-        console.error('Error refrescando usuario:', e);
+        console.error("Error refrescando usuario:", e);
       }
     },
 
@@ -519,32 +544,35 @@ export default {
         bio: user.bio,
         status: user.status,
       };
-      localStorage.setItem('user', JSON.stringify(this.currentUser));
+      localStorage.setItem("user", JSON.stringify(this.currentUser));
     },
     loadGroupConversation() {
-      fetch('http://localhost:5000/conversations/group')
-        .then(res => res.json())
-        .then(conversation => {
+      fetch("http://localhost:5000/conversations/group")
+        .then((res) => res.json())
+        .then((conversation) => {
           this.groupConversationId = conversation._id;
-          if (this.chatMode === 'group' || !this.conversationId) {
+          if (this.chatMode === "group" || !this.conversationId) {
             this.conversationId = conversation._id;
-            this.chatMode = 'group';
+            this.chatMode = "group";
             this.privateChatFriend = null;
           }
           socket.emit("join-group-chat", this.currentUser.id);
-          return fetch(`http://localhost:5000/conversations/${conversation._id}/add-participant`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ userId: this.currentUser.id })
-          });
+          return fetch(
+            `http://localhost:5000/conversations/${conversation._id}/add-participant`,
+            {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ userId: this.currentUser.id }),
+            },
+          );
         })
-        .then(res => res.json())
+        .then((res) => res.json())
         .then(() => {
           if (this.isGroupActive || !this.conversationId) {
             this.loadMessages();
           }
         })
-        .catch(error => console.error('Error cargando conversación:', error));
+        .catch((error) => console.error("Error cargando conversación:", error));
 
       this.loadPrivateFriendsList();
     },
@@ -553,7 +581,7 @@ export default {
       if (!this.currentUser?.id) return;
       try {
         this.privateFriendsList = await apiJson(
-          `/users/${this.currentUser.id}/friends`
+          `/users/${this.currentUser.id}/friends`,
         );
       } catch (e) {
         console.error(e);
@@ -562,11 +590,16 @@ export default {
     },
 
     selectGroupChat() {
-      this.chatMode = 'group';
+      this.chatMode = "group";
       this.privateChatFriend = null;
-      if (this.conversationId && this.groupConversationId &&
-          String(this.conversationId) !== String(this.groupConversationId)) {
-        socket.emit('leave-private-chat', { conversationId: this.conversationId });
+      if (
+        this.conversationId &&
+        this.groupConversationId &&
+        String(this.conversationId) !== String(this.groupConversationId)
+      ) {
+        socket.emit("leave-private-chat", {
+          conversationId: this.conversationId,
+        });
       }
       if (this.groupConversationId) {
         this.conversationId = this.groupConversationId;
@@ -586,7 +619,7 @@ export default {
       if (!this.currentUser?.id || !otherUser?.id) return;
 
       this.chatOpen = true;
-      this.chatMode = 'private';
+      this.chatMode = "private";
 
       try {
         let convId = conversationId;
@@ -594,106 +627,110 @@ export default {
           const data = await apiJson(
             `/users/${this.currentUser.id}/conversations/private`,
             {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
               body: JSON.stringify({ friendId: otherUser.id }),
-            }
+            },
           );
           convId = data.conversationId;
         }
 
         if (this.conversationId && this.conversationId !== convId) {
-          socket.emit('leave-private-chat', { conversationId: this.conversationId });
+          socket.emit("leave-private-chat", {
+            conversationId: this.conversationId,
+          });
         }
 
         this.conversationId = convId;
         this.privateChatFriend = otherUser;
-        socket.emit('join-private-chat', { conversationId: convId });
+        socket.emit("join-private-chat", { conversationId: convId });
         this.loadMessages();
       } catch (error) {
         console.error(error);
       }
     },
-        toggleProfileMenu() {
+    toggleProfileMenu() {
       this.showProfileMenu = !this.showProfileMenu;
     },
     selectOption(option) {
       this.showProfileMenu = false;
-      switch(option) {
-        case 'profile':
-          this.switchView('profile');
+      switch (option) {
+        case "profile":
+          this.switchView("profile");
           break;
-        case 'myevents':
-          this.switchView('myevents');
+        case "myevents":
+          this.switchView("myevents");
           break;
-        case 'friends':
-          this.switchView('friends');
+        case "friends":
+          this.switchView("friends");
           break;
-        case 'admin':
-          this.switchView('admin');
+        case "admin":
+          this.switchView("admin");
           break;
-        case 'logout':
+        case "logout":
           this.logout();
           break;
-        case 'login':
-          this.switchView('profile');
+        case "login":
+          this.switchView("profile");
           break;
-        case 'register':
-          this.switchView('newUser');
+        case "register":
+          this.switchView("newUser");
           break;
         default:
           break;
       }
     },
     loadMessages() {
-  if (!this.conversationId) return;
+      if (!this.conversationId) return;
 
-  fetch(`http://localhost:5000/conversations/${this.conversationId}/messages`)
-    .then(res => res.json())
-    .then(messages => {
-      this.messages = messages.map(msg => ({
-        id: msg._id,
-        text: msg.text,
-        senderId: msg.senderId._id,
-        senderName: msg.senderId.username,
-        senderImage: msg.senderId.profileImage,
-        type: msg.senderId._id === this.currentUser.id ? 'user' : 'bot',
-        sentAt: msg.sentAt
-      }));
+      fetch(
+        `http://localhost:5000/conversations/${this.conversationId}/messages`,
+      )
+        .then((res) => res.json())
+        .then((messages) => {
+          this.messages = messages.map((msg) => ({
+            id: msg._id,
+            text: msg.text,
+            senderId: msg.senderId._id,
+            senderName: msg.senderId.username,
+            senderImage: msg.senderId.profileImage,
+            type: msg.senderId._id === this.currentUser.id ? "user" : "bot",
+            sentAt: msg.sentAt,
+          }));
 
-      // SCROLL ABAJO
-      this.$nextTick(() => {
-        this.scrollToBottom();
-      });
-    })
-    .catch(error => console.error('Error cargando mensajes:', error));
-},
+          // SCROLL ABAJO
+          this.$nextTick(() => {
+            this.scrollToBottom();
+          });
+        })
+        .catch((error) => console.error("Error cargando mensajes:", error));
+    },
     logout() {
       // Llamar al servidor para establecer status en false
       const userId = this.currentUser.id;
-      
-      fetch('http://localhost:5000/logout', {
-        method: 'POST',
+
+      fetch("http://localhost:5000/logout", {
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json'
+          "Content-Type": "application/json",
         },
-        body: JSON.stringify({ userId })
-      }).catch((error) => console.error('Error en logout:', error));
+        body: JSON.stringify({ userId }),
+      }).catch((error) => console.error("Error en logout:", error));
 
       // Limpiar estado local
       this.isLoggedIn = false;
       this.currentUser = null;
       this.chatOpen = false;
-      this.chatMode = 'group';
+      this.chatMode = "group";
       this.messages = [];
       this.conversationId = null;
       this.groupConversationId = null;
       this.privateChatFriend = null;
       this.privateFriendsList = [];
-      this.messageInput = '';
-      localStorage.removeItem('user');
-      localStorage.removeItem('isLoggedIn');
-      this.switchView('profile');
+      this.messageInput = "";
+      localStorage.removeItem("user");
+      localStorage.removeItem("isLoggedIn");
+      this.switchView("profile");
     },
     toggleChat() {
       this.chatOpen = !this.chatOpen;
@@ -704,33 +741,33 @@ export default {
       }
     },
     sendMessage() {
-      if (this.messageInput.trim() === '' || !this.conversationId) return;
+      if (this.messageInput.trim() === "" || !this.conversationId) return;
 
       const messageText = this.messageInput;
 
       // Enviar mensaje al servidor
-      fetch('http://localhost:5000/messages', {
-        method: 'POST',
+      fetch("http://localhost:5000/messages", {
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json'
+          "Content-Type": "application/json",
         },
         body: JSON.stringify({
           conversationId: this.conversationId,
           senderId: this.currentUser.id,
-          text: messageText
-        })
+          text: messageText,
+        }),
       })
-        .then(res => res.json())
+        .then((res) => res.json())
         .then(() => {
-          this.messageInput = '';
+          this.messageInput = "";
           this.scrollToBottom();
         })
-        .catch(error => {
-          console.error('Error enviando mensaje:', error);
+        .catch((error) => {
+          console.error("Error enviando mensaje:", error);
           this.messageInput = messageText; // Restaurar el mensaje si falla
         });
-    }
-  }
+    },
+  },
 };
 </script>
 
@@ -748,14 +785,12 @@ export default {
   height: 100%;
   /* background: linear-gradient(135deg, rgba(10, 10, 20, 1), rgba(20, 20, 40, 1)); */
   -webkit-app-region: drag;
-  ackground-image: url('@/assets/newbackground.svg');
-  background-size: cover; 
+  ackground-image: url("@/assets/newbackground.svg");
+  background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
   background-attachment: fixed;
 }
-
-
 
 .user-info {
   display: flex;
@@ -865,7 +900,11 @@ export default {
 }
 
 .nav-btn.active {
-  background: linear-gradient(135deg, rgba(150, 66, 228, 0.808), rgba(224, 97, 59, 0.808));;
+  background: linear-gradient(
+    135deg,
+    rgba(150, 66, 228, 0.808),
+    rgba(224, 97, 59, 0.808)
+  );
   border-color: rgba(197, 41, 30, 0.8);
   color: rgba(255, 255, 255, 0.9);
   box-shadow: 0 0 15px rgba(255, 102, 0, 0.507);
@@ -997,7 +1036,6 @@ export default {
   font-family: "Inter", sans-serif;
   text-align: left;
 }
-
 
 /* ===== CONTENIDO PRINCIPAL ===== */
 .main-content {
@@ -1212,12 +1250,20 @@ export default {
   justify-content: center;
   font-size: 0.85rem;
   font-weight: 700;
-  background: linear-gradient(135deg, rgba(103, 12, 139, 0.55), rgba(197, 41, 30, 0.6));
+  background: linear-gradient(
+    135deg,
+    rgba(103, 12, 139, 0.55),
+    rgba(197, 41, 30, 0.6)
+  );
   color: #fff;
 }
 
 .group-avatar {
-  background: linear-gradient(135deg, rgba(255, 180, 100, 0.9), rgba(197, 41, 30, 0.85));
+  background: linear-gradient(
+    135deg,
+    rgba(255, 180, 100, 0.9),
+    rgba(197, 41, 30, 0.85)
+  );
   color: rgba(20, 8, 5, 0.95);
 }
 
@@ -1400,5 +1446,18 @@ export default {
 
 .chat-input button:active {
   transform: scale(0.95);
+}
+
+.chat-messages::-webkit-scrollbar {
+  width: 6px;
+}
+
+.chat-messages::-webkit-scrollbar-thumb {
+  background: linear-gradient(
+    180deg,
+    rgba(255, 162, 100, 0.6),
+    rgba(197, 41, 30, 0.5)
+  );
+  border-radius: 10px;
 }
 </style>
