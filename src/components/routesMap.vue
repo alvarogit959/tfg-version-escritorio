@@ -1,146 +1,14 @@
 <template>
   <div class="forum-container">
-    <h2>Foro</h2>
-    
-    <div class="notification-area" v-if="notification">
-      <p :class="notificationClass">{{ notification }}</p>
-    </div>
 
-    <div class="forum-content">
-      <!-- CREAR NUEVO HILO -->
-      <div class="create-thread-section">
-        <h3>Crear nuevo tema</h3>
-        <input
-          v-model="newThread.title"
-          type="text"
-          placeholder="Título del tema..."
-          class="thread-input"
-        />
-        <textarea
-          v-model="newThread.content"
-          placeholder="Escribe tu mensaje..."
-          class="thread-textarea"
-        ></textarea>
-        <button @click="createThread" class="create-btn">Publicar tema</button>
-      </div>
-
-      <!-- LISTA DE TEMAS -->
-      <div class="threads-section">
-        <h3>Temas activos</h3>
-        
-        <div v-if="threads.length === 0" class="no-threads">
-          <p>No hay temas aún. Sé el primero en crear uno.</p>
-        </div>
-
-        <div v-for="thread in threads" :key="thread.id" class="thread-item">
-          <div class="thread-header">
-            <h4>{{ thread.title }}</h4>
-            <span class="thread-date">{{ formatDate(thread.createdAt) }}</span>
-          </div>
-          <p class="thread-author">Por: {{ thread.author }}</p>
-          <p class="thread-preview">{{ thread.content.substring(0, 100) }}...</p>
-          <div class="thread-stats">
-            <span class="replies">💬 {{ thread.replies || 0 }} respuestas</span>
-            <button class="reply-btn" @click="selectThread(thread)">Leer más</button>
-          </div>
-        </div>
-      </div>
-    </div>
   </div>
 </template>
 
 <script>
+import "mapbox-gl/dist/mapbox-gl.css";
+
 export default {
-  name: "forum-view",
-  data() {
-    return {
-      threads: [],
-      selectedThread: null,
-      newThread: {
-        title: "",
-        content: ""
-      },
-      notification: "",
-      notificationClass: ""
-    };
-  },
-  mounted() {
-    this.loadThreads();
-  },
-  methods: {
-    loadThreads() {
-      // Por ahora, cargamos datos de ejemplo
-      this.threads = [
-        {
-          id: 1,
-          title: "Mejor ruta para la próxima concentración",
-          author: "usuario1",
-          content: "Hola a todos, alguien conoce una buena ruta para hacer un road trip el próximo fin de semana?",
-          replies: 5,
-          createdAt: new Date("2026-05-15")
-        },
-        {
-          id: 2,
-          title: "Consejos de mantenimiento para coches clásicos",
-          author: "mecanico_pro",
-          content: "Aquí comparto algunos tips para mantener en perfecto estado tu vehículo clásico.",
-          replies: 12,
-          createdAt: new Date("2026-05-14")
-        },
-        {
-          id: 3,
-          title: "¿Quién va al rally de este mes?",
-          author: "racing_fan",
-          content: "Se anima alguien a participar en el rally del 20 de mayo?",
-          replies: 8,
-          createdAt: new Date("2026-05-13")
-        }
-      ];
-    },
-
-    createThread() {
-      if (!this.newThread.title || !this.newThread.content) {
-        this.notification = "Por favor completa todos los campos";
-        this.notificationClass = "error";
-        return;
-      }
-
-      const thread = {
-        id: this.threads.length + 1,
-        title: this.newThread.title,
-        author: "usuario_actual",
-        content: this.newThread.content,
-        replies: 0,
-        createdAt: new Date()
-      };
-
-      this.threads.unshift(thread);
-      this.notification = "Tema creado correctamente";
-      this.notificationClass = "success";
-      
-      this.newThread.title = "";
-      this.newThread.content = "";
-
-      setTimeout(() => {
-        this.notification = "";
-      }, 3000);
-    },
-
-    selectThread(thread) {
-      this.selectedThread = thread;
-      console.log("Tema seleccionado:", thread);
-    },
-
-    formatDate(date) {
-      return new Date(date).toLocaleDateString("es-ES", {
-        day: "numeric",
-        month: "short",
-        year: "numeric",
-        hour: "2-digit",
-        minute: "2-digit"
-      });
-    }
-  }
+  name: "RoutesMap"
 };
 </script>
 

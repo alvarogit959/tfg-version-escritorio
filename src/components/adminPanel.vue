@@ -45,7 +45,7 @@
             v-if="event.location?.length"
             class="meta"
           >
-            📍 {{ event.location[0].location }}
+            {{ event.location[0].location }}
           </p>
 
           <div class="card-actions">

@@ -38,8 +38,8 @@
           <li>
             <button
               class="nav-btn"
-              :class="{ active: currentView === 'forum' }"
-              @click="switchView('forum')"
+              :class="{ active: currentView === 'routes' }"
+              @click="switchView('routes')"
             >
               Rutas
             </button>
@@ -179,8 +179,8 @@
       </div>
 
       <!-- Vista Foro -->
-      <div v-if="currentView === 'forum'" class="view-container">
-        <ForumView />
+      <div v-if="currentView === 'routes'" class="view-container">
+        <RoutesView />
       </div>
 
       <!-- Vista Perfil / Login -->
@@ -326,7 +326,7 @@ import "mapbox-gl/dist/mapbox-gl.css";
 import InicioView from "./inicio.vue";
 import MapView from "./map.vue";
 import EventsView from "./events.vue";
-import ForumView from "./forum.vue";
+import RoutesView from "./routesMap.vue";
 import LoginView from "./login-view.vue";
 import ProfileView from "./profile.vue";
 import MyEventsView from "./myEvents.vue";
@@ -344,7 +344,7 @@ export default {
     InicioView,
     MapView,
     EventsView,
-    ForumView,
+    RoutesView,
     LoginView,
     ProfileView,
     MyEventsView,
@@ -785,7 +785,7 @@ export default {
   height: 100%;
   /* background: linear-gradient(135deg, rgba(10, 10, 20, 1), rgba(20, 20, 40, 1)); */
   -webkit-app-region: drag;
-  ackground-image: url("@/assets/newbackground.svg");
+  /*background-image: url("@/assets/newbackground.svg");*/
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
