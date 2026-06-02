@@ -47,7 +47,7 @@
           <li>
             <div class="profile-group">
               <button class="profile-btn" @click="toggleProfileMenu">
-                {{ isLoggedIn ? "Perfil" : "Iniciar sesión" }}
+                {{ isLoggedIn ? "Perfil   ▼" : "Iniciar sesión" }}
               </button>
               <div v-if="showProfileMenu" class="submenu">
                 <template v-if="isLoggedIn">
@@ -56,7 +56,7 @@
                     :class="{ active: currentView === 'profile' }"
                     @click="selectOption('profile')"
                   >
-                    Ver Perfil
+                    Mi Perfil
                   </button>
                   <button
                     @click="selectOption('myevents')"
@@ -106,7 +106,10 @@
     <div class="main-content">
       <!-- Vista Inicio -->
       <div v-if="currentView === 'inicio'" class="view-container">
-        <InicioView />
+        <InicioView
+          @navigate="switchView"
+          @select-event="openEventFromInicio"
+        />
       </div>
 
       <!-- Vista Mapa -->
@@ -492,6 +495,11 @@ export default {
     },
 
     openEventFromMap(event) {
+      this.eventFromMap = event;
+      this.currentView = "events";
+    },
+
+    openEventFromInicio(event) {
       this.eventFromMap = event;
       this.currentView = "events";
     },
@@ -903,11 +911,11 @@ export default {
   background: linear-gradient(
     135deg,
     rgba(150, 66, 228, 0.808),
-    rgba(224, 97, 59, 0.808)
+    rgba(8, 30, 128, 0.829)
   );
   border-color: rgba(197, 41, 30, 0.8);
   color: rgba(255, 255, 255, 0.9);
-  box-shadow: 0 0 15px rgba(255, 102, 0, 0.507);
+  box-shadow: 0 0 15px rgba(0, 68, 255, 0.507);
 }
 
 /* ===== PROFILE GROUP & SUBMENU ===== */

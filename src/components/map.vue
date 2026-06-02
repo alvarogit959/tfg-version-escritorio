@@ -712,7 +712,7 @@ activateGPS() {
   align-items: center;
   justify-content: flex-start;
   color: rgb(255, 255, 255);
-  padding: 1rem;
+  
   -webkit-app-region: no-drag;
 }
 .glass {
@@ -800,7 +800,7 @@ a {
 
 #map {
   width: 100%;
-  height: calc(100vh - 250px);
+  height: calc(100vh - 205px);
   overflow: hidden;
 
   max-height: 100vh;

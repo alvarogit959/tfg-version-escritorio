@@ -1,17 +1,81 @@
 <template>
   <div class="mainarea">
+   <!-- <img id="image" src="../assets/transport.png" />-->
+    <h3>CarMeet Club</h3>
+    <div class="top-events">
+      <button @click="activateLocation" class="submenu-btn" >
+        {{ "Activar GPS" }}
+      </button>
+
+    </div>
+
+    <div class="nearby-events-row" v-if="nearbyEvents.length > 0">
+      <h4>Eventos Cercanos</h4>
+      <div class="events-flex-container">
+        <div
+          v-for="event in nearbyEvents"
+          :key="event.id"
+          class="event-card-small"
+          @click="selectEvent(event)"
+        >
+          <h5>{{ event.title }}</h5>
+          <p class="date">{{ formatDate(event.start) }}</p>
+          <p v-if="eventDistanceKm(event) !== null" class="distance">
+            A {{ eventDistanceKm(event) }} km
+          </p>
+          <!--<p class="preview">{{ eventPreview(event) }}</p>-->
+        </div>
+      </div>
+    </div>
+
+    <div class="go-map">
+
+      <button
+        class="nav-btn-absolute"
+        @click="$emit('navigate', 'map')"
+      >
+        Ir al Mapa
+      </button>
+    </div>
+
+
+    <div class="events-soon">
+      <h4>Próximos eventos</h4>
+      <p v-if="upcomingEventsList.length === 0">No hay eventos disponibles.</p>
+      <ul v-else>
+        <li 
+          v-for="event in upcomingEventsList" 
+          :key="event.id"
+          @click="selectEvent(event)"
+          class="clickable-event"
+        >
+          <strong>{{ event.title }}</strong><br />
+          {{ new Date(event.start).toLocaleDateString("es-ES") }}<br />
+          {{ event.description }}
+        </li>
+
+      </ul>
+      <button
+        v-if="events.length > 7"
+        class="nav-btn"
+        @click="$emit('navigate', 'events')"
+      >
+        Ver todos los eventos
+      </button>
+    </div>
+
     <!--<h1>{{ msg }}</h1>-->
     <!--<img id="image"  src="../assets/transport.png">
     <h3>CarMeet Club</h3>-->
-  
-    <!-- <p id="notifications">{{ notification }}</p> -->
 
+    <!-- <p id="notifications">{{ notification }}</p> -->
+<!--background-image: url('../assets/transport.png'); -->
     <!--FILTROS -->
-    <div class="filters-container">
+    <!--<div class="filters-container">
       <div class="filter-group">
-        <!-- Ubicación -->
+        
         <button class="filter-btn" @click="toggleUbicacion">
-          Ubicación
+          Ubicación 
         </button>
         <div v-if="showUbicacion" class="submenu">
           <button @click="activateGPS" class="submenu-btn">Activar GPS</button>
@@ -27,8 +91,6 @@
       <button class="filter-btn" @click="selectFilter('motos')">
         Concentración Motos
       </button>
-
-      <!-- Competición -->
       <div class="filter-group">
         <button class="filter-btn" @click="toggleCompeticion">
           Competición
@@ -37,7 +99,7 @@
           <button @click="selectCompeticion('rally')" class="submenu-btn">Rally</button>
           <button @click="selectCompeticion('circuito')" class="submenu-btn">Circuito</button>
           <button @click="selectCompeticion('drift')" class="submenu-btn">Drift</button>
-          
+        
         </div>
       </div>
 
@@ -50,263 +112,173 @@
       </button>
     </div>
 
-    <div id="map"></div>
-
-
+    <div id="map"></div>-->
   </div>
 </template>
 
 <script>
-import L from 'leaflet';
-import { upcomingEvents } from "../utils/api.js";
-//const nombre = "Evento CarMeet";
-//const fecha = "20/05/2026";
-/*
-const carIcon = L.icon({
-  iconUrl: require('../assets/transport.png'),
-  iconSize: [40, 40],
-  iconAnchor: [20, 40],
-  popupAnchor: [0, -35]
-});*/
+import { upcomingEvents, apiJson } from "../utils/api.js";
+
 export default {
-  name: "map-view",
-  props: {
-    msg: String,
-  },
+  name: "inicio-view",
+  emits: ["navigate", "select-event"],
   data() {
-    
     return {
-      username: "",
-      password: "",
-      confirmpassword: "",
-      notification: "",
-      map: null,
-      showUbicacion: false,
-      showCompeticion: false,
-      manualLocation: "",
-      activeFilter: null,
-      userLocation: null,
       events: [],
-      markers: []
+      userLocation: { lat: 40.4168, lng: -3.7038 }, // Madrid by default
+      locating: false,
+      notification: "",
+      notificationClass: "",
     };
+  },
+  computed: {
+    nearbyEvents() {
+      const sorted = [...this.events]
+        .map((event) => ({
+          event,
+          distance: this.getEventDistanceValue(event),
+        }))
+        .filter(({ distance }) => Number.isFinite(distance))
+        .sort((a, b) => a.distance - b.distance)
+        .slice(0, 5)
+        .map(({ event }) => event);
+
+      return sorted;
+    },
+    
+    upcomingEventsList() {
+      return this.events.slice(0, 7);
+    },
   },
   async mounted() {
     await this.loadEvents();
-
-    this.$nextTick(() => {
-      this.initializeMap();
-    });
-  },
-  beforeUnmount() {
-    this.markers.forEach((marker) => marker.remove());
-    this.markers = [];
-    if (this.map) {
-      this.map.stop();
-      this.map.off();
-      this.map.remove();
-      this.map = null;
-    }
   },
   methods: {
-    toggleUbicacion() {
-      this.showUbicacion = !this.showUbicacion;
-      this.showCompeticion = false;
-    },
-
-    toggleCompeticion() {
-      this.showCompeticion = !this.showCompeticion;
-      this.showUbicacion = false;
-    },
-
-    closeUbicacion() {
-      this.showUbicacion = false;
-      this.notification = `Ubicación establecida: ${this.manualLocation}`;
-      this.userLocation = this.manualLocation;
-      this.manualLocation = "";
-    },
-    createCarIcon(zoom) {
-      // Small size when zoomed out, larger when zoomed in
-      const size = Math.max(8, Math.min(40, zoom * 2.5));
-
-      return L.icon({
-        iconUrl: require('../assets/transport.png'),
-        iconSize: [size, size],
-        iconAnchor: [size / 2, size],
-        popupAnchor: [0, -size + 5]
-      });
-    },
-
-    activateGPS() {
-      if ("geolocation" in navigator) {
-        navigator.geolocation.getCurrentPosition(
-          (position) => {
-            const { latitude, longitude } = position.coords;
-            this.userLocation = `${latitude.toFixed(4)}, ${longitude.toFixed(4)}`;
-            this.notification = `GPS Activado: ${this.userLocation}`;
-            this.map.setView([latitude, longitude], 13, { animate: false });
-            this.showUbicacion = false;
-          },
-          (error) => {
-            this.notification = "No se pudo obtener la ubicación";
-            console.error(error);
-          }
-        );
-      } else {
-        this.notification = "Geolocalización no disponible";
+    async loadEvents() {
+      try {
+        const data = await apiJson("/events");
+        this.events = upcomingEvents(data);
+        console.log("Eventos cargados:", this.events);
+      } catch (error) {
+        console.error("Error cargando eventos:", error);
+        this.notification = "No se pudieron cargar los eventos";
+        this.notificationClass = "error";
       }
     },
 
-    selectFilter(filterType) {
-      this.activeFilter = filterType;
-      this.showUbicacion = false;
-      this.showCompeticion = false;
-      this.notification = `Filtro aplicado: ${filterType}`;
-      console.log(`Filter selected: ${filterType}`);
-    },
-
-    selectCompeticion(tipo) {
-      this.activeFilter = `competicion-${tipo}`;
-      this.showCompeticion = false;
-      this.notification = `Competición seleccionada: ${tipo}`;
-      console.log(`Competition type selected: ${tipo}`);
-    },
-
-    initializeMap() {
-      // Verify DOM element exists
-      const mapContainer = document.getElementById('map');
-      if (!mapContainer) {
-        console.warn('Map container not found');
-        return;
-      }
-
-//UBICACION INICIO
-      this.map = L.map('map', {
-        zoomAnimation: false,
-        markerZoomAnimation: false,
-      });
-      this.map.setView([42.2383, -8.7292], 13, { animate: false });
-
-    //capa de OpenStreetMap
-    //Cambiar color aqui??
-    L.tileLayer(
-  'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',
-  {
-    attribution: '&copy; OpenStreetMap contributors &copy; CARTO',
-    maxZoom: 19
-  }
-).addTo(this.map);
-    
-//Marcador de ejemplo ---------------------------------------------
- /*     L.marker([42.223, -8.6380], { icon: carIcon })
-        .addTo(this.map)
-       // .bindTooltip(`${nombre}`, { permanent: true, direction: 'top' })
-        .bindPopup(`
-    <b>${nombre}</b><br>
-    ${fecha}<br><br>
-    <button onclick="alert('Apuntado correctamente')">Asistir</button>
-  `);
-
-
-      L.marker([42.2383, -8.7102]).addTo(this.map)
-        .bindPopup(`Test<br><br>
-    <button onclick="alert('Apuntado correctamente')">Asistir</button>`);
-      
-      //DELAY PARA TESTEAR POPUP 
-      setTimeout(() => {
-        if (this.map) {
-          document.querySelectorAll('.leaflet-marker-icon')[0]?.click();
-        }
-      }, 500); */
-      // Crear un marcador por cada evento
-this.events.forEach(event => {
-  if (!event.location || event.location.length === 0) return;
-
-  const loc = event.location[0];
-  const lat = parseFloat(loc.latitude);
-  const lng = parseFloat(loc.longitude);
-
-  if (isNaN(lat) || isNaN(lng)) return;
-
-  const fechaInicio = new Date(event.start).toLocaleDateString("es-ES");
-
-  const marker = L.marker(
-    [lat, lng],
-    { icon: this.createCarIcon(this.map.getZoom()) }
-  )
-    .addTo(this.map)
-    .bindPopup(`
-      <b>${event.title}</b><br>
-      ${fechaInicio}<br><br>
-      ${event.description}<br><br>
-      <button onclick="alert('Apuntado correctamente')">
-        Asistir
-      </button>
-    `);
-
-  this.markers.push(marker);
-});
-this.map.on('zoomend', () => {
-  if (!this.map) return;
-  const zoom = this.map.getZoom();
-  const newIcon = this.createCarIcon(zoom);
-
-  this.markers.forEach(marker => {
-    if (marker) marker.setIcon(newIcon);
-  });
-});
-    },
-    
-    async createUser() {
-      if (this.password !== this.confirmpassword) {
-        this.notification = "Las contraseñas no coinciden";
-        return;
-      }
-
-      if (!this.username || !this.password) {
-        this.notification = "Rellene todos los campos";
-        return;
-      }
+    async activateLocation() {
+      this.locating = true;
 
       try {
-        const res = await fetch("http://localhost:5000/users", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json"
-          },
-          body: JSON.stringify({
-            nombreCorreo: this.username,
-            password: this.password
-          })
-        });
-
-        if (!res.ok) {
-          const error = await res.json();
-          this.notification = error.error || "Error creando usuario";
-          return;
-        }
-
-        this.notification = "Usuario creado correctamente";
-
-        this.username = "";
-        this.password = "";
-        this.confirmpassword = "";
-
+        const location = await this.getBrowserLocation();
+        this.setUserLocation(location, "Ubicación activada");
       } catch (error) {
-        console.error(error);
-        this.notification = "Error conectando con servidor";
+        console.warn("GPS falló:", error);
+
+        // fallback sin API externa
+        const location = {
+          lat: 42.2406,
+          lng: -8.7823,
+        };
+
+        this.setUserLocation(location, "Ubicación aproximada (Cangas)");
+      } finally {
+        this.locating = false;
       }
     },
-    //TEST CARGAR DESDE EL SERVER!!!!====================================================================
-    async loadEvents() {
-  try {
-    const res = await fetch("http://localhost:5000/events");
-    this.events = upcomingEvents(await res.json());
-    console.log("Eventos cargados:", this.events);
-  } catch (error) {
-    console.error("Error cargando eventos:", error);
-    this.notification = "No se pudieron cargar los eventos";
-  }
-},
+
+    getBrowserLocation() {
+      if (!navigator.geolocation) {
+        return Promise.reject(new Error("Geolocalización no disponible"));
+      }
+
+      return new Promise((resolve, reject) => {
+        navigator.geolocation.getCurrentPosition(
+          (pos) => {
+            resolve({
+              lat: pos.coords.latitude,
+              lng: pos.coords.longitude,
+            });
+          },
+          reject,
+          {
+            enableHighAccuracy: false,
+            timeout: 10000,
+            maximumAge: 0,
+          },
+        );
+      });
+    },
+
+    setUserLocation(location, message) {
+      this.userLocation = location;
+      this.notification = message;
+      this.notificationClass = "success";
+    },
+
+    getEventCoordinates(event) {
+      const loc = event.location?.[0];
+      if (!loc) return null;
+
+      const lat = parseFloat(loc.latitude);
+      const lng = parseFloat(loc.longitude);
+      if (Number.isNaN(lat) || Number.isNaN(lng)) return null;
+
+      return { lat, lng };
+    },
+
+    getDistanceKm(from, to) {
+      const earthRadiusKm = 6371;
+      const toRadians = (degrees) => (degrees * Math.PI) / 180;
+      const dLat = toRadians(to.lat - from.lat);
+      const dLng = toRadians(to.lng - from.lng);
+      const lat1 = toRadians(from.lat);
+      const lat2 = toRadians(to.lat);
+
+      const a =
+        Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+        Math.cos(lat1) *
+          Math.cos(lat2) *
+          Math.sin(dLng / 2) *
+          Math.sin(dLng / 2);
+
+      return earthRadiusKm * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    },
+
+    getEventDistanceValue(event) {
+      if (!this.userLocation) return Number.POSITIVE_INFINITY;
+
+      const eventCoordinates = this.getEventCoordinates(event);
+      if (!eventCoordinates) return Number.POSITIVE_INFINITY;
+
+      return this.getDistanceKm(this.userLocation, eventCoordinates);
+    },
+
+    eventDistanceKm(event) {
+      const distance = this.getEventDistanceValue(event);
+      if (!Number.isFinite(distance)) return null;
+
+      return distance < 10 ? distance.toFixed(1) : Math.round(distance);
+    },
+
+    eventPreview(event) {
+      const raw = event.description || "";
+      const plain =
+        typeof raw === "string" ? raw.replace(/<[^>]*>/g, "") : "";
+      return plain.length > 60 ? `${plain.slice(0, 60)}...` : plain || "—";
+    },
+
+    formatDate(date) {
+      return new Date(date).toLocaleDateString("es-ES", {
+        weekday: "short",
+        day: "numeric",
+        month: "short",
+      });
+    },
+
+    selectEvent(event) {
+      this.$emit("select-event", event);
+    },
   },
 };
 </script>
@@ -322,23 +294,18 @@ this.map.on('zoomend', () => {
   right: 5px;
 }
 .mainarea {
-  display: flex;
+    display: flex;
+    align-items: center;
   flex-direction: column;
   width: 100%;
   height: 100%;
-  background: linear-gradient(
-    135deg,
-    rgba(255,255,255,0.12),
-    rgba(0, 0, 0, 0.726)
-  );
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  /*border-radius: 16px;*/
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.25);
-  align-items: center;
-  /*border-radius: 3rem;*/
-  color: rgb(255, 255, 255);
+  overflow-y: auto;
+  padding: 1rem 1.25rem 1.5rem;
+  color: rgb(255, 208, 186);
+  font-family: "Inter", sans-serif;
+  box-sizing: border-box;
   -webkit-app-region: no-drag;
+  gap: 1rem;
 }
 .glass {
   background: rgba(255, 255, 255, 0.15);
@@ -346,23 +313,22 @@ this.map.on('zoomend', () => {
   -webkit-backdrop-filter: blur(12px);
 
   border: 1px solid rgba(255, 255, 255, 0.25);
-  box-shadow:
-    0 8px 32px rgba(0, 0, 0, 0.25),
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.25),
     inset 0 0 0 1px rgba(255, 255, 255, 0.1);
 
-
   color: white;
-} 
-#image{ 
-
 }
-#notifications{
-
+#image {
+  width: 100%;
+  height: 30vh;
+  object-fit: cover;
 }
 
-h3{  font-family: "Inter", sans-serif;
-  color:rgb(255, 255, 255);
-font-size: 1.7rem;}
+h3 {
+  font-family: "Inter", sans-serif;
+  color: rgb(255, 255, 255);
+  font-size: 1.7rem;
+}
 input {
   font-family: "Inter", sans-serif;
   width: 60%;
@@ -413,7 +379,9 @@ button:active {
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
 }
 
-p{width: 80%;}
+p {
+  width: 80%;
+}
 a {
   color: #ffffff;
 }
@@ -429,7 +397,7 @@ a {
 .filters-container {
   display: flex;
   flex-direction: row;
-  
+
   gap: 0.8rem;
   width: 95%;
   justify-content: center;
@@ -447,7 +415,6 @@ a {
 }
 
 .filter-btn {
-
   font-family: "Inter", sans-serif;
   padding: 0.7rem 1rem;
   cursor: pointer;
@@ -493,6 +460,7 @@ a {
 
 .submenu-btn {
   font-family: "Inter", sans-serif;
+  margin-left: 5rem;
   padding: 0.6rem 1rem;
   cursor: pointer;
   transition: all 0.2s ease;
@@ -531,5 +499,220 @@ a {
   border-color: rgba(255, 255, 255, 0.4);
   background: rgba(255, 255, 255, 0.15);
 }
+.mainarea::-webkit-scrollbar {
+  width: 6px;
+}
 
+.mainarea::-webkit-scrollbar-thumb {
+  background: linear-gradient(
+    180deg,
+    rgba(255, 162, 100, 0.6),
+    rgba(197, 41, 30, 0.5)
+  );
+  border-radius: 10px;
+}
+
+.top-events {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+}
+
+.location-status {
+  font-size: 0.9rem;
+  color: rgba(255, 162, 100, 0.8);
+  padding: 0.5rem 1rem;
+  background: rgba(255, 162, 100, 0.1);
+  border-radius: 0.6rem;
+  border: 1px solid rgba(255, 162, 100, 0.3);
+}
+
+.nearby-events-row {
+  margin-inline: 5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  padding: 1rem;
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 1rem;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.nearby-events-row h4 {
+  margin: 0;
+  color: rgb(255, 255, 255);
+  font-size: 1.1rem;
+}
+
+.events-flex-container {
+  display: flex;
+  gap: 1rem;
+  
+  padding-bottom: 0.5rem;
+}
+
+.event-card-small {
+  flex: 1;
+  padding: 1.5rem;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.12);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  border-radius: 0.8rem;
+  cursor: pointer;
+  transition: all 0.25s ease;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.event-card-small:hover {
+  background: rgba(255, 255, 255, 0.22);
+  transform: translateY(-2px);
+  border-color: rgba(255, 255, 255, 0.4);
+}
+
+.event-card-small h5 {
+  margin: 0;
+  color: rgb(255, 255, 255);
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.event-card-small .date {
+  margin: 0;
+  font-size: 0.85rem;
+  color: rgba(255, 162, 100, 0.8);
+}
+
+.event-card-small .distance {
+  margin: 0;
+  font-size: 0.8rem;
+  color: rgba(255, 255, 255, 0.6);
+  font-weight: 500;
+}
+
+.event-card-small .preview {
+  margin: 0;
+  font-size: 0.8rem;
+  color: rgba(255, 255, 255, 0.7);
+  line-height: 1.3;
+}
+
+.go-map {
+  height: 30rem;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 7rem;
+  gap: 1rem;
+  background-image: url('../assets/transport.png');
+  background-size: cover;
+  background-position: center;
+}
+
+
+
+
+
+.events-soon h4 {
+  margin: 1rem 0 0.5rem 0;
+  color: rgb(255, 255, 255);
+}
+
+.events-soon ul {
+  list-style: none;
+  padding: 0;
+  margin: 0.5rem 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.clickable-event {
+  padding: 0.8rem 1rem;
+  background: rgba(255, 255, 255, 0.12);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  border-radius: 0.8rem;
+  cursor: pointer;
+  transition: all 0.25s ease;
+  color: rgb(255, 208, 186);
+  font-size: 0.95rem;
+  text-align: left;
+}
+
+.clickable-event:hover {
+  background: rgba(255, 255, 255, 0.22);
+  transform: translateX(4px);
+  border-color: rgba(255, 255, 255, 0.4);
+}
+
+.clickable-event:active {
+  transform: translateX(2px);
+}
+
+.nav-btn {
+  width: 100%;
+  padding: 0.9rem 2rem;
+  cursor: pointer;
+  transition: all 0.25s ease;
+  background: rgba(255, 255, 255, 0.12);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  border-radius: 1rem;
+  color: white;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.25);
+  font-family: "Inter", sans-serif;
+  font-size: 1rem;
+}
+
+.nav-btn:hover {
+  background: rgba(255, 255, 255, 0.22);
+  transform: translateY(-2px);
+}
+
+.nav-btn:active {
+  transform: translateY(0);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
+}
+
+.nav-btn-absolute {
+  width: 10rem;
+
+  padding: 0.9rem 2rem;
+  cursor: pointer;
+  transition: all 0.25s ease;
+  background: rgba(255, 255, 255, 0.12);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  border-radius: 1rem;
+  color: white;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.25);
+  font-family: "Inter", sans-serif;
+  font-size: 1rem;
+}
+
+.nav-btn-absolute:hover {
+  background: rgba(255, 255, 255, 0.22);
+  transform: translateY(-2px);
+}
+
+.nav-btn-absolute:active {
+  transform: translateY(0);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
+}
+.submenu-btn {
+  width: auto;
+  padding: 0.9rem 2rem;
+}
+
+.submenu-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
 </style>
