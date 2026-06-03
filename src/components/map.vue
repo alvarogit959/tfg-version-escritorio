@@ -21,7 +21,7 @@
       </div>
 
       <button
-        class="filter-btn"
+        class="filter-btn" id="coches"
         :class="{ 'filter-btn--hidden': isTypeHidden('coches') }"
         @click="selectFilter('coches')"
       >
@@ -29,14 +29,14 @@
       </button>
 
       <button
-        class="filter-btn"
+        class="filter-btn" id="motos"
         :class="{ 'filter-btn--hidden': isTypeHidden('motos') }"
         @click="selectFilter('motos')"
       >
         Concentración Motos
       </button>
       <button
-      class="filter-btn"
+      class="filter-btn" id="competicion"
             @click="selectCompeticion('rally')"
             
             :class="{ 'filter-btn--hidden': isTypeHidden('competicion') }">
@@ -46,7 +46,7 @@
       
 
       <button
-        class="filter-btn"
+        class="filter-btn" id="feria"
         :class="{ 'filter-btn--hidden': isTypeHidden('feria') }"
         @click="selectFilter('feria')"
       >
@@ -888,8 +888,10 @@ a {
   height: 85vh;
   overflow: hidden;
 }
-
-
+#coches{color:#9aa1ff}
+#motos{color:#cf4343}
+#competicion{color:#44bb54}
+#feria{color:#bdb041}
 
 .filters-container {
   box-sizing: border-box;

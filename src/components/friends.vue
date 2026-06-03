@@ -281,66 +281,80 @@ export default {
 <style scoped>
 .friends-container {
   width: 100%;
-    height: calc(100vh - 2rem - 60px); 
+  height: calc(100vh - 2rem - 60px);
   max-height: calc(100vh - 2rem - 60px);
   overflow-y: auto;
-  padding: 1rem 1.25rem 1.5rem;
-  color: rgb(255, 208, 186);
+  padding: 1rem;
+  color: white;
   font-family: "Inter", sans-serif;
   box-sizing: border-box;
   -webkit-app-region: no-drag;
+
   display: flex;
   flex-direction: column;
   gap: 1rem;
+
+  background: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.12),
+    rgba(0, 0, 0, 0.726)
+  );
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+
+  border: 3px solid rgba(175, 175, 175, 0.2);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.25);
 }
 
 .page-title {
   margin: 0;
-  font-size: 1.5rem;
-  background: linear-gradient(90deg, rgba(255, 230, 200, 1), rgba(255, 149, 100, 1));
-  -webkit-background-clip: text;
-  background-clip: text;
-  -webkit-text-fill-color: transparent;
+  font-size: 1.7rem;
+  color: white;
 }
 
 .page-subtitle {
   margin: 0;
-  opacity: 0.75;
+  color: rgba(255, 255, 255, 0.7);
   font-size: 0.9rem;
 }
 
 .panel-card {
-  background: rgba(20, 20, 40, 0.55);
-  backdrop-filter: blur(15px);
-  border: 1px solid rgba(255, 162, 100, 0.25);
-  border-radius: 0.2rem;
+  background: rgba(255, 255, 255, 0.12);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  border-radius: 0.8rem;
+
   padding: 1.1rem 1.2rem;
+
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.25);
 }
 
 .section-title {
   margin: 0 0 0.85rem;
   font-size: 1.05rem;
-  color: rgba(255, 149, 100, 0.95);
-  border-bottom: 1px solid rgba(255, 162, 100, 0.2);
+  color: white;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.2);
   padding-bottom: 0.5rem;
 }
 
 .notification {
-  padding: 0.65rem 1rem;
-  border-radius: 0.2rem;
-  border: 1px solid rgba(255, 162, 100, 0.3);
+  padding: 0.8rem 1rem;
+  border-radius: 0.8rem;
+  border: 1px solid rgba(255, 255, 255, 0.25);
 }
 
 .notification.success {
-  background: rgba(76, 175, 80, 0.25);
+  background: rgba(76, 175, 80, 0.15);
 }
 
 .notification.error {
-  background: rgba(244, 67, 54, 0.25);
+  background: rgba(244, 67, 54, 0.15);
 }
 
 .notification.info {
-  background: rgba(255, 162, 100, 0.15);
+  background: rgba(255, 255, 255, 0.08);
 }
 
 .loading,
@@ -351,18 +365,32 @@ export default {
 
 .search-form {
   display: flex;
-  gap: 0.5rem;
+  gap: 0.8rem;
   margin-bottom: 0.75rem;
 }
 
 .search-form input {
   flex: 1;
   padding: 0.65rem 0.9rem;
-  background: rgba(255, 255, 255, 0.08);
-  border: 1px solid rgba(255, 162, 100, 0.3);
-  border-radius: 0.2rem;
+
+  background: rgba(255, 255, 255, 0.15);
+  backdrop-filter: blur(12px);
+
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  border-radius: 1rem;
+
   color: white;
   font-family: inherit;
+}
+
+.search-form input::placeholder {
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.search-form input:focus {
+  outline: none;
+  border-color: rgba(255, 255, 255, 0.6);
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.15);
 }
 
 .search-results,
@@ -371,9 +399,10 @@ export default {
   list-style: none;
   padding: 0;
   margin: 0;
+
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
+  gap: 0.75rem;
 }
 
 .user-row {
@@ -381,11 +410,22 @@ export default {
   justify-content: space-between;
   align-items: center;
   gap: 0.75rem;
-  padding: 0.75rem;
-  background: linear-gradient(90deg, rgba(255, 162, 100, 0.08), transparent);
-  border: 1px solid rgba(255, 162, 100, 0.2);
-  border-radius: 0.2rem;
   flex-wrap: wrap;
+
+  padding: 0.9rem 1rem;
+
+  background: rgba(255, 255, 255, 0.12);
+  backdrop-filter: blur(12px);
+
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  border-radius: 0.8rem;
+
+  transition: all 0.25s ease;
+}
+
+.user-row:hover {
+  background: rgba(255, 255, 255, 0.18);
+  border-color: rgba(255, 255, 255, 0.4);
 }
 
 .user-row.pending {
@@ -400,40 +440,57 @@ export default {
 
 .bio-preview {
   font-size: 0.8rem;
-  opacity: 0.65;
+  color: rgba(255, 255, 255, 0.65);
 }
 
 .user-link {
   background: none;
   border: none;
-  color: rgba(150, 220, 255, 1);
+  padding: 0;
+
+  color: rgb(96, 168, 250);
   cursor: pointer;
-  text-decoration: underline;
+
   font-size: 1rem;
   font-weight: 600;
-  padding: 0;
+  text-decoration: underline;
 }
 
 .row-actions {
   display: flex;
-  gap: 0.4rem;
+  gap: 0.5rem;
   flex-wrap: wrap;
 }
 
 .pending-tag {
+  color: rgb(255, 208, 186);
   font-size: 0.8rem;
-  color: rgba(255, 200, 120, 0.9);
+}
+
+.btn-primary,
+.btn-ghost,
+.btn-danger {
+  font-family: inherit;
+
+  padding: 0.5rem 1rem;
+  cursor: pointer;
+  transition: all 0.25s ease;
+
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+
+  border-radius: 0.6rem;
+  color: white;
 }
 
 .btn-primary {
-  padding: 0.5rem 1rem;
-  background: linear-gradient(135deg, rgba(255, 180, 100, 1), rgba(197, 41, 30, 0.85));
-  border: 1px solid rgba(197, 41, 30, 0.8);
-  border-radius: 0.2rem;
-  color: rgba(20, 8, 5, 0.95);
-  font-weight: 600;
-  cursor: pointer;
-  font-family: inherit;
+  background: rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+}
+
+.btn-primary:hover {
+  background: rgba(255, 255, 255, 0.22);
+  transform: translateY(-2px);
 }
 
 .btn-primary:disabled {
@@ -441,30 +498,45 @@ export default {
   cursor: not-allowed;
 }
 
+.btn-ghost {
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.btn-ghost:hover {
+  background: rgba(255, 255, 255, 0.18);
+}
+
+.btn-danger {
+  background: rgba(180, 60, 60, 0.25);
+  border: 1px solid rgba(255, 120, 120, 0.3);
+}
+
+.btn-danger:hover {
+  background: rgba(180, 60, 60, 0.4);
+}
+
 .btn-sm {
   padding: 0.35rem 0.75rem;
   font-size: 0.82rem;
 }
 
-.btn-ghost {
-  padding: 0.35rem 0.75rem;
-  background: transparent;
-  border: 1px solid rgba(255, 162, 100, 0.4);
-  border-radius: 0.2rem;
-  color: rgb(255, 208, 186);
-  cursor: pointer;
-  font-family: inherit;
-  font-size: 0.82rem;
+.friends-container::-webkit-scrollbar {
+  width: 12px;
 }
 
-.btn-danger {
-  padding: 0.35rem 0.75rem;
-  background: rgba(120, 30, 30, 0.5);
-  border: 1px solid rgba(255, 100, 80, 0.45);
-  border-radius: 0.2rem;
-  color: #ffccbc;
-  cursor: pointer;
-  font-family: inherit;
-  font-size: 0.82rem;
+.friends-container::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 10px;
+}
+
+.friends-container::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.28);
+  border-radius: 10px;
+  border: 1px solid rgba(0, 0, 0, 0.15);
+}
+
+.friends-container::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.42);
 }
 </style>
