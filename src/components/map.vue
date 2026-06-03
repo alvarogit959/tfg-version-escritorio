@@ -752,15 +752,13 @@ activateGPS() {
 }
 /*FIN   TEST*/
 .mainarea {
-  
+  overflow: hidden;
   display: flex;
   justify-content: flex-start;
   flex-direction: column;
   row-gap: 0.1rem;
   width: 100%;
   max-height: 100vh;
-  overflow-y: auto;
-  overflow-x: hidden;
   background: linear-gradient(
     135deg,
     rgba(255,255,255,0.12),
@@ -770,7 +768,6 @@ activateGPS() {
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.25);
   color: rgb(255, 255, 255);
   -webkit-app-region: no-drag;
-  overflow: hidden;
   scrollbar-width: none;
 }
 
@@ -800,6 +797,7 @@ activateGPS() {
 }
 
 .mainarea::-webkit-scrollbar-thumb:hover {
+  
   background: linear-gradient(
     180deg,
     rgba(99, 102, 241, 1),

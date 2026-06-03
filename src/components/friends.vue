@@ -281,7 +281,8 @@ export default {
 <style scoped>
 .friends-container {
   width: 100%;
-  height: 100%;
+    height: calc(100vh - 2rem - 60px); 
+  max-height: calc(100vh - 2rem - 60px);
   overflow-y: auto;
   padding: 1rem 1.25rem 1.5rem;
   color: rgb(255, 208, 186);

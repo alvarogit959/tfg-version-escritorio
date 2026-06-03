@@ -930,6 +930,19 @@ export default {
   overflow-y: auto;
   flex: 1;
   padding-right: 0.35rem;
+    display: flex;
+  flex-direction: column;
+  row-gap: 0.5rem;
+
+  height: 100vh; 
+  max-height: 100vh; 
+  overflow-y: auto; 
+  overflow-x: hidden; 
+  align-items: center;
+  justify-content: flex-start;
+  color: rgb(255, 255, 255);
+  -webkit-app-region: no-drag;
+  box-sizing: border-box; 
 }
 
 .events-list::-webkit-scrollbar {
@@ -952,6 +965,7 @@ export default {
 }
 
 .event-card {
+  width: 96%;
   font-family: "Inter", sans-serif;
   background: rgba(255, 255, 255, 0.08);
   border: 1px solid rgba(255, 255, 255, 0.2);

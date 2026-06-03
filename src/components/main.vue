@@ -1482,4 +1482,9 @@ export default {
     rgba(168, 85, 247, 0.8)
   );
 }
+.chat-panel,
+.chat-sidebar,
+.chat-conversation {
+  min-height: 0;
+}
 </style>

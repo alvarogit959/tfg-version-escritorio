@@ -430,7 +430,8 @@ export default {
 <style scoped>
 .admin-panel {
   width: 100%;
-  height: 100%;
+    height: calc(100vh - 2rem - 60px); 
+  max-height: calc(100vh - 2rem - 60px);
   overflow-y: auto;
   padding: 1.5rem 2rem;
   color: white;

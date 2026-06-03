@@ -282,8 +282,10 @@ export default {
 <style scoped>
 html,
 body {
-  overflow-x: hidden;
-  max-width: 100%;
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
 }
 .leaflet-control-attribution {
   font-size: 10px;
@@ -295,18 +297,28 @@ body {
 }
 .mainarea {
   display: flex;
-  align-items: center;
-
   flex-direction: column;
+  row-gap: 1rem;
   width: 100%;
-  height: 100%;
-  overflow-y: auto;
-  overflow-x: hidden;
-
-  color: rgb(255, 208, 186);
-  font-family: "Inter", sans-serif;
-  box-sizing: border-box;
+  height: calc(100vh - 2rem - 60px); 
+  max-height: calc(100vh - 2rem - 60px);
+  overflow-y: auto; 
+  overflow-x: hidden; 
+  background: linear-gradient(
+    135deg,
+    rgba(255,255,255,0.12),
+    rgba(0, 0, 0, 0.726)
+  );
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 3px solid rgba(175, 175, 175, 0.2);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.25);
+  align-items: center;
+  justify-content: flex-start;
+  color: rgb(255, 255, 255);
   -webkit-app-region: no-drag;
+  padding: 1rem; 
+  box-sizing: border-box; 
 }
 .glass {
   background: rgba(255, 255, 255, 0.15);
@@ -538,15 +550,19 @@ a {
   border: 1px solid rgba(255, 162, 100, 0.3);
 }
 
-.nearby-events-row {
-  margin-inline: 1rem;
-  width: 90%;
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-
-  border-radius: 1rem;
+.nearby-events-row,
+.go-map,
+.events-soon {
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  
 }
+.events-soon {
+ padding-bottom: 4.5rem;
+  
+}
+
 
 .nearby-events-row h4 {
   margin: 0;
@@ -557,17 +573,17 @@ a {
 .events-flex-container {
   display: flex;
   gap: 1rem;
-  width: 100%;
+  overflow-x: auto;
   padding-bottom: 0.5rem;
+  width: 100%;
 }
 
 .event-card-small {
   height: 8rem;
-
   flex: 1;
   padding: 1.5rem;
-  padding-top: 2rem;
-  padding-bottom: 2rem;
+  padding-top: 2.5rem;
+  padding-bottom: 2.5rem;
   align-items: center;
   justify-content: center;
   background: rgba(255, 255, 255, 0.12);
@@ -650,6 +666,7 @@ transition: all 1.5s ease;
 }
 .events-soon {
   width: 90%;
+  height: auto;
   display: flex;
   flex-direction: column;
   
@@ -749,6 +766,7 @@ transition: all 1.5s ease;
   align-items: center;
   justify-content: center;
   width: 7rem;
+  margin-bottom: 0.6rem;
 
 }
 .submenu-btn:disabled {

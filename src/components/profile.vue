@@ -296,7 +296,6 @@ export default {
   display: flex;
   flex-direction: column;
   width: 100%;
-  height: 100%;
   overflow-y: auto;
   padding: 1rem 1.25rem 1.5rem;
   color: rgb(255, 255, 255);
@@ -309,6 +308,16 @@ export default {
     rgba(255,255,255,0.12),
     rgba(0, 0, 0, 0.726)
   );
+  height: calc(100vh - 2rem - 60px); 
+  max-height: calc(100vh - 2rem - 60px);
+  overflow-y: auto; 
+  overflow-x: hidden; 
+  align-items: center;
+  justify-content: flex-start;
+  color: rgb(255, 255, 255);
+  -webkit-app-region: no-drag;
+  box-sizing: border-box; 
+  margin-top: 0;
 }
 
 .profile-container::-webkit-scrollbar {
