@@ -1,6 +1,6 @@
 <template>
   <div class="mainarea">
-    <h1>{{ msg }}</h1>
+    
     <!--<img id="image"  src="../assets/transport.png">
     <h3>CarMeet Club</h3>-->
   
@@ -74,22 +74,43 @@
       </div>
 
       <div class="date-filter">
-        <label>
-          <span>Desde</span>
-          <input v-model="dateFrom" type="date" @input="updateMarkerVisibility">
-        </label>
-        <label>
-          <span>Hasta</span>
-          <input v-model="dateTo" type="date" @input="updateMarkerVisibility">
-        </label>
-        <button
-          type="button"
-          class="date-clear-btn"
-          :disabled="!dateFrom && !dateTo"
-          @click="clearDateFilters"
-        >
-          Limpiar
-        </button>
+  <div class="date-picker-field">
+    
+    <button type="button" class="date-picker-btn" @click="openDatePicker('dateFromInput')">
+      <span>Desde</span>
+      <strong v-if="dateFrom">{{ formatDateFilter(dateFrom) }}</strong>
+    </button>
+    <input
+      ref="dateFromInput"
+      v-model="dateFrom"
+      class="date-picker-native"
+      type="date"
+      @change="updateMarkerVisibility"
+    >
+  </div>
+  <span>→</span>
+  <div class="date-picker-field">
+    
+    <button type="button" class="date-picker-btn" @click="openDatePicker('dateToInput')">
+      <span>Hasta</span>
+      <strong v-if="dateTo">{{ formatDateFilter(dateTo) }}</strong>
+    </button>
+    <input
+      ref="dateToInput"
+      v-model="dateTo"
+      class="date-picker-native"
+      type="date"
+      @change="updateMarkerVisibility"
+    >
+  </div>
+  <button
+    type="button"
+    class="date-clear-btn"
+    :disabled="!dateFrom && !dateTo"
+    @click="clearDateFilters"
+  >
+    Limpiar
+  </button>
       </div>
     </div>
 
@@ -305,7 +326,12 @@ activateGPS() {
       console.warn("GPS falló:", error);
 
       // 👉 fallback automático
-      await this.fallbackLocation();
+      try {
+        await this.fallbackLocation();
+      } catch (fallbackError) {
+        console.error("No se pudo obtener ubicación por IP:", fallbackError);
+        this.notification = "No se pudo obtener la ubicación";
+      }
     },
 
     {
@@ -343,11 +369,19 @@ activateGPS() {
     },
 
     isEventHidden(event) {
-      const type = this.getEventType(event);
-      if (type && this.hiddenTypes.includes(type)) return true;
-      if (!this.isEventInsideDateRange(event)) return true;
-      return !this.isEventInsideRange(event);
-    },
+    const type = this.getEventType(event);
+    
+    // Verificar si el tipo está oculto
+    if (type && this.hiddenTypes.includes(type)) return true;
+    
+    // Verificar rango de fecha
+    if (!this.isEventInsideDateRange(event)) return true;
+    
+    // Verificar distancia
+    if (this.userLocation && !this.isEventInsideRange(event)) return true;
+    
+    return false;
+  },
 
     selectFilter(filterType) {
       const type = this.normalizeEventType(filterType);
@@ -367,16 +401,19 @@ activateGPS() {
 
     selectCompeticion() {
       this.selectFilter("competicion");
-      this.showCompeticion = false;
     },
 
     updateMarkerVisibility() {
-      this.eventMarkers.forEach(({ marker, event }) => {
-        const el = marker.getElement();
-        if (!el) return;
-        el.style.display = this.isEventHidden(event) ? "none" : "block";
-      });
-    },
+    if (!this.eventMarkers || this.eventMarkers.length === 0) return;
+    
+    this.eventMarkers.forEach(({ marker, event }) => {
+      const el = marker.getElement();
+      if (!el) return;
+      
+      const isHidden = this.isEventHidden(event);
+      el.style.display = isHidden ? "none" : "block";
+    });
+  },
 
     updateRangeFilter() {
       this.updateDistanceCircle();
@@ -461,6 +498,28 @@ activateGPS() {
       this.dateFrom = "";
       this.dateTo = "";
       this.updateMarkerVisibility();
+    },
+
+    openDatePicker(refName) {
+      const picker = this.$refs[refName];
+      if (!picker) return;
+
+      if (typeof picker.showPicker === "function") {
+        picker.showPicker();
+        return;
+      }
+
+      picker.focus();
+      picker.click();
+    },
+
+    formatDateFilter(date) {
+      if (!date) return "Fecha";
+      return new Date(`${date}T00:00:00`).toLocaleDateString("es-ES", {
+        day: "2-digit",
+        month: "2-digit",
+        year: "numeric",
+      });
     },
 
     createCircleGeoJson(center, radiusKm, points = 96) {
@@ -693,27 +752,60 @@ activateGPS() {
 }
 /*FIN   TEST*/
 .mainarea {
+  
   display: flex;
+  justify-content: flex-start;
   flex-direction: column;
   row-gap: 0.1rem;
   width: 100%;
-  height: 100vh;
+  max-height: 100vh;
+  overflow-y: auto;
+  overflow-x: hidden;
   background: linear-gradient(
     135deg,
     rgba(255,255,255,0.12),
     rgba(0, 0, 0, 0.726)
   );
-
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
   border: 3px solid rgba(175, 175, 175, 0.2);
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.25);
-
-  align-items: center;
-  justify-content: flex-start;
   color: rgb(255, 255, 255);
-  
   -webkit-app-region: no-drag;
+  overflow: hidden;
+  scrollbar-width: none;
+}
+
+.mainarea::-webkit-scrollbar {
+  display: none;
+}
+
+.mainarea::-webkit-scrollbar {
+  width: 12px;
+}
+
+
+.mainarea::-webkit-scrollbar-track {
+  background: rgba(99, 102, 241, 0.08);
+  border-radius: 10px;
+}
+
+.mainarea::-webkit-scrollbar-thumb {
+  background: linear-gradient(
+    180deg,
+    rgba(99, 102, 241, 0.9),
+    rgba(168, 85, 247, 0.9)
+  );
+  border-radius: 10px;
+  border: 1px solid rgba(99, 102, 241, 0.3);
+  transition: all 0.3s ease;
+}
+
+.mainarea::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(
+    180deg,
+    rgba(99, 102, 241, 1),
+    rgba(168, 85, 247, 1)
+  );
+  border-color: rgba(99, 102, 241, 0.6);
 }
 .glass {
   background: rgba(255, 255, 255, 0.15);
@@ -728,12 +820,7 @@ activateGPS() {
   border-radius: 1rem;
   color: white;
 } 
-#image{width: 9rem; 
-  height: 9rem; 
-  object-fit: contain;
-    margin-top: -3rem;
-  margin-bottom: -3rem;
-}
+
 #notifications{
  margin-top: -0.5rem; 
   margin-bottom: -0.02rem;
@@ -800,32 +887,36 @@ a {
 
 #map {
   width: 100%;
-  height: calc(100vh - 205px);
+  height: 85vh;
   overflow: hidden;
-
-  max-height: 100vh;
 }
 
 
 
 .filters-container {
+  box-sizing: border-box;
+  padding: 0.2rem;
   display: flex;
   flex-direction: row;
-  gap: 0.8rem;
-  width: 95%;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  width: 100%;
+  max-width: 100%;
   justify-content: center;
   align-items: center;
-  padding: 1rem;
 }
 
 .filter-group {
   position: relative;
-  width: 100%;
+  width: auto;
+  min-width: auto;
 }
 
 .filter-btn {
+  width: auto;
+  max-width: 100%;
   font-family: "Inter", sans-serif;
-  padding: 0.7rem 1rem;
+  padding: 0.6rem 0.7rem;
   cursor: pointer;
   transition: all 0.25s ease;
   background: rgba(255, 255, 255, 0.12);
@@ -834,7 +925,7 @@ a {
   border: 1px solid rgba(255, 255, 255, 0.25);
   border-radius: 0.2rem;
   color: white;
-  font-size: 0.95rem;
+  font-size: 0.8rem;
   white-space: nowrap;
 }
 
@@ -855,8 +946,9 @@ a {
 }
 
 .distance-filter {
-  min-width: 180px;
-  padding: 0.55rem 0.8rem;
+  height: 2rem;
+  padding: 0.1rem 0.65rem;
+  padding-bottom: 0.5rem;
   background: rgba(255, 255, 255, 0.12);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
@@ -869,8 +961,8 @@ a {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  gap: 0.8rem;
-  margin-bottom: 0.35rem;
+  gap: 0.4rem;
+  margin-bottom: -0.4rem;
   font-family: "Inter", sans-serif;
   font-size: 0.85rem;
   white-space: nowrap;
@@ -896,47 +988,152 @@ a {
 .date-filter {
   display: flex;
   align-items: center;
-  gap: 0.45rem;
-  flex-wrap: wrap;
-  min-width: 280px;
-  padding: 0.45rem 0.65rem;
-  background: rgba(255, 255, 255, 0.12);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
+  gap: 0.35rem;
+  flex: 0 1 auto;
+  max-width: 100%;
+  background: rgba(255, 255, 255, 0.08);
+  padding: 0.25rem 0.45rem;
+  border-radius: 0.4rem;
   border: 1px solid rgba(255, 255, 255, 0.25);
   border-radius: 0.2rem;
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.25);
+  color: white;
+
 }
 
 .date-filter label {
   display: flex;
   align-items: center;
   gap: 0.3rem;
-  font-family: "Inter", sans-serif;
-  font-size: 0.8rem;
-  color: rgba(255, 255, 255, 0.82);
+  cursor: pointer;
+
 }
 
-.date-filter input {
-  width: 7.7rem;
-  height: 2rem;
-  padding: 0 0.45rem;
-  border-radius: 0.2rem;
-  color-scheme: dark;
+.date-filter label span {
+  color: white;
+  font-size: 0.85rem;
+  opacity: 0.8;
+  font-family: 'Inter', sans-serif;
+  white-space: nowrap;
+  
+}
+
+.date-filter input[type="date"] {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+  pointer-events: none;
+}
+
+.date-filter input[type="date"] {
+  width: auto;
+  padding: 0.3rem 0.5rem;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  background: rgba(255, 255, 255, 0.12);
+  border-radius: 0.5rem;
+  color: white;
   font-size: 0.8rem;
+  font-family: 'Inter', sans-serif;
+  cursor: pointer;
+}
+
+.date-filter input[type="date"]::-webkit-calendar-picker-indicator {
+  filter: invert(1);
+  opacity: 0.7;
+  cursor: pointer;
+}
+
+.date-filter span:not(label span) {
+  color: white;
+  font-size: 1rem;
+  font-size: 0.82rem;
+  
 }
 
 .date-clear-btn {
   width: auto;
-  padding: 0.48rem 0.7rem;
-  border-radius: 0.2rem;
-  font-size: 0.8rem;
+  padding: 0.43rem 0.55rem;
+  border-radius: 0.3rem;
+  font-size: 0.74rem;
   white-space: nowrap;
+  background: rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  color: white;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.date-clear-btn:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.22);
+  transform: translateY(-1px);
 }
 
 .date-clear-btn:disabled {
-  opacity: 0.55;
   cursor: not-allowed;
+  font-size: 0.82rem;
+}
+
+.date-picker-field {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.date-picker-field span,
+.date-filter-arrow {
+  color: white;
+  font-family: "Inter", sans-serif;
+  font-size: 0.82rem;
+  white-space: nowrap;
+}
+
+.date-picker-btn {
+  width: 5.4rem;
+  min-width: 0;
+  min-height: 2.15rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 0.05rem;
+  padding: 0.28rem 0.45rem;
+  border-radius: 0.3rem;
+  font-size: 0.78rem;
+  background: rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  color: rgb(255, 255, 255);
+  cursor: pointer;
+  box-shadow: none;
+}
+
+.date-picker-btn span {
+  font-size: 0.78rem;
+  line-height: 1;
+}
+
+.date-picker-btn strong {
+  font-size: 0.65rem;
+  line-height: 1;
+  font-weight: 600;
+  color: #55c7ff;
+}
+
+.date-picker-btn:hover {
+  background: rgba(255, 255, 255, 0.22);
+  transform: translateY(-1px);
+  
+}
+
+.date-filter .date-picker-native[type="date"] {
+  position: absolute;
+  inset: 0;
+  
+  width: 100%;
+  height: 100%;
+  padding: 0;
+  border: 0;
+  pointer-events: none;
 }
 
 .submenu {

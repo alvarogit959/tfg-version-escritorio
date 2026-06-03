@@ -790,7 +790,7 @@ export default {
   display: flex;
   flex-direction: column;
   width: 100%;
-  height: 100%;
+
   /* background: linear-gradient(135deg, rgba(10, 10, 20, 1), rgba(20, 20, 40, 1)); */
   -webkit-app-region: drag;
   /*background-image: url("@/assets/newbackground.svg");*/
@@ -890,7 +890,7 @@ export default {
   font-family: "Inter", sans-serif;
   padding: 0.6rem 2.2rem;
   background: rgba(255, 255, 255, 0.1);
-  border: 1px solid rgba(255, 162, 100, 0.3);
+  border: 1px solid rgba(99, 102, 241, 0.3);
   border-radius: 0.2rem;
   color: rgb(255, 208, 186);
   cursor: pointer;
@@ -913,7 +913,7 @@ export default {
     rgba(150, 66, 228, 0.808),
     rgba(8, 30, 128, 0.829)
   );
-  border-color: rgba(197, 41, 30, 0.8);
+  border-color: rgba(168, 85, 247, 0.8);
   color: rgba(255, 255, 255, 0.9);
   box-shadow: 0 0 15px rgba(0, 68, 255, 0.507);
 }
@@ -941,9 +941,9 @@ export default {
 }
 
 .profile-btn:hover {
-  background: rgba(255, 162, 100, 0.2);
-  border-color: rgba(255, 162, 100, 0.6);
-  color: rgba(255, 162, 100, 1);
+  background: rgba(99, 102, 241, 0.2);
+  border-color: rgba(99, 102, 241, 0.6);
+  color: rgba(99, 102, 241, 1);
   transform: translateY(-2px);
 }
 
@@ -1009,7 +1009,7 @@ export default {
 }
 
 .submenu-btn.logout-option:hover {
-  background: rgba(255, 100, 100, 0.15);
+  background: rgba(168, 85, 247, 0.15);
   color: rgba(255, 150, 150, 1);
 }
 
@@ -1101,7 +1101,7 @@ export default {
   }
 
   .navbar-content {
-    gap: 0.8rem;
+    gap: 0.2rem;
   }
 
   .nav-menu {
@@ -1125,7 +1125,7 @@ export default {
 
 .chat-button {
   position: fixed;
-  bottom: 40px;
+  bottom: 20px;
   right: 20px;
   width: 100px;
   height: 50px;
@@ -1162,7 +1162,7 @@ export default {
   width: min(520px, 92vw);
   height: min(380px, 55vh);
   background: rgba(18, 18, 36, 0.97);
-  border: 1px solid rgba(255, 162, 100, 0.4);
+  border: 1px solid rgba(99, 102, 241, 0.4);
   border-radius: 0.35rem;
   box-shadow: 0 12px 40px rgba(0, 0, 0, 0.55);
   display: flex;
@@ -1191,7 +1191,7 @@ export default {
   max-width: 180px;
   display: flex;
   flex-direction: column;
-  border-right: 1px solid rgba(255, 162, 100, 0.22);
+  border-right: 1px solid rgba(99, 102, 241, 0.22);
   background: rgba(0, 0, 0, 0.28);
 }
 
@@ -1240,11 +1240,11 @@ export default {
 }
 
 .chat-list-item:hover {
-  background: rgba(255, 162, 100, 0.1);
+  background: rgba(99, 102, 241, 0.1);
 }
 
 .chat-list-item.active {
-  background: rgba(255, 162, 100, 0.18);
+  background: rgba(99, 102, 241, 0.18);
   border-left-color: rgba(255, 149, 100, 0.95);
 }
 
@@ -1261,7 +1261,7 @@ export default {
   background: linear-gradient(
     135deg,
     rgba(103, 12, 139, 0.55),
-    rgba(197, 41, 30, 0.6)
+    rgba(168, 85, 247, 0.6)
   );
   color: #fff;
 }
@@ -1269,10 +1269,10 @@ export default {
 .group-avatar {
   background: linear-gradient(
     135deg,
-    rgba(255, 180, 100, 0.9),
-    rgba(197, 41, 30, 0.85)
+    rgba(99, 102, 241, 0.9),
+    rgba(168, 85, 247, 0.85)
   );
-  color: rgba(20, 8, 5, 0.95);
+  color: rgba(255, 255, 255, 0.95);
 }
 
 .chat-list-info {
@@ -1415,7 +1415,7 @@ export default {
   display: flex;
   gap: 6px;
   padding: 8px 10px;
-  border-top: 1px solid rgba(255, 162, 100, 0.25);
+  border-top: 1px solid rgba(99, 102, 241, 0.25);
   background: rgba(12, 12, 28, 0.95);
 }
 
@@ -1438,7 +1438,7 @@ export default {
 .chat-input button {
   padding: 7px 12px;
   background: rgba(212, 154, 105, 0.9);
-  border: 1px solid rgba(197, 41, 30, 0.7);
+  border: 1px solid rgba(168, 85, 247, 0.7);
   border-radius: 0.2rem;
   color: rgba(20, 8, 5, 0.95);
   cursor: pointer;
@@ -1457,15 +1457,29 @@ export default {
 }
 
 .chat-messages::-webkit-scrollbar {
-  width: 6px;
+  width: 8px;
+}
+
+.chat-messages::-webkit-scrollbar-track {
+  background: rgba(99, 102, 241, 0.05);
+  border-radius: 10px;
 }
 
 .chat-messages::-webkit-scrollbar-thumb {
   background: linear-gradient(
     180deg,
-    rgba(255, 162, 100, 0.6),
-    rgba(197, 41, 30, 0.5)
+    rgba(99, 102, 241, 0.6),
+    rgba(168, 85, 247, 0.6)
   );
   border-radius: 10px;
+  border: 2px solid rgba(99, 102, 241, 0.1);
+}
+
+.chat-messages::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(
+    180deg,
+    rgba(99, 102, 241, 0.8),
+    rgba(168, 85, 247, 0.8)
+  );
 }
 </style>

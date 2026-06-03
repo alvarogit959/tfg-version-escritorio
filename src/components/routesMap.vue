@@ -170,17 +170,26 @@ h4 {
 }
 
 .threads-section::-webkit-scrollbar-track {
-  background: rgba(255, 255, 255, 0.1);
+  background: rgba(99, 102, 241, 0.05);
   border-radius: 10px;
 }
 
 .threads-section::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.3);
+  background: linear-gradient(
+    180deg,
+    rgba(99, 102, 241, 0.6),
+    rgba(168, 85, 247, 0.6)
+  );
   border-radius: 10px;
+  border: 2px solid rgba(99, 102, 241, 0.1);
 }
 
 .threads-section::-webkit-scrollbar-thumb:hover {
-  background: rgba(255, 255, 255, 0.5);
+  background: linear-gradient(
+    180deg,
+    rgba(99, 102, 241, 0.8),
+    rgba(168, 85, 247, 0.8)
+  );
 }
 
 .no-threads {

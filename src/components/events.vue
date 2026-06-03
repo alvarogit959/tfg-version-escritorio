@@ -738,7 +738,7 @@ export default {
   flex-direction: column;
   width: 100%;
   height: 100%;
-  color: rgb(255, 208, 186);
+  color: rgb(255, 255, 255);
   padding: 0;
   -webkit-app-region: no-drag;
   overflow: hidden;
@@ -756,12 +756,11 @@ export default {
 .events-list-section {
   display: flex;
   flex-direction: column;
- 
   height: 100%;
-  background: rgba(20, 20, 40, 0.55);
+  background: rgba(255, 255, 255, 0.08);
   backdrop-filter: blur(15px);
   -webkit-backdrop-filter: blur(15px);
-  border: 1px solid rgba(255, 162, 100, 0.25);
+  border: 1px solid rgba(255, 255, 255, 0.2);
   border-radius: 0.2rem;
   padding: 1rem 1.2rem;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
@@ -775,7 +774,7 @@ export default {
   gap: 0.8rem;
   margin-bottom: 0.75rem;
   padding-bottom: 0.75rem;
-  border-bottom: 1px solid rgba(255, 162, 100, 0.2);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.2);
 }
 
 .list-header h2 {
@@ -783,25 +782,24 @@ export default {
   font-size: 1.3rem;
   font-family: "Inter", sans-serif;
   font-weight: bold;
-  color: rgba(255, 149, 100, 0.9);
+  color: rgb(255, 255, 255);
 }
 
 .create-event-btn {
   font-family: "Inter", sans-serif;
   padding: 0.55rem 1.1rem;
   font-size: 0.85rem;
-  background: rgba(212, 154, 105, 0.85);
-  border: 1px solid rgba(197, 41, 30, 0.8);
-  border-radius: 0.2rem;
-  color: rgba(0, 0, 0, 0.9);
+  background: rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  color: white;
   cursor: pointer;
   transition: all 0.3s ease;
   font-weight: 500;
 }
 
 .create-event-btn:hover {
-  background: rgba(255, 162, 100, 1);
-  box-shadow: 0 0 12px rgba(255, 102, 0, 0.4);
+  background: rgba(255, 255, 255, 0.22);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.25);
   transform: translateY(-2px);
 }
 
@@ -833,9 +831,9 @@ export default {
 .date-controls input {
   font-family: "Inter", sans-serif;
   border-radius: 0.2rem;
-  border: 1px solid rgba(255, 162, 100, 0.35);
+  border: 1px solid rgba(255, 255, 255, 0.25);
   background: rgba(255, 255, 255, 0.08);
-  color: rgb(255, 230, 210);
+  color: white;
 }
 
 .control-btn,
@@ -852,15 +850,15 @@ export default {
 .type-filter-btn:hover,
 .sort-btn:hover:not(:disabled),
 .clear-date-btn:hover:not(:disabled) {
-  background: rgba(255, 162, 100, 0.18);
-  border-color: rgba(255, 162, 100, 0.55);
+  background: rgba(255, 255, 255, 0.22);
+  border-color: rgba(255, 255, 255, 0.4);
 }
 
 .type-filter-btn.active,
 .sort-btn.active {
-  background: rgba(255, 162, 100, 0.85);
-  border-color: rgba(197, 41, 30, 0.8);
-  color: rgba(0, 0, 0, 0.9);
+  background: rgba(255, 255, 255, 0.25);
+  border-color: rgba(255, 255, 255, 0.5);
+  color: white;
   font-weight: 600;
 }
 
@@ -880,7 +878,7 @@ export default {
   display: flex;
   align-items: center;
   gap: 0.35rem;
-  color: rgba(255, 208, 186, 0.75);
+  color: rgba(255, 255, 255, 0.75);
   font-size: 0.8rem;
 }
 
@@ -898,12 +896,12 @@ export default {
 }
 
 .location-status.muted {
-  color: rgba(255, 208, 186, 0.5);
+  color: rgba(255, 255, 255, 0.55);
 }
 
 .sort-control {
   justify-content: flex-end;
-  color: rgba(255, 208, 186, 0.75);
+  color: rgba(255, 255, 255, 0.75);
   font-size: 0.8rem;
 }
 
@@ -912,7 +910,7 @@ export default {
   border-radius: 0.2rem;
   margin-bottom: 0.75rem;
   font-size: 0.9rem;
-  border: 1px solid rgba(255, 162, 100, 0.3);
+  border: 1px solid rgba(255, 255, 255, 0.25);
 }
 
 .notification.success {
@@ -935,18 +933,28 @@ export default {
 }
 
 .events-list::-webkit-scrollbar {
-  width: 6px;
+  width: 8px;
+}
+
+.events-list::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 10px;
 }
 
 .events-list::-webkit-scrollbar-thumb {
-  background: rgba(255, 162, 100, 0.35);
+  background: rgba(255, 255, 255, 0.28);
   border-radius: 10px;
+  border: 2px solid rgba(0, 0, 0, 0.15);
+}
+
+.events-list::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.42);
 }
 
 .event-card {
   font-family: "Inter", sans-serif;
   background: rgba(255, 255, 255, 0.08);
-  border: 1px solid rgba(255, 162, 100, 0.25);
+  border: 1px solid rgba(255, 255, 255, 0.2);
   border-radius: 0.2rem;
   padding: 1rem;
   cursor: pointer;
@@ -954,8 +962,8 @@ export default {
 }
 
 .event-card:hover {
-  background: rgba(255, 162, 100, 0.15);
-  border-color: rgba(255, 162, 100, 0.5);
+  background: rgba(255, 255, 255, 0.16);
+  border-color: rgba(255, 255, 255, 0.4);
   transform: translateY(-2px);
 }
 
@@ -970,7 +978,7 @@ export default {
 .event-card-header h3 {
   margin: 0;
   font-size: 1rem;
-  color: rgb(255, 230, 210);
+  color: white;
   flex: 1;
 }
 
@@ -981,28 +989,28 @@ export default {
   font-weight: 600;
   white-space: nowrap;
   text-transform: capitalize;
-  background: rgba(103, 12, 139, 0.35);
-  border: 1px solid rgba(171, 87, 226, 0.35);
-  color: rgba(255, 220, 255, 0.95);
+  background: rgba(255, 255, 255, 0.14);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  color: rgba(255, 255, 255, 0.95);
 }
 
 .type-carmeet,
 .type-coches {
-  background: rgba(255, 102, 0, 0.25);
-  border-color: rgba(255, 162, 100, 0.5);
-  color: rgba(255, 200, 150, 1);
+  background: rgba(255, 255, 255, 0.18);
+  border-color: rgba(255, 255, 255, 0.35);
+  color: white;
 }
 
 .event-date {
   margin: 0.2rem 0;
   font-size: 0.85rem;
-  color: rgba(255, 208, 186, 0.85);
+  color: rgba(255, 255, 255, 0.82);
 }
 
 .event-location {
   margin: 0.15rem 0;
   font-size: 0.8rem;
-  color: rgba(255, 149, 100, 0.85);
+  color: rgba(255, 255, 255, 0.72);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -1018,7 +1026,7 @@ export default {
 .event-preview {
   margin: 0.25rem 0 0;
   font-size: 0.78rem;
-  color: rgba(255, 208, 186, 0.55);
+  color: rgba(255, 255, 255, 0.55);
 }
 
 .no-events {
@@ -1026,7 +1034,7 @@ export default {
   justify-content: center;
   align-items: center;
   min-height: 12rem;
-  color: rgba(255, 208, 186, 0.45);
+  color: rgba(255, 255, 255, 0.5);
   font-style: italic;
 }
 
@@ -1037,10 +1045,10 @@ export default {
   z-index: 20;
   display: flex;
   flex-direction: column;
-  background: rgba(20, 20, 40, 0.92);
+  background: rgba(0, 0, 0, 0.82);
   backdrop-filter: blur(18px);
   -webkit-backdrop-filter: blur(18px);
-  border: 1px solid rgba(255, 162, 100, 0.35);
+  border: 1px solid rgba(255, 255, 255, 0.25);
   border-radius: 0.2rem;
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
   overflow: hidden;
@@ -1049,7 +1057,7 @@ export default {
 .details-toolbar {
   flex-shrink: 0;
   padding: 0.75rem 1rem;
-  border-bottom: 1px solid rgba(255, 162, 100, 0.25);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.2);
   background: rgba(0, 0, 0, 0.2);
 }
 
@@ -1057,9 +1065,9 @@ export default {
   font-family: "Inter", sans-serif;
   padding: 0.55rem 1.2rem;
   background: rgba(255, 255, 255, 0.1);
-  border: 1px solid rgba(255, 162, 100, 0.35);
+  border: 1px solid rgba(255, 255, 255, 0.25);
   border-radius: 0.2rem;
-  color: rgb(255, 208, 186);
+  color: white;
   cursor: pointer;
   transition: all 0.3s ease;
   font-size: 0.9rem;
@@ -1067,9 +1075,9 @@ export default {
 }
 
 .back-btn:hover {
-  background: rgba(255, 162, 100, 0.2);
-  border-color: rgba(255, 162, 100, 0.6);
-  color: rgba(255, 162, 100, 1);
+  background: rgba(255, 255, 255, 0.22);
+  border-color: rgba(255, 255, 255, 0.4);
+  color: white;
 }
 
 .details-scroll {
@@ -1079,12 +1087,22 @@ export default {
 }
 
 .details-scroll::-webkit-scrollbar {
-  width: 6px;
+  width: 8px;
+}
+
+.details-scroll::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 10px;
 }
 
 .details-scroll::-webkit-scrollbar-thumb {
-  background: rgba(255, 162, 100, 0.35);
+  background: rgba(255, 255, 255, 0.28);
   border-radius: 10px;
+  border: 2px solid rgba(0, 0, 0, 0.15);
+}
+
+.details-scroll::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.42);
 }
 
 .details-title-row {

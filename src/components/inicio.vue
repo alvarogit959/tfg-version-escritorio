@@ -1,16 +1,15 @@
 <template>
   <div class="mainarea">
-   <!-- <img id="image" src="../assets/transport.png" />-->
+    <!-- <img id="image" src="../assets/transport.png" />-->
     <h3>CarMeet Club</h3>
-    <div class="top-events">
-      <button @click="activateLocation" class="submenu-btn" >
-        {{ "Activar GPS" }}
-      </button>
-
-    </div>
 
     <div class="nearby-events-row" v-if="nearbyEvents.length > 0">
-      <h4>Eventos Cercanos</h4>
+      <div class="top-events">
+        <button @click="activateLocation" class="submenu-btn-gps">
+          {{ "Activar GPS" }}
+        </button>
+        <h4>Eventos Cercanos</h4>
+      </div>
       <div class="events-flex-container">
         <div
           v-for="event in nearbyEvents"
@@ -29,31 +28,28 @@
     </div>
 
     <div class="go-map">
-
-      <button
-        class="nav-btn-absolute"
-        @click="$emit('navigate', 'map')"
-      >
+      <div class="blurtest">
+      <button class="nav-btn-absolute" @click="$emit('navigate', 'map')">
         Ir al Mapa
       </button>
+      </div>
     </div>
-
 
     <div class="events-soon">
       <h4>Próximos eventos</h4>
       <p v-if="upcomingEventsList.length === 0">No hay eventos disponibles.</p>
       <ul v-else>
-        <li 
-          v-for="event in upcomingEventsList" 
+        <li
+          v-for="event in upcomingEventsList"
           :key="event.id"
           @click="selectEvent(event)"
           class="clickable-event"
         >
-          <strong>{{ event.title }}</strong><br />
+          <strong>{{ event.title }}</strong
+          ><br />
           {{ new Date(event.start).toLocaleDateString("es-ES") }}<br />
           {{ event.description }}
         </li>
-
       </ul>
       <button
         v-if="events.length > 7"
@@ -69,7 +65,7 @@
     <h3>CarMeet Club</h3>-->
 
     <!-- <p id="notifications">{{ notification }}</p> -->
-<!--background-image: url('../assets/transport.png'); -->
+    <!--background-image: url('../assets/transport.png'); -->
     <!--FILTROS -->
     <!--<div class="filters-container">
       <div class="filter-group">
@@ -145,7 +141,7 @@ export default {
 
       return sorted;
     },
-    
+
     upcomingEventsList() {
       return this.events.slice(0, 7);
     },
@@ -263,8 +259,7 @@ export default {
 
     eventPreview(event) {
       const raw = event.description || "";
-      const plain =
-        typeof raw === "string" ? raw.replace(/<[^>]*>/g, "") : "";
+      const plain = typeof raw === "string" ? raw.replace(/<[^>]*>/g, "") : "";
       return plain.length > 60 ? `${plain.slice(0, 60)}...` : plain || "—";
     },
 
@@ -285,6 +280,11 @@ export default {
 
 <!-- Add "scoped" attribute to limit CSS to this component only -->
 <style scoped>
+html,
+body {
+  overflow-x: hidden;
+  max-width: 100%;
+}
 .leaflet-control-attribution {
   font-size: 10px;
   opacity: 0.1;
@@ -294,18 +294,19 @@ export default {
   right: 5px;
 }
 .mainarea {
-    display: flex;
-    align-items: center;
+  display: flex;
+  align-items: center;
+
   flex-direction: column;
   width: 100%;
   height: 100%;
   overflow-y: auto;
-  padding: 1rem 1.25rem 1.5rem;
+  overflow-x: hidden;
+
   color: rgb(255, 208, 186);
   font-family: "Inter", sans-serif;
   box-sizing: border-box;
   -webkit-app-region: no-drag;
-  gap: 1rem;
 }
 .glass {
   background: rgba(255, 255, 255, 0.15);
@@ -357,14 +358,14 @@ input:focus {
 button {
   font-family: "Inter", sans-serif;
   width: 100%;
-  padding: 0.9rem 2rem;
+  padding: 0.5rem 1rem;
   cursor: pointer;
   transition: all 0.25s ease;
   background: rgba(255, 255, 255, 0.12);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
   border: 1px solid rgba(255, 255, 255, 0.25);
-  border-radius: 1rem;
+  border-radius: 0.2rem;
   color: white;
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.25);
 }
@@ -500,22 +501,32 @@ a {
   background: rgba(255, 255, 255, 0.15);
 }
 .mainarea::-webkit-scrollbar {
-  width: 6px;
+  width: 12px;
 }
 
-.mainarea::-webkit-scrollbar-thumb {
-  background: linear-gradient(
-    180deg,
-    rgba(255, 162, 100, 0.6),
-    rgba(197, 41, 30, 0.5)
-  );
+.mainarea::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.08);
   border-radius: 10px;
 }
 
+.mainarea::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.28);
+  border-radius: 10px;
+  border: 1px solid rgba(0, 0, 0, 0.15);
+  transition: all 0.3s ease;
+}
+
+.mainarea::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.42);
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
 .top-events {
-  display: flex;
-  gap: 1rem;
+    display: grid;
+  grid-template-columns: 1fr auto 1fr;
   align-items: center;
+  gap: 1rem;
+  width: 100%
 }
 
 .location-status {
@@ -528,14 +539,13 @@ a {
 }
 
 .nearby-events-row {
-  margin-inline: 5rem;
+  margin-inline: 1rem;
+  width: 90%;
   display: flex;
   flex-direction: column;
   gap: 1rem;
-  padding: 1rem;
-  background: rgba(255, 255, 255, 0.08);
+
   border-radius: 1rem;
-  border: 1px solid rgba(255, 255, 255, 0.2);
 }
 
 .nearby-events-row h4 {
@@ -547,19 +557,23 @@ a {
 .events-flex-container {
   display: flex;
   gap: 1rem;
-  
+  width: 100%;
   padding-bottom: 0.5rem;
 }
 
 .event-card-small {
+  height: 8rem;
+
   flex: 1;
   padding: 1.5rem;
+  padding-top: 2rem;
+  padding-bottom: 2rem;
   align-items: center;
   justify-content: center;
   background: rgba(255, 255, 255, 0.12);
   backdrop-filter: blur(12px);
   border: 1px solid rgba(255, 255, 255, 0.25);
-  border-radius: 0.8rem;
+  border-radius: 0.4rem;
   cursor: pointer;
   transition: all 0.25s ease;
   display: flex;
@@ -583,7 +597,7 @@ a {
 .event-card-small .date {
   margin: 0;
   font-size: 0.85rem;
-  color: rgba(255, 162, 100, 0.8);
+  color: rgb(96, 168, 250);
 }
 
 .event-card-small .distance {
@@ -601,27 +615,45 @@ a {
 }
 
 .go-map {
-  height: 30rem;
+  position: relative;
+
+  width: 90%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+justify-content: center;
+  gap: 1rem;
+  background-image: url("../assets/mapscreenshot.png");
+  background-size: cover;
+  background-position: center;
+  border-radius: 0.4rem;
+}
+.blurtest{background: rgba(0, 0, 0, 0.39);
+   position: relative;
+  height: 20rem;
   width: 100%;
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 7rem;
+justify-content: center;
   gap: 1rem;
-  background-image: url('../assets/transport.png');
-  background-size: cover;
-  background-position: center;
+  border-radius: 0.4rem;
 }
+.blurtest:hover{
+  background: rgba(0, 0, 0, 0.185);
+transition: all 1.5s ease;
 
-
-
-
-
+}
 .events-soon h4 {
   margin: 1rem 0 0.5rem 0;
   color: rgb(255, 255, 255);
 }
-
+.events-soon {
+  width: 90%;
+  display: flex;
+  flex-direction: column;
+  
+}
 .events-soon ul {
   list-style: none;
   padding: 0;
@@ -682,15 +714,16 @@ a {
 
 .nav-btn-absolute {
   width: 10rem;
-
+  margin-top: 5rem;
+  margin-bottom: 5rem;
   padding: 0.9rem 2rem;
   cursor: pointer;
   transition: all 0.25s ease;
-  background: rgba(255, 255, 255, 0.12);
+  background: rgba(115, 134, 197, 0.507);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
   border: 1px solid rgba(255, 255, 255, 0.25);
-  border-radius: 1rem;
+  border-radius: 0.4rem;
   color: white;
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.25);
   font-family: "Inter", sans-serif;
@@ -698,8 +731,9 @@ a {
 }
 
 .nav-btn-absolute:hover {
-  background: rgba(255, 255, 255, 0.22);
-  transform: translateY(-2px);
+  background: rgba(164, 181, 235, 0.507);
+  transform: scale(1.2);
+  -ms-zoom-animation: all 2s ease;
 }
 
 .nav-btn-absolute:active {
@@ -710,7 +744,13 @@ a {
   width: auto;
   padding: 0.9rem 2rem;
 }
+.submenu-btn-gps {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 7rem;
 
+}
 .submenu-btn:disabled {
   opacity: 0.6;
   cursor: not-allowed;

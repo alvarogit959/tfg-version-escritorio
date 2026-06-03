@@ -759,15 +759,29 @@ h1 {
   cursor: not-allowed;
 }
 .my-events-container::-webkit-scrollbar {
-  width: 6px;
+  width: 8px;
+}
+
+.my-events-container::-webkit-scrollbar-track {
+  background: rgba(99, 102, 241, 0.05);
+  border-radius: 10px;
 }
 
 .my-events-container::-webkit-scrollbar-thumb {
   background: linear-gradient(
     180deg,
-    rgba(255, 162, 100, 0.6),
-    rgba(197, 41, 30, 0.5)
+    rgba(99, 102, 241, 0.6),
+    rgba(168, 85, 247, 0.6)
   );
   border-radius: 10px;
+  border: 2px solid rgba(99, 102, 241, 0.1);
+}
+
+.my-events-container::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(
+    180deg,
+    rgba(99, 102, 241, 0.8),
+    rgba(168, 85, 247, 0.8)
+  );
 }
 </style>

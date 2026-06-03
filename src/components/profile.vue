@@ -299,24 +299,35 @@ export default {
   height: 100%;
   overflow-y: auto;
   padding: 1rem 1.25rem 1.5rem;
-  color: rgb(255, 208, 186);
+  color: rgb(255, 255, 255);
   font-family: "Inter", sans-serif;
   box-sizing: border-box;
   -webkit-app-region: no-drag;
   gap: 1rem;
+  background: linear-gradient(
+    135deg,
+    rgba(255,255,255,0.12),
+    rgba(0, 0, 0, 0.726)
+  );
 }
 
 .profile-container::-webkit-scrollbar {
-  width: 6px;
+  width: 8px;
+}
+
+.profile-container::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 10px;
 }
 
 .profile-container::-webkit-scrollbar-thumb {
-  background: linear-gradient(
-    180deg,
-    rgba(255, 162, 100, 0.6),
-    rgba(197, 41, 30, 0.5)
-  );
+  background: rgba(255, 255, 255, 0.28);
   border-radius: 10px;
+  border: 2px solid rgba(0, 0, 0, 0.15);
+}
+
+.profile-container::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.42);
 }
 
 .notification {
@@ -351,14 +362,14 @@ export default {
   justify-content: center;
   gap: 0.75rem;
   padding: 3rem;
-  color: rgba(255, 208, 186, 0.75);
+  color: rgba(255, 255, 255, 0.75);
 }
 
 .loading-spinner {
   width: 22px;
   height: 22px;
 
-  border-top-color: rgba(255, 149, 100, 1);
+  border-top-color: rgba(255, 255, 255, 0.9);
   border-radius: 50%;
   animation: spin 0.8s linear infinite;
 }
@@ -377,13 +388,11 @@ export default {
 
 
 
-  background: 
-    rgba(30, 18, 45, 0.92) 0%,
-
-  ;
+  background: rgba(255, 255, 255, 0.08);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
-
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.25);
   padding: 1.5rem 1.5rem 1.25rem;
 }
 
@@ -405,18 +414,14 @@ export default {
   border-radius: 50%;
   object-fit: cover;
   display: block;
-  border: 3px solid rgba(20, 20, 40, 0.8);
+  border: 3px solid rgba(255, 255, 255, 0.25);
 }
 
 .avatar-placeholder {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(
-    160deg,
-    rgba(28, 14, 34, 0.6),
-    rgba(197, 41, 30, 0.7)
-  );
+  background: rgba(255, 255, 255, 0.15);
   font-size: 2.6rem;
   font-weight: 700;
   color: rgba(255, 230, 210, 1);
@@ -428,8 +433,8 @@ export default {
   font-weight: 700;
   background: linear-gradient(
     90deg,
-    rgba(255, 230, 200, 1),
-    rgba(255, 149, 100, 1)
+    rgba(255, 255, 255, 1),
+    rgba(210, 210, 210, 1)
   );
   -webkit-background-clip: text;
   background-clip: text;
@@ -439,7 +444,7 @@ export default {
 .email {
   margin: 0 0 0.6rem;
   font-size: 0.95rem;
-  color: rgba(255, 208, 186, 0.8);
+  color: rgba(255, 255, 255, 0.75);
 }
 
 .role-badge {
@@ -449,24 +454,17 @@ export default {
   font-weight: 600;
   text-transform: capitalize;
   border-radius: 0.2rem;
-  background: linear-gradient(
-    90deg,
-    rgba(103, 12, 139, 0.5),
-    rgba(80, 30, 100, 0.4)
-  );
+  background: rgba(255, 255, 255, 0.14);
+  border: 1px solid rgba(255, 255, 255, 0.25);
 
-  color: rgba(255, 220, 255, 0.95);
+  color: rgba(255, 255, 255, 0.95);
 }
 
 .role-badge.admin {
-  background: linear-gradient(
-    90deg,
-    rgba(255, 162, 100, 0.55),
-    rgba(212, 154, 105, 0.7)
-  );
-  border-color: rgba(197, 41, 30, 0.7);
-  color: rgba(30, 10, 5, 0.95);
-  box-shadow: 0 0 12px rgba(255, 102, 0, 0.35);
+  background: rgba(255, 255, 255, 0.24);
+  border-color: rgba(255, 255, 255, 0.45);
+  color: white;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.25);
 }
 
 .stats-row {
@@ -487,7 +485,7 @@ export default {
     rgba(0, 0, 0, 0.25),
     rgba(0, 0, 0, 0.08)
   );
-  border: 1px solid rgba(255, 162, 100, 0.25);
+  border: 1px solid rgba(255, 255, 255, 0.2);
   border-radius: 0.2rem;
 }
 
@@ -496,8 +494,8 @@ export default {
   font-weight: 700;
   background: linear-gradient(
     180deg,
-    rgba(255, 230, 200, 1),
-    rgba(255, 149, 100, 1)
+    rgba(255, 255, 255, 1),
+    rgba(210, 210, 210, 1)
   );
   -webkit-background-clip: text;
   background-clip: text;
@@ -514,17 +512,18 @@ export default {
   font-size: 0.72rem;
   text-transform: uppercase;
   letter-spacing: 0.04em;
-  color: rgba(255, 208, 186, 0.6);
+  color: rgba(255, 255, 255, 0.6);
 }
 
 /* ===== Paneles ===== */
 .panel-card {
   align-self: center;
   width: 80%;
-
+  background: rgba(255, 255, 255, 0.08);
   backdrop-filter: blur(15px);
   -webkit-backdrop-filter: blur(15px);
-
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.25);
   border-radius: 0.2rem;
   padding: 1.25rem 1.35rem;
 
@@ -536,14 +535,14 @@ export default {
   padding-bottom: 0.65rem;
   font-size: 1.2rem;
   font-weight: 700;
-  color: rgba(255, 149, 100, 0.95);
+  color: white;
 
 }
 
 .section-hint {
   margin: -0.5rem 0 1rem;
   font-size: 0.88rem;
-  color: rgba(255, 208, 186, 0.55);
+  color: rgba(255, 255, 255, 0.55);
 }
 
 .profile-form {
@@ -566,7 +565,7 @@ export default {
 .form-group label {
   font-size: 0.85rem;
   font-weight: 600;
-  color: rgba(255, 149, 100, 0.95);
+  color: rgba(255, 255, 255, 0.88);
 }
 
 .form-group input,
@@ -578,22 +577,22 @@ export default {
     rgba(0, 0, 0, 0.08),
     rgba(0, 0, 0, 0.15)
   );
-  border: 1px solid rgba(255, 162, 100, 0.3);
+  border: 1px solid rgba(255, 255, 255, 0.25);
   border-radius: 0.2rem;
-  color: rgb(255, 230, 210);
+  color: white;
   outline: none;
   transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
 .form-group input::placeholder,
 .form-group textarea::placeholder {
-  color: rgba(255, 208, 186, 0.4);
+  color: rgba(255, 255, 255, 0.45);
 }
 
 .form-group input:focus,
 .form-group textarea:focus {
-  border-color: rgba(255, 149, 100, 0.8);
-  box-shadow: 0 0 0 2px rgba(255, 102, 0, 0.2);
+  border-color: rgba(255, 255, 255, 0.6);
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.15);
 }
 
 .save-btn {
@@ -605,19 +604,16 @@ export default {
   border-radius: 0.2rem;
   cursor: pointer;
   transition: all 0.3s ease;
-  background: linear-gradient(
-    135deg,
-    rgb(21, 132, 151),
-    rgba(9, 66, 99, 0.85)
-  );
-  border: 1px solid rgba(70, 107, 230, 0.8);
+  background: rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.25);
   color: rgba(255, 255, 255, 0.95);
-  box-shadow: 0 4px 16px rgba(33, 71, 241, 0.35);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.25);
 }
 
 .save-btn:hover:not(:disabled) {
   transform: translateY(-2px);
-  box-shadow: 0 6px 22px rgba(255, 102, 0, 0.5);
+  background: rgba(255, 255, 255, 0.22);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
   filter: brightness(1.05);
 }
 
@@ -631,7 +627,7 @@ export default {
 .no-events {
   text-align: center;
   padding: 1.5rem;
-  color: rgba(255, 208, 186, 0.55);
+  color: rgba(255, 255, 255, 0.55);
 }
 
 .no-events .hint {
@@ -657,7 +653,7 @@ export default {
   padding: 1rem 1.15rem;
   background: linear-gradient(
     90deg,
-    rgba(255, 162, 100, 0.1),
+    rgba(255, 255, 255, 0.1),
     rgba(255, 255, 255, 0.04)
   );
 
@@ -667,26 +663,26 @@ export default {
 }
 
 .joined-event-item:hover {
-  border-color: rgba(255, 162, 100, 0.45);
+  border-color: rgba(255, 255, 255, 0.4);
   transform: translateX(4px);
 }
 
 .event-info h3 {
   margin: 0 0 0.25rem;
   font-size: 1.05rem;
-  color: rgb(255, 230, 210);
+  color: white;
 }
 
 .event-date {
   margin: 0.1rem 0;
   font-size: 0.88rem;
-  color: rgba(255, 208, 186, 0.8);
+  color: rgba(255, 255, 255, 0.8);
 }
 
 .event-location {
   margin: 0.1rem 0 0;
   font-size: 0.82rem;
-  color: rgba(255, 149, 100, 0.85);
+  color: rgba(255, 255, 255, 0.72);
 }
 
 .leave-btn {
@@ -695,25 +691,17 @@ export default {
   font-family: "Inter", sans-serif;
   font-size: 0.85rem;
   font-weight: 500;
-  background: linear-gradient(
-    135deg,
-    rgba(0, 0, 0, 0.6),
-    rgba(0, 0, 0, 0.5)
-  );
-  border: 1px solid rgba(255, 30, 0, 0.568);
+  background: rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.25);
   border-radius: 0.1rem;
-  color: rgb(255, 190, 178);
+  color: white;
   cursor: pointer;
   transition: all 0.25s ease;
 }
 
 .leave-btn:hover:not(:disabled) {
-  background: linear-gradient(
-    135deg,
-    rgba(120, 30, 30, 0.7),
-    rgba(220, 50, 40, 0.6)
-  );
-  box-shadow: 0 0 10px rgba(197, 41, 30, 0.4);
+  background: rgba(255, 255, 255, 0.22);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.25);
 }
 
 .leave-btn:disabled {

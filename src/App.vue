@@ -3,7 +3,7 @@
     <div class="buttoncontanier">
       <button class="defaultbutton" @click="minimizeWindow">_</button>
       <button class="defaultbutton" @click="toggleMaximize">□</button>
-      <button class="defaultbutton" @click="closeWindow">X</button>
+      <button class="defaultbutton" @click="closeWindow">x</button>
     </div>
   </div>
 
@@ -38,7 +38,17 @@ export default {
 </script>
 
 <style>
-@import url("https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@100;300;400;500;600;700;800;900&display=swap");
+
+* {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+  -webkit-text-size-adjust: 100%;
+  letter-spacing: -0.2px;
+  line-height: 1.5;
+}
 
 html,
 body {
@@ -52,14 +62,15 @@ body {
 }
 
 #app {
-  padding-top: 3.5rem;
+  margin-top: 2rem;
+
   display: flex;
   flex-direction: column;
   align-items: center;
-  font-family: "Inter", sans-serif;
+  font-family: 'Inter', sans-serif;
   justify-content: flex-start;
   text-align: center;
-  height: calc(100vh - 3.5rem);
+  height: calc(100vh);
   width: 100vw;
   background: linear-gradient(135deg, rgba(10, 10, 20, 1), rgba(20, 20, 40, 1));
   border-radius: 0;
@@ -72,7 +83,7 @@ body {
   top: 0;
   left: 0;
   right: 0;
-  height: 3.5rem;
+  height: 2rem;
   -webkit-app-region: drag;
   z-index: 9999;
   display: flex;
@@ -81,33 +92,35 @@ body {
   user-select: none;
   background: rgba(20, 20, 40, 0.95);
   backdrop-filter: blur(15px);
-  border-bottom: 1px solid rgba(100, 200, 255, 0.2);
+  border-bottom: 1px solid rgba(100, 150, 255, 0.3);
 }
 
 /* Buttons must NOT be draggable */
 .buttoncontanier {
   position: relative;
-  right: 1rem;
+  border-radius: 0.3rem;
   display: flex;
   -webkit-app-region: no-drag;
+  column-gap: 0.5rem;
+  
 }
 
 .defaultbutton {
-  font-family: "Inter", sans-serif;
+  font-family: 'Inter', sans-serif;
   width: 2rem;
   height: 2rem;
   margin: 0.1rem;
   cursor: pointer;
   transition: all 0.25s ease;
-  background: rgba(255, 255, 255, 0.12);
-  backdrop-filter: blur(12px);
-  border: 1px solid rgba(255, 255, 255, 0.25);
-  border-radius: 0.5rem;
+  background: rgba(20, 20, 40, 0);
+
+  border: 1px solid rgba(0, 0, 0, 0);
+  font-size: 1rem;
   color: white;
 }
 
 .defaultbutton:hover {
-  background: rgba(255, 255, 255, 0.22);
+  background: rgba(168, 85, 247, 0.3);
   transform: translateY(-2px);
 }
 
