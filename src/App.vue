@@ -52,30 +52,33 @@ export default {
 
 html,
 body {
-  height: 100vh;
+overflow: hidden;
+height: 100vh;
   width: 100vw;
   padding: 0;
   margin: 0;
   background: transparent;
-  overflow: hidden;
+  overflow-x: hidden;
   -webkit-app-region: no-drag;
 }
 
 #app {
-  margin-top: 2rem;
-
+  
+  padding-top: 2rem;
+  margin-top: 0;
+  width: 100vw;
+  height: 100vh-2rem;
   display: flex;
   flex-direction: column;
   align-items: center;
   font-family: 'Inter', sans-serif;
   justify-content: flex-start;
   text-align: center;
-  height: calc(100vh);
-  width: 100vw;
+
+
   background: linear-gradient(135deg, rgba(10, 10, 20, 1), rgba(20, 20, 40, 1));
   border-radius: 0;
   -webkit-app-region: no-drag;
-  overflow: hidden;
 }
 
 .titlebar {
@@ -91,7 +94,6 @@ body {
   align-items: center;
   user-select: none;
   background: rgba(20, 20, 40, 0.95);
-  backdrop-filter: blur(15px);
   border-bottom: 1px solid rgba(100, 150, 255, 0.3);
 }
 
@@ -127,4 +129,12 @@ body {
 .defaultbutton:active {
   transform: translateY(0);
 }
+.main-content,
+.view-container,
+.chat-panel,
+.chat-conversation,
+.chat-messages {
+  min-height: 0;
+}
+
 </style>
