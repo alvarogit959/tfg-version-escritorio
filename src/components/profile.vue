@@ -718,10 +718,15 @@ export default {
   cursor: not-allowed;
 }
 
-@media (max-width: 600px) {
+@media (max-width: 900px) {
+  .profile-container {
+  height: calc(100vh - 2rem);
+    max-height: calc(100vh - 2rem);
+  }
   .profile-header {
     flex-direction: column;
     text-align: center;
+
   }
 
   .header-info h1 {

@@ -928,7 +928,7 @@ export default {
 
 .profile-btn {
   font-family: "Inter", sans-serif;
-  padding: 0.6rem 1.2rem;
+  padding: 0.25rem 0.5rem;
   background: rgba(103, 12, 139, 0.377);
   border: 1px solid rgba(171, 87, 226, 0.3);
   border-radius: 0.2rem;
@@ -1077,12 +1077,14 @@ export default {
 
 /* ===== RESPONSIVE ===== */
 @media (max-width: 1024px) {
+
   .navbar-content {
     gap: 1rem;
   }
 
   .navbar-logo h2 {
-    font-size: 1.1rem;
+    font-size: 0.8rem;
+    margin-left: -0.5rem;
   }
 
   .nav-menu {

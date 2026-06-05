@@ -121,7 +121,7 @@ export default {
   data() {
     return {
       events: [],
-      userLocation: { lat: 40.4168, lng: -3.7038 }, // Madrid by default
+      userLocation: { lat: 40.4168, lng: -3.7038 }, //Madrid, para probar y luego cangas?
       locating: false,
       notification: "",
       notificationClass: "",
@@ -553,10 +553,12 @@ a {
 .nearby-events-row,
 .go-map,
 .events-soon {
-  width: 100%;
+  width: 100vw;
   max-width: 100%;
   box-sizing: border-box;
-  
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 }
 .events-soon {
  padding-bottom: 4.5rem;
@@ -572,10 +574,12 @@ a {
 
 .events-flex-container {
   display: flex;
+  justify-content: center;
+  align-items: center;
   gap: 1rem;
   overflow-x: auto;
   padding-bottom: 0.5rem;
-  width: 100%;
+  width: 95%;
 }
 
 .event-card-small {
@@ -767,10 +771,17 @@ transition: all 1.5s ease;
   justify-content: center;
   width: 7rem;
   margin-bottom: 0.6rem;
+  margin-left: 6%;
 
 }
 .submenu-btn:disabled {
   opacity: 0.6;
   cursor: not-allowed;
+}
+@media (max-width: 900px) {
+  .mainarea {
+    height: calc(100vh - 2rem);
+    max-height: calc(100vh - 2rem);
+  }
 }
 </style>

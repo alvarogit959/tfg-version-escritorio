@@ -306,8 +306,13 @@ export default {
 
 <style scoped>
 .user-profile-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
   width: 100%;
-  height: 100%;
+  height: calc(100vh - 2rem - 60px);
+  max-height: calc(100vh - 2rem - 60px);
   overflow-y: auto;
   padding: 1.5rem 2rem;
   color: white;

@@ -1,25 +1,29 @@
 <template>
   <div class="events-container">
-    <div class="content-wrapper">
-      <!-- Lista de eventos (pantalla completa hasta que se elige uno) -->
-      <div class="events-list-section">
-        <div class="list-header">
-          <h2>Eventos</h2>
-          <button
-            v-if="currentUser"
-            type="button"
-            class="create-event-btn"
-            @click="$emit('create-event')"
-          >
-            + Crear evento
-          </button>
-        </div>
+    <div class="page-header">
+      <div class="page-heading">  
+      </div>
+      <button
+        v-if="currentUser"
+        type="button"
+        class="btn-primary"
+        @click="$emit('create-event')"
+      >
+        + Crear evento
+      </button>
+    </div>
 
+    <p v-if="notification" class="notification" :class="notificationClass">
+      {{ notification }}
+    </p>
+
+    <div class="content-wrapper">
+      <section class="panel-card filters-panel">
         <div class="events-controls">
           <div class="location-controls">
             <button
               type="button"
-              class="control-btn"
+              class="btn-primary btn-sm"
               :disabled="locating"
               @click="activateLocation"
             >
@@ -38,7 +42,7 @@
               v-for="type in eventTypeFilters"
               :key="type.value"
               type="button"
-              class="type-filter-btn"
+              class="btn-ghost btn-sm type-filter-btn"
               :class="{ active: selectedTypes.includes(type.value) }"
               @click="toggleTypeFilter(type.value)"
             >
@@ -46,18 +50,43 @@
             </button>
           </div>
 
-          <div class="date-controls">
-            <label>
-              <span>Desde</span>
-              <input v-model="dateFrom" type="date">
-            </label>
-            <label>
-              <span>Hasta</span>
-              <input v-model="dateTo" type="date">
-            </label>
+          <div class="date-filter">
+            <div class="date-picker-field">
+              <button
+                type="button"
+                class="date-picker-btn"
+                @click="openDatePicker('dateFromInput')"
+              >
+                <span>Desde</span>
+                <strong v-if="dateFrom">{{ formatDateFilter(dateFrom) }}</strong>
+              </button>
+              <input
+                ref="dateFromInput"
+                v-model="dateFrom"
+                class="date-picker-native"
+                type="date"
+              >
+            </div>
+            <span class="date-filter-arrow">→</span>
+            <div class="date-picker-field">
+              <button
+                type="button"
+                class="date-picker-btn"
+                @click="openDatePicker('dateToInput')"
+              >
+                <span>Hasta</span>
+                <strong v-if="dateTo">{{ formatDateFilter(dateTo) }}</strong>
+              </button>
+              <input
+                ref="dateToInput"
+                v-model="dateTo"
+                class="date-picker-native"
+                type="date"
+              >
+            </div>
             <button
               type="button"
-              class="clear-date-btn"
+              class="date-clear-btn"
               :disabled="!dateFrom && !dateTo"
               @click="clearDateFilters"
             >
@@ -69,7 +98,7 @@
             <span>Ordenar</span>
             <button
               type="button"
-              class="sort-btn"
+              class="btn-ghost btn-sm sort-btn"
               :class="{ active: sortMode === 'date' }"
               @click="setSortMode('date')"
             >
@@ -77,7 +106,7 @@
             </button>
             <button
               type="button"
-              class="sort-btn"
+              class="btn-ghost btn-sm sort-btn"
               :class="{ active: sortMode === 'distance' }"
               :disabled="locating"
               @click="setSortMode('distance')"
@@ -86,10 +115,9 @@
             </button>
           </div>
         </div>
+      </section>
 
-    <!--    <p v-if="notification" class="notification" :class="notificationClass">
-          {{ notification }}
-        </p>-->
+      <section class="panel-card events-list-panel">
 
         <div class="events-list">
           <div
@@ -119,13 +147,13 @@
             <p>No hay eventos disponibles con estos filtros</p>
           </div>
         </div>
-      </div>
+      </section>
 
       <!-- Detalle a pantalla completa sobre la lista -->
       <Transition name="detail-slide">
         <div v-if="selectedEvent" class="event-details-overlay">
           <div class="details-toolbar">
-            <button type="button" class="back-btn" @click="closeDetail">
+            <button type="button" class="btn-primary back-btn" @click="closeDetail">
               ← Volver
             </button>
           </div>
@@ -250,7 +278,8 @@
 
                 <div class="action-buttons">
                   <button
-                    class="attend-btn"
+                    type="button"
+                    class="btn-primary attend-btn"
                     :disabled="attending || isAttendingSelected"
                     @click="attendEvent"
                   >
@@ -565,6 +594,37 @@ export default {
       this.dateTo = "";
     },
 
+    /**
+     * Abre el selector nativo de fecha asociado al ref indicado.
+     * @param {string} refName - Nombre del ref del input type="date"
+     */
+    openDatePicker(refName) {
+      const picker = this.$refs[refName];
+      if (!picker) return;
+
+      if (typeof picker.showPicker === "function") {
+        picker.showPicker();
+        return;
+      }
+
+      picker.focus();
+      picker.click();
+    },
+
+    /**
+     * Formatea una fecha ISO (yyyy-mm-dd) para mostrarla en el botón del filtro.
+     * @param {string} date - Fecha en formato de input date
+     * @returns {string} Texto legible en locale es-ES
+     */
+    formatDateFilter(date) {
+      if (!date) return "Fecha";
+      return new Date(`${date}T00:00:00`).toLocaleDateString("es-ES", {
+        day: "2-digit",
+        month: "2-digit",
+        year: "numeric",
+      });
+    },
+
     eventDistanceKm(event) {
       const distance = this.getEventDistanceValue(event);
       if (!Number.isFinite(distance)) return null;
@@ -734,86 +794,178 @@ export default {
 
 <style scoped>
 .events-container {
+  width: 100%;
+  height: calc(100vh - 2rem - 60px);
+  max-height: calc(100vh - 2rem - 60px);
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 1rem;
+  color: white;
+  font-family: "Inter", sans-serif;
+  box-sizing: border-box;
+  -webkit-app-region: no-drag;
+
   display: flex;
   flex-direction: column;
-  width: 100%;
-  height: 100%;
-  color: rgb(255, 255, 255);
-  padding: 0;
-  -webkit-app-region: no-drag;
-  overflow: hidden;
+  gap: 1rem;
+
+  background: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.12),
+    rgba(0, 0, 0, 0.726)
+  );
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+
+  border: 3px solid rgba(175, 175, 175, 0.2);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.25);
+}
+
+.events-container::-webkit-scrollbar {
+  width: 12px;
+}
+
+.events-container::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 10px;
+}
+
+.events-container::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.28);
+  border-radius: 10px;
+  border: 1px solid rgba(0, 0, 0, 0.15);
+}
+
+.events-container::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.42);
+}
+
+.page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.page-heading {
+  flex: 1;
+  min-width: 200px;
+}
+
+.page-title {
+  margin: 0;
+  font-size: 1.7rem;
+  color: white;
+}
+
+.page-subtitle {
+  margin: 0.35rem 0 0;
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 0.9rem;
 }
 
 .content-wrapper {
   position: relative;
   flex: 1;
-  width: 100%;
-  height: 100%;
-  overflow: hidden;
-}
-
-/* ===== Lista (única vista visible sin selección) ===== */
-.events-list-section {
+  min-height: 0;
   display: flex;
   flex-direction: column;
-  height: 100%;
-  background: rgba(255, 255, 255, 0.08);
-  backdrop-filter: blur(15px);
-  -webkit-backdrop-filter: blur(15px);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  border-radius: 0.2rem;
-  padding: 1rem 1.2rem;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
-  overflow: hidden;
+  gap: 1rem;
 }
 
-.list-header {
+.panel-card {
+  background: rgba(255, 255, 255, 0.12);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+
+  min-height: 4rem;
+  height: auto;
+
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  border-radius: 0.8rem;
+
+  padding: 0.8rem 1rem;
+
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.25);
+}
+
+.events-list-panel {
+  flex: 1;
+  min-height: 0;
   display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 0.8rem;
-  margin-bottom: 0.75rem;
-  padding-bottom: 0.75rem;
+  flex-direction: column;
+}
+
+.section-title {
+  margin: 0 0 0.85rem;
+  font-size: 1.05rem;
+  color: white;
   border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+  padding-bottom: 0.5rem;
 }
 
-.list-header h2 {
-  margin: 0;
-  font-size: 1.3rem;
-  font-family: "Inter", sans-serif;
-  font-weight: bold;
-  color: rgb(255, 255, 255);
+.btn-primary,
+.btn-ghost {
+  font-family: inherit;
+  padding: 0.5rem 1rem;
+  cursor: pointer;
+  transition: all 0.25s ease;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-radius: 0.6rem;
+  color: white;
 }
 
-.create-event-btn {
-  font-family: "Inter", sans-serif;
-  padding: 0.55rem 1.1rem;
-  font-size: 0.85rem;
+.btn-primary {
   background: rgba(255, 255, 255, 0.12);
   border: 1px solid rgba(255, 255, 255, 0.25);
-  color: white;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  font-weight: 500;
 }
 
-.create-event-btn:hover {
+.btn-primary:hover:not(:disabled) {
   background: rgba(255, 255, 255, 0.22);
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.25);
   transform: translateY(-2px);
 }
 
-.events-controls {
-  display: grid;
-  grid-template-columns: minmax(170px, auto) 1fr minmax(280px, auto) minmax(150px, auto);
-  gap: 0.75rem;
-  align-items: center;
-  margin-bottom: 0.75rem;
+.btn-primary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
 }
 
+.btn-ghost {
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.btn-ghost:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.18);
+}
+
+.btn-ghost:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.btn-sm {
+  padding: 0.35rem 0.75rem;
+  font-size: 0.82rem;
+}
+
+.type-filter-btn.active,
+.sort-btn.active {
+  background: rgba(255, 255, 255, 0.22);
+  border-color: rgba(255, 255, 255, 0.45);
+}
+
+.events-controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  align-items: center;
+}
 .location-controls,
 .filter-controls,
-.date-controls,
 .sort-control {
   display: flex;
   align-items: center;
@@ -824,69 +976,128 @@ export default {
   flex-wrap: wrap;
 }
 
-.control-btn,
-.type-filter-btn,
-.sort-btn,
-.clear-date-btn,
-.date-controls input {
-  font-family: "Inter", sans-serif;
-  border-radius: 0.2rem;
-  border: 1px solid rgba(255, 255, 255, 0.25);
-  background: rgba(255, 255, 255, 0.08);
-  color: white;
-}
-
-.control-btn,
-.type-filter-btn,
-.sort-btn,
-.clear-date-btn {
-  padding: 0.48rem 0.75rem;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  white-space: nowrap;
-}
-
-.control-btn:hover,
-.type-filter-btn:hover,
-.sort-btn:hover:not(:disabled),
-.clear-date-btn:hover:not(:disabled) {
-  background: rgba(255, 255, 255, 0.22);
-  border-color: rgba(255, 255, 255, 0.4);
-}
-
-.type-filter-btn.active,
-.sort-btn.active {
-  background: rgba(255, 255, 255, 0.25);
-  border-color: rgba(255, 255, 255, 0.5);
-  color: white;
-  font-weight: 600;
-}
-
-.control-btn:disabled,
-.sort-btn:disabled,
-.clear-date-btn:disabled {
-  opacity: 0.55;
-  cursor: not-allowed;
-}
-
-.date-controls {
-  justify-content: center;
-  flex-wrap: wrap;
-}
-
-.date-controls label {
+/* Filtro de fechas (mismo aspecto que map.vue) */
+.date-filter {
   display: flex;
   align-items: center;
   gap: 0.35rem;
-  color: rgba(255, 255, 255, 0.75);
-  font-size: 0.8rem;
+  flex: 0 1 auto;
+  max-width: 100%;
+  background: rgba(255, 255, 255, 0.08);
+  padding: 0.25rem 0.45rem;
+  border-radius: 0.2rem;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.25);
+  color: white;
 }
 
-.date-controls input {
-  height: 2.05rem;
-  padding: 0 0.45rem;
-  color-scheme: dark;
-  outline: none;
+.date-filter label {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  cursor: pointer;
+}
+
+.date-filter label span {
+  color: white;
+  font-size: 0.85rem;
+  opacity: 0.8;
+  font-family: "Inter", sans-serif;
+  white-space: nowrap;
+}
+
+.date-filter-arrow,
+.date-filter > span:not(.date-picker-field span) {
+  color: white;
+  font-size: 0.82rem;
+  white-space: nowrap;
+}
+
+.date-clear-btn {
+  width: auto;
+  padding: 0.43rem 0.55rem;
+  border-radius: 0.3rem;
+  font-size: 0.74rem;
+  white-space: nowrap;
+  background: rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  color: white;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-family: inherit;
+}
+
+.date-clear-btn:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.22);
+  transform: translateY(-1px);
+}
+
+.date-clear-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.date-picker-field {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.date-picker-field span,
+.date-filter-arrow {
+  color: white;
+  font-family: "Inter", sans-serif;
+  font-size: 0.82rem;
+  white-space: nowrap;
+}
+
+.date-picker-btn {
+  width: 5.4rem;
+  min-width: 0;
+  min-height: 2.15rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 0.05rem;
+  padding: 0.28rem 0.45rem;
+  border-radius: 0.3rem;
+  font-size: 0.78rem;
+  background: rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  color: rgb(255, 255, 255);
+  cursor: pointer;
+  box-shadow: none;
+  font-family: inherit;
+  transition: all 0.2s ease;
+}
+
+.date-picker-btn span {
+  font-size: 0.78rem;
+  line-height: 1;
+}
+
+.date-picker-btn strong {
+  font-size: 0.65rem;
+  line-height: 1;
+  font-weight: 600;
+  color: #55c7ff;
+}
+
+.date-picker-btn:hover {
+  background: rgba(255, 255, 255, 0.22);
+  transform: translateY(-1px);
+}
+
+.date-filter .date-picker-native[type="date"] {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  padding: 0;
+  border: 0;
+  opacity: 0;
+  pointer-events: none;
 }
 
 .location-status {
@@ -906,43 +1117,32 @@ export default {
 }
 
 .notification {
-  padding: 0.65rem 0.9rem;
-  border-radius: 0.2rem;
-  margin-bottom: 0.75rem;
-  font-size: 0.9rem;
+  padding: 0.8rem 1rem;
+  border-radius: 0.8rem;
   border: 1px solid rgba(255, 255, 255, 0.25);
+  margin: 0;
 }
 
 .notification.success {
-  background: rgba(76, 175, 80, 0.25);
-  color: #b8f5b8;
+  background: rgba(76, 175, 80, 0.15);
 }
 
 .notification.error {
-  background: rgba(244, 67, 54, 0.25);
-  color: #ffab91;
+  background: rgba(244, 67, 54, 0.15);
+}
+
+.notification.info {
+  background: rgba(255, 255, 255, 0.08);
 }
 
 .events-list {
   display: flex;
   flex-direction: column;
-  gap: 0.65rem;
+  gap: 0.75rem;
   overflow-y: auto;
   flex: 1;
-  padding-right: 0.35rem;
-    display: flex;
-  flex-direction: column;
-  row-gap: 0.5rem;
-
-  height: 100vh; 
-  max-height: 100vh; 
-  overflow-y: auto; 
-  overflow-x: hidden; 
-  align-items: center;
-  justify-content: flex-start;
-  color: rgb(255, 255, 255);
-  -webkit-app-region: no-drag;
-  box-sizing: border-box; 
+  min-height: 0;
+  padding-right: 0.25rem;
 }
 
 .events-list::-webkit-scrollbar {
@@ -965,18 +1165,18 @@ export default {
 }
 
 .event-card {
-  width: 96%;
-  font-family: "Inter", sans-serif;
-  background: rgba(255, 255, 255, 0.08);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  border-radius: 0.2rem;
-  padding: 1rem;
+  font-family: inherit;
+  padding: 0.9rem 1rem;
+  background: rgba(255, 255, 255, 0.12);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  border-radius: 0.8rem;
   cursor: pointer;
-  transition: all 0.3s ease;
+  transition: all 0.25s ease;
 }
 
 .event-card:hover {
-  background: rgba(255, 255, 255, 0.16);
+  background: rgba(255, 255, 255, 0.18);
   border-color: rgba(255, 255, 255, 0.4);
   transform: translateY(-2px);
 }
@@ -1052,18 +1252,21 @@ export default {
   font-style: italic;
 }
 
-/* ===== Detalle a pantalla completa ===== */
 .event-details-overlay {
   position: absolute;
   inset: 0;
   z-index: 20;
   display: flex;
   flex-direction: column;
-  background: rgba(0, 0, 0, 0.82);
+  background: linear-gradient(
+    135deg,
+    rgb(54, 54, 54),
+    rgb(0, 0, 0)
+  );
   backdrop-filter: blur(18px);
   -webkit-backdrop-filter: blur(18px);
   border: 1px solid rgba(255, 255, 255, 0.25);
-  border-radius: 0.2rem;
+  border-radius: 0.8rem;
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
   overflow: hidden;
 }
@@ -1076,22 +1279,7 @@ export default {
 }
 
 .back-btn {
-  font-family: "Inter", sans-serif;
-  padding: 0.55rem 1.2rem;
-  background: rgba(255, 255, 255, 0.1);
-  border: 1px solid rgba(255, 255, 255, 0.25);
-  border-radius: 0.2rem;
-  color: white;
-  cursor: pointer;
-  transition: all 0.3s ease;
   font-size: 0.9rem;
-  font-weight: 500;
-}
-
-.back-btn:hover {
-  background: rgba(255, 255, 255, 0.22);
-  border-color: rgba(255, 255, 255, 0.4);
-  color: white;
 }
 
 .details-scroll {
@@ -1130,8 +1318,8 @@ export default {
 .details-content h1 {
   margin: 0;
   font-size: 1.65rem;
-  font-family: "Inter", sans-serif;
-  color: rgba(255, 149, 100, 0.95);
+  font-family: inherit;
+  color: white;
   flex: 1;
   min-width: 200px;
 }
@@ -1148,8 +1336,8 @@ export default {
   display: block;
   font-size: 0.85rem;
   font-weight: 600;
-  font-family: "Inter", sans-serif;
-  color: rgba(255, 149, 100, 0.95);
+  font-family: inherit;
+  color: rgba(255, 255, 255, 0.88);
   margin-bottom: 0.45rem;
 }
 
@@ -1166,9 +1354,9 @@ export default {
 .event-image {
   max-width: 220px;
   max-height: 220px;
-  border-radius: 0.2rem;
+  border-radius: 0.6rem;
   object-fit: cover;
-  border: 1px solid rgba(255, 162, 100, 0.35);
+  border: 1px solid rgba(255, 255, 255, 0.25);
 }
 
 .event-info {
@@ -1178,30 +1366,30 @@ export default {
 }
 
 .info-group {
-  background: rgba(255, 255, 255, 0.06);
-  border-left: 3px solid rgba(255, 149, 100, 0.7);
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.2);
   padding: 0.85rem 1rem;
-  border-radius: 0.2rem;
+  border-radius: 0.6rem;
 }
 
 .info-group label {
   display: block;
   font-size: 0.85rem;
   font-weight: 600;
-  font-family: "Inter", sans-serif;
-  color: rgba(255, 149, 100, 0.95);
+  font-family: inherit;
+  color: rgba(255, 255, 255, 0.88);
   margin-bottom: 0.35rem;
 }
 
 .info-group p {
   margin: 0;
-  color: rgba(255, 230, 210, 0.95);
+  color: rgba(255, 255, 255, 0.85);
   line-height: 1.5;
 }
 
 .coordinates {
   font-size: 0.85rem;
-  color: rgba(255, 208, 186, 0.65);
+  color: rgba(255, 255, 255, 0.55);
   margin-top: 0.3rem;
 }
 
@@ -1213,11 +1401,11 @@ export default {
 }
 
 .attendee-badge {
-  background: rgba(103, 12, 139, 0.35);
-  border: 1px solid rgba(171, 87, 226, 0.4);
-  color: rgba(255, 220, 255, 0.95);
+  background: rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  color: rgba(255, 255, 255, 0.95);
   padding: 0.3rem 0.65rem;
-  border-radius: 0.2rem;
+  border-radius: 0.5rem;
   font-size: 0.82rem;
 }
 
@@ -1233,14 +1421,10 @@ export default {
   align-items: center;
   gap: 0.4rem;
   padding: 0.35rem 0.7rem;
-  background: linear-gradient(
-    90deg,
-    rgba(255, 162, 100, 0.2),
-    rgba(255, 162, 100, 0.08)
-  );
-  border: 1px solid rgba(255, 162, 100, 0.45);
-  border-radius: 0.2rem;
-  color: rgb(255, 230, 210);
+  background: rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  border-radius: 0.5rem;
+  color: white;
   cursor: pointer;
   font-family: inherit;
   font-size: 0.82rem;
@@ -1248,17 +1432,13 @@ export default {
 }
 
 .moderator-badge:hover {
-  background: rgba(255, 162, 100, 0.28);
+  background: rgba(255, 255, 255, 0.22);
   transform: translateY(-1px);
 }
 
 .moderator-badge.is-admin {
   border-color: rgba(255, 193, 7, 0.55);
-  background: linear-gradient(
-    90deg,
-    rgba(255, 193, 7, 0.25),
-    rgba(255, 162, 100, 0.12)
-  );
+  background: rgba(255, 193, 7, 0.15);
 }
 
 .mod-name {
@@ -1276,14 +1456,14 @@ export default {
 }
 
 .moderator-badge.is-admin .mod-role {
-  color: rgba(255, 220, 120, 1);
+  color: rgba(255, 224, 130, 1);
 }
 
 .attendees-loading,
 .no-attendees {
   margin: 0.25rem 0 0;
   font-size: 0.88rem;
-  color: rgba(255, 208, 186, 0.55);
+  color: rgba(255, 255, 255, 0.55);
   font-style: italic;
 }
 
@@ -1295,30 +1475,8 @@ export default {
   width: 100%;
   max-width: 320px;
   padding: 0.85rem 1.5rem;
-  font-family: "Inter", sans-serif;
-  border-radius: 0.2rem;
-  cursor: pointer;
-  transition: all 0.3s ease;
   font-size: 0.95rem;
   font-weight: 600;
-  background: rgba(212, 154, 105, 0.9);
-  border: 1px solid rgba(197, 41, 30, 0.8);
-  color: rgba(0, 0, 0, 0.9);
-}
-
-.attend-btn:hover:not(:disabled) {
-  background: rgba(255, 162, 100, 1);
-  box-shadow: 0 0 14px rgba(255, 102, 0, 0.45);
-  transform: translateY(-2px);
-}
-
-.attend-btn:disabled {
-  opacity: 0.55;
-  cursor: not-allowed;
-  transform: none;
-  background: rgba(255, 255, 255, 0.12);
-  border-color: rgba(255, 162, 100, 0.25);
-  color: rgba(255, 208, 186, 0.7);
 }
 
 /* Transición al abrir detalle */
@@ -1335,11 +1493,35 @@ export default {
 
 @media (max-width: 900px) {
   .events-controls {
-    grid-template-columns: 1fr;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  align-items: center;
+}
+  .events-container {
+    height: calc(100vh - 2rem);
+    max-height: calc(100vh - 2rem);
+  }
+  .location-controls,
+  .filter-controls,
+  .date-filter,
+  .sort-control {
+    flex-shrink: 0;
   }
 
   .sort-control {
     justify-content: flex-start;
   }
+
+  .page-header {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .page-header .btn-primary {
+    width: 100%;
+    text-align: center;
+  }
 }
+
 </style>

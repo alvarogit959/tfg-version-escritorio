@@ -96,6 +96,13 @@ height: 100vh;
   background: rgba(20, 20, 40, 0.95);
   border-bottom: 1px solid rgba(100, 150, 255, 0.3);
 }
+@media (max-width: 768px) {
+  .titlebar {
+    display: none;
+  }
+  #app {padding-top: 0rem;
+  padding-bottom: 0rem;}
+}
 
 /* Buttons must NOT be draggable */
 .buttoncontanier {
