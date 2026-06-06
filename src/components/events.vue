@@ -149,7 +149,7 @@
         </div>
       </section>
 
-      <!-- Detalle a pantalla completa sobre la lista -->
+      <!--OVERLAY EN VEZ DE OTRA VISTA   =========================================================                                                             -->
       <Transition name="detail-slide">
         <div v-if="selectedEvent" class="event-details-overlay">
           <div class="details-toolbar">
@@ -166,49 +166,45 @@
                   {{ selectedEvent.type }}
                 </span>
               </div>
+<div class="info-container">
+              <div class="poster-container">
+            <img
+              :src="`http://localhost:5000${selectedEvent.image}`"
+              class="event-image"
+              alt="Poster"
+            />
+          </div>
+          <!-- INFORMACIÓN DEL EVENTO -->
 
-              <div
-                v-if="selectedEvent.images && selectedEvent.images.length > 0"
-                class="images-gallery"
-              >
-                <div class="images-container">
-                  <img
-                    v-for="(image, index) in selectedEvent.images"
-                    :key="index"
-                    :src="image"
-                    :alt="`Evento ${index + 1}`"
-                    class="event-image"
-                  />
-                </div>
-              </div>
-
+<!-- DESCRIPCIÓN -->
+              <div class="event-info">
+           <!-- MAPA-->
               <div
                 v-if="selectedEvent.location && selectedEvent.location.length > 0"
                 class="event-map-block"
               >
-                <label class="map-label">Ubicación en el mapa</label>
+                <!--<label class="map-label">Ubicación en el mapa</label>-->
                 <EventMiniMap
                   :key="'map-' + eventKey(selectedEvent)"
                   :event="selectedEvent"
                 />
               </div>
 
-              <div class="event-info">
+
                 <div class="info-group">
                   <label>Descripción</label>
                   <p>{{ selectedEvent.description }}</p>
                 </div>
-
+<!-- FECHAS -->
                 <div class="info-group">
                   <label>Fecha inicio</label>
                   <p>{{ formatDateFull(selectedEvent.start) }}</p>
                 </div>
-
                 <div class="info-group">
                   <label>Fecha fin</label>
                   <p>{{ formatDateFull(selectedEvent.end) }}</p>
                 </div>
-
+<!-- UBICACIÓN -->
                 <div
                   v-if="selectedEvent.location && selectedEvent.location.length > 0"
                   class="info-group"
@@ -220,7 +216,7 @@
                     {{ selectedEvent.location[0].longitude }}
                   </p>
                 </div>
-
+<!-- ORGANIZADORES -->
                 <div class="info-group">
                   <label>
                     Organizadores
@@ -275,7 +271,7 @@
                   </div>
                   <p v-else class="no-attendees">Nadie apuntado aún</p>
                 </div>
-
+<!-- ACCIONES -->
                 <div class="action-buttons">
                   <button
                     type="button"
@@ -292,7 +288,9 @@
                     }}
                   </button>
                 </div>
+
               </div>
+</div>
             </div>
           </div>
         </div>
@@ -442,13 +440,12 @@ export default {
   } catch (error) {
     console.warn("GPS falló:", error);
 
-    //fallback sin API externa
     const location = {
       lat: 42.2406,
       lng: -8.7823
     };
 
-    this.setUserLocation(location, "Ubicación aproximada (Cangas)");
+    this.setUserLocation(location);
   } finally {
     this.locating = false;
   }
@@ -799,7 +796,7 @@ export default {
   max-height: calc(100vh - 2rem - 60px);
   overflow-y: auto;
   overflow-x: hidden;
-  padding: 1rem;
+  padding: 0.5rem;
   color: white;
   font-family: "Inter", sans-serif;
   box-sizing: border-box;
@@ -807,7 +804,7 @@ export default {
 
   display: flex;
   flex-direction: column;
-  gap: 1rem;
+  gap: 0.5rem;
 
   background: linear-gradient(
     135deg,
@@ -844,7 +841,6 @@ export default {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
-  gap: 1rem;
   flex-wrap: wrap;
 }
 
@@ -1316,6 +1312,7 @@ export default {
 }
 
 .details-content h1 {
+  
   margin: 0;
   font-size: 1.65rem;
   font-family: inherit;
@@ -1523,5 +1520,23 @@ export default {
     text-align: center;
   }
 }
+.poster-container{
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+}
+.info-container{
+  display: flex;
+  flex-direction:row;
+  justify-content: center;
 
+  gap: 0.85rem;
+}
+.event-image{
+  max-width: 100%;
+  max-height: 55vh;
+  border-radius: 0.6rem;
+  object-fit: cover;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+}
 </style>

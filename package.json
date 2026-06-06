@@ -19,6 +19,7 @@
     "leaflet": "^1.9.4",
     "mapbox-gl": "^3.24.0",
     "mongoose": "^9.4.1",
+    "path": "^0.12.7",
     "socket.io": "^4.8.3",
     "socket.io-client": "^4.8.3",
     "vue": "^3.2.13",

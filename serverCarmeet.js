@@ -7,9 +7,18 @@ const http = require("http");
 const bcrypt = require("bcrypt");
 const { Server } = require("socket.io");
 
+const path = require('path');
+
 const app = express();
 app.use(cors());
 app.use(express.json());
+//TEST IMAGES SERVER
+
+app.use(
+  "/event-images",
+  express.static(path.join(__dirname, "event-images"))
+);
+
 
 //CREAR SERVIDOR
 const server = http.createServer(app);
@@ -1298,7 +1307,14 @@ app.post("/conversations/:conversationId/add-participant", async (req, res) => {
 app.get("/events", async (req, res) => {
   try {
     const events = await Event.find().sort({ start: 1 });
-    res.json(filterUpcomingEvents(events));
+//Get image by ID 
+    const eventsWithImages = filterUpcomingEvents(events).map(event => ({
+      ...event.toObject(),
+      image: `/event-images/${event.id}/poster.jpg`
+    }));
+
+    res.json(eventsWithImages);
+
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: "Error obteniendo eventos" });

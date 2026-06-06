@@ -1,14 +1,14 @@
 <template>
   <div class="mainarea">
-    <!-- <img id="image" src="../assets/transport.png" />-->
-    <h3>CarMeet Club</h3>
+    <!-- <img id="image" src="../assets/transport.png" />
+    <h3>CarMeet Club</h3>-->
 
     <div class="nearby-events-row" v-if="nearbyEvents.length > 0">
       <div class="top-events">
         <button @click="activateLocation" class="submenu-btn-gps">
           {{ "Activar GPS" }}
         </button>
-        <h4>Eventos Cercanos</h4>
+        <!-- <h4>Eventos Cercanos</h4> -->
       </div>
       <div class="events-flex-container">
         <div
@@ -17,11 +17,20 @@
           class="event-card-small"
           @click="selectEvent(event)"
         >
-          <h5>{{ event.title }}</h5>
-          <p class="date">{{ formatDate(event.start) }}</p>
-          <p v-if="eventDistanceKm(event) !== null" class="distance">
-            A {{ eventDistanceKm(event) }} km
-          </p>
+          <div class="event-image-container">
+            <img
+              :src="`http://localhost:5000${event.image}`"
+              class="event-image-small"
+              alt="Poster"
+            />
+          </div>
+          <div class="event-details">
+            <h5>{{ event.title }}</h5>
+            <p class="date">{{ formatDate(event.start) }}</p>
+            <p v-if="eventDistanceKm(event) !== null" class="distance">
+              A {{ eventDistanceKm(event) }} km
+            </p>
+          </div>
           <!--<p class="preview">{{ eventPreview(event) }}</p>-->
         </div>
       </div>
@@ -29,9 +38,9 @@
 
     <div class="go-map">
       <div class="blurtest">
-      <button class="nav-btn-absolute" @click="$emit('navigate', 'map')">
-        Ir al Mapa
-      </button>
+        <button class="nav-btn-absolute" @click="$emit('navigate', 'map')">
+          Ir al Mapa
+        </button>
       </div>
     </div>
 
@@ -48,7 +57,7 @@
           <strong>{{ event.title }}</strong
           ><br />
           {{ new Date(event.start).toLocaleDateString("es-ES") }}<br />
-          {{ event.description }}
+         <!-- {{ event.description }}-->
         </li>
       </ul>
       <button
@@ -59,56 +68,6 @@
         Ver todos los eventos
       </button>
     </div>
-
-    <!--<h1>{{ msg }}</h1>-->
-    <!--<img id="image"  src="../assets/transport.png">
-    <h3>CarMeet Club</h3>-->
-
-    <!-- <p id="notifications">{{ notification }}</p> -->
-    <!--background-image: url('../assets/transport.png'); -->
-    <!--FILTROS -->
-    <!--<div class="filters-container">
-      <div class="filter-group">
-        
-        <button class="filter-btn" @click="toggleUbicacion">
-          Ubicación 
-        </button>
-        <div v-if="showUbicacion" class="submenu">
-          <button @click="activateGPS" class="submenu-btn">Activar GPS</button>
-          <input v-model="manualLocation" type="text" placeholder="Escribe tu ubicación">
-          <button @click="closeUbicacion" class="submenu-btn">✓ Aplicar</button>
-        </div>
-      </div>
-
-      <button class="filter-btn" @click="selectFilter('coches')">
-        Concentración Coches
-      </button>
-
-      <button class="filter-btn" @click="selectFilter('motos')">
-        Concentración Motos
-      </button>
-      <div class="filter-group">
-        <button class="filter-btn" @click="toggleCompeticion">
-          Competición
-        </button>
-        <div v-if="showCompeticion" class="submenu">
-          <button @click="selectCompeticion('rally')" class="submenu-btn">Rally</button>
-          <button @click="selectCompeticion('circuito')" class="submenu-btn">Circuito</button>
-          <button @click="selectCompeticion('drift')" class="submenu-btn">Drift</button>
-        
-        </div>
-      </div>
-
-      <button class="filter-btn" @click="selectFilter('ferias')">
-        Ferias
-      </button>
-
-      <button v-if="false" class="filter-btn" @click="selectFilter('talleres')">
-        Talleres
-      </button>
-    </div>
-
-    <div id="map"></div>-->
   </div>
 </template>
 
@@ -300,13 +259,13 @@ body {
   flex-direction: column;
   row-gap: 1rem;
   width: 100%;
-  height: calc(100vh - 2rem - 60px); 
+  height: calc(100vh - 2rem - 60px);
   max-height: calc(100vh - 2rem - 60px);
-  overflow-y: auto; 
-  overflow-x: hidden; 
+  overflow-y: auto;
+  overflow-x: hidden;
   background: linear-gradient(
     135deg,
-    rgba(255,255,255,0.12),
+    rgba(255, 255, 255, 0.12),
     rgba(0, 0, 0, 0.726)
   );
   backdrop-filter: blur(10px);
@@ -317,8 +276,8 @@ body {
   justify-content: flex-start;
   color: rgb(255, 255, 255);
   -webkit-app-region: no-drag;
-  padding: 1rem; 
-  box-sizing: border-box; 
+  padding-top: 0.5rem;
+  box-sizing: border-box;
 }
 .glass {
   background: rgba(255, 255, 255, 0.15);
@@ -534,11 +493,11 @@ a {
 }
 
 .top-events {
-    display: grid;
+  display: grid;
   grid-template-columns: 1fr auto 1fr;
   align-items: center;
   gap: 1rem;
-  width: 100%
+  width: 100%;
 }
 
 .location-status {
@@ -561,10 +520,8 @@ a {
   align-items: center;
 }
 .events-soon {
- padding-bottom: 4.5rem;
-  
+  padding-bottom: 4.5rem;
 }
-
 
 .nearby-events-row h4 {
   margin: 0;
@@ -577,28 +534,25 @@ a {
   justify-content: center;
   align-items: center;
   gap: 1rem;
-  overflow-x: auto;
   padding-bottom: 0.5rem;
-  width: 95%;
+  width: 90%;
 }
 
 .event-card-small {
-  height: 8rem;
-  flex: 1;
-  padding: 1.5rem;
-  padding-top: 2.5rem;
-  padding-bottom: 2.5rem;
+  height: 55vh;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
-  background: rgba(255, 255, 255, 0.12);
+  background: rgba(29, 14, 43, 0.336);
   backdrop-filter: blur(12px);
   border: 1px solid rgba(255, 255, 255, 0.25);
   border-radius: 0.4rem;
   cursor: pointer;
   transition: all 0.25s ease;
   display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
+  overflow: hidden;
 }
 
 .event-card-small:hover {
@@ -610,7 +564,7 @@ a {
 .event-card-small h5 {
   margin: 0;
   color: rgb(255, 255, 255);
-  font-size: 1rem;
+  font-size: 0.8rem;
   font-weight: 600;
 }
 
@@ -633,36 +587,58 @@ a {
   color: rgba(255, 255, 255, 0.7);
   line-height: 1.3;
 }
+.event-image-container {
+  flex: 8;
+  overflow: hidden;
+  position: relative;
+  margin: 0;
+  padding: 0;
+  gap: 0;
+}
+.event-image-small {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.event-details {
+  flex: 2; 
+  
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  
+}
+
 
 .go-map {
   position: relative;
-
   width: 90%;
   display: flex;
   flex-direction: column;
   align-items: center;
-justify-content: center;
+  justify-content: center;
   gap: 1rem;
   background-image: url("../assets/mapscreenshot.png");
   background-size: cover;
   background-position: center;
   border-radius: 0.4rem;
 }
-.blurtest{background: rgba(0, 0, 0, 0.39);
-   position: relative;
+.blurtest {
+  background: rgba(0, 0, 0, 0.39);
+  position: relative;
   height: 20rem;
   width: 100%;
   display: flex;
   flex-direction: column;
   align-items: center;
-justify-content: center;
+  justify-content: center;
   gap: 1rem;
   border-radius: 0.4rem;
 }
-.blurtest:hover{
+.blurtest:hover {
   background: rgba(0, 0, 0, 0.185);
-transition: all 1.5s ease;
-
+  transition: all 1.5s ease;
 }
 .events-soon h4 {
   margin: 1rem 0 0.5rem 0;
@@ -673,7 +649,6 @@ transition: all 1.5s ease;
   height: auto;
   display: flex;
   flex-direction: column;
-  
 }
 .events-soon ul {
   list-style: none;
@@ -685,6 +660,7 @@ transition: all 1.5s ease;
 }
 
 .clickable-event {
+  width: 70vw;
   padding: 0.8rem 1rem;
   background: rgba(255, 255, 255, 0.12);
   backdrop-filter: blur(12px);
@@ -692,7 +668,7 @@ transition: all 1.5s ease;
   border-radius: 0.8rem;
   cursor: pointer;
   transition: all 0.25s ease;
-  color: rgb(255, 208, 186);
+  color: rgb(180, 199, 250);
   font-size: 0.95rem;
   text-align: left;
 }
@@ -701,6 +677,7 @@ transition: all 1.5s ease;
   background: rgba(255, 255, 255, 0.22);
   transform: translateX(4px);
   border-color: rgba(255, 255, 255, 0.4);
+  color: rgb(255, 255, 255);
 }
 
 .clickable-event:active {
@@ -708,11 +685,11 @@ transition: all 1.5s ease;
 }
 
 .nav-btn {
-  width: 100%;
-  padding: 0.9rem 2rem;
+  width: 20%;
+  padding: 0.8rem 1rem;
   cursor: pointer;
   transition: all 0.25s ease;
-  background: rgba(255, 255, 255, 0.12);
+  background: rgba(83, 13, 129, 0.596);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
   border: 1px solid rgba(255, 255, 255, 0.25);
@@ -766,22 +743,29 @@ transition: all 1.5s ease;
   padding: 0.9rem 2rem;
 }
 .submenu-btn-gps {
+  background: rgba(47, 21, 141, 0.781);
+  border:none;
+  color: rgb(255, 255, 255);
   display: flex;
   align-items: center;
   justify-content: center;
   width: 7rem;
+  height: 2rem;
   margin-bottom: 0.6rem;
-  margin-left: 6%;
-
+  margin-left: 10%;
 }
 .submenu-btn:disabled {
   opacity: 0.6;
   cursor: not-allowed;
 }
+
 @media (max-width: 900px) {
   .mainarea {
     height: calc(100vh - 2rem);
     max-height: calc(100vh - 2rem);
+    padding: 0rem;
+    margin: 0;
+    gap: 0;
   }
 }
 </style>
