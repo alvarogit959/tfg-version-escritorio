@@ -29,7 +29,7 @@ npm install mapbox-gl
 node .\serverVueElectron.js
 npm run electron:serve   
 
-
+C:\Users\delva\Desktop\Clases\SEGUNDOAÑO\segundoCuatrimestre\vue-electron-app\event-images\default.jpg
 
 ### Build final de la aplicación:
 npm run electron:build   

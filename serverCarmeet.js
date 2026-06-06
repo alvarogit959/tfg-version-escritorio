@@ -8,7 +8,7 @@ const bcrypt = require("bcrypt");
 const { Server } = require("socket.io");
 
 const path = require('path');
-
+const fs = require("fs");
 const app = express();
 app.use(cors());
 app.use(express.json());
@@ -1307,14 +1307,26 @@ app.post("/conversations/:conversationId/add-participant", async (req, res) => {
 app.get("/events", async (req, res) => {
   try {
     const events = await Event.find().sort({ start: 1 });
-//Get image by ID 
-    const eventsWithImages = filterUpcomingEvents(events).map(event => ({
-      ...event.toObject(),
-      image: `/event-images/${event.id}/poster.jpg`
-    }));
+
+    const eventsWithImages = filterUpcomingEvents(events).map(event => {
+      const posterPath = path.join(
+        __dirname,
+        "event-images",
+        event.id.toString(),
+        "poster.jpg"
+      );
+
+      const image = fs.existsSync(posterPath)
+        ? `/event-images/${event.id}/poster.jpg`
+        : "/event-images/default.jpg";
+
+      return {
+        ...event.toObject(),
+        image
+      };
+    });
 
     res.json(eventsWithImages);
-
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: "Error obteniendo eventos" });

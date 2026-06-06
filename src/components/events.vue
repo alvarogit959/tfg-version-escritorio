@@ -1,18 +1,5 @@
 <template>
   <div class="events-container">
-    <div class="page-header">
-      <div class="page-heading">  
-      </div>
-      <button
-        v-if="currentUser"
-        type="button"
-        class="btn-primary"
-        @click="$emit('create-event')"
-      >
-        + Crear evento
-      </button>
-    </div>
-
     <p v-if="notification" class="notification" :class="notificationClass">
       {{ notification }}
     </p>
@@ -32,9 +19,7 @@
             <span v-if="userLocation" class="location-status">
               Ubicación activa
             </span>
-            <span v-else class="location-status muted">
-              Sin ubicación
-            </span>
+            <span v-else class="location-status muted"> Sin ubicación </span>
           </div>
 
           <div class="filter-controls">
@@ -58,14 +43,16 @@
                 @click="openDatePicker('dateFromInput')"
               >
                 <span>Desde</span>
-                <strong v-if="dateFrom">{{ formatDateFilter(dateFrom) }}</strong>
+                <strong v-if="dateFrom">{{
+                  formatDateFilter(dateFrom)
+                }}</strong>
               </button>
               <input
                 ref="dateFromInput"
                 v-model="dateFrom"
                 class="date-picker-native"
                 type="date"
-              >
+              />
             </div>
             <span class="date-filter-arrow">→</span>
             <div class="date-picker-field">
@@ -82,7 +69,7 @@
                 v-model="dateTo"
                 class="date-picker-native"
                 type="date"
-              >
+              />
             </div>
             <button
               type="button"
@@ -113,12 +100,19 @@
             >
               Distancia
             </button>
+            <button
+              v-if="currentUser"
+              type="button"
+              class="btn-primary"
+              @click="$emit('create-event')"
+            >
+              + Crear evento
+            </button>
           </div>
         </div>
       </section>
 
       <section class="panel-card events-list-panel">
-
         <div class="events-list">
           <div
             v-for="event in displayedEvents"
@@ -128,7 +122,9 @@
           >
             <div class="event-card-header">
               <h3>{{ event.title }}</h3>
-              <span class="event-type" :class="`type-${event.type}`">{{ event.type }}</span>
+              <span class="event-type" :class="`type-${event.type}`">{{
+                event.type
+              }}</span>
             </div>
             <p class="event-date">{{ formatDate(event.start) }}</p>
             <p
@@ -137,7 +133,10 @@
             >
               {{ event.location[0].location }}
             </p>
-            <p v-if="userLocation && eventDistanceKm(event) !== null" class="event-distance">
+            <p
+              v-if="userLocation && eventDistanceKm(event) !== null"
+              class="event-distance"
+            >
               A {{ eventDistanceKm(event) }} km
             </p>
             <p class="event-preview">{{ eventPreview(event) }}</p>
@@ -152,145 +151,161 @@
       <!--OVERLAY EN VEZ DE OTRA VISTA   =========================================================                                                             -->
       <Transition name="detail-slide">
         <div v-if="selectedEvent" class="event-details-overlay">
-          <div class="details-toolbar">
-            <button type="button" class="btn-primary back-btn" @click="closeDetail">
-              ← Volver
-            </button>
-          </div>
-
           <div class="details-scroll">
             <div class="details-content">
               <div class="details-title-row">
                 <h1>{{ selectedEvent.title }}</h1>
-                <span class="event-type detail-type" :class="`type-${selectedEvent.type}`">
+                <span
+                  class="event-type detail-type"
+                  :class="`type-${selectedEvent.type}`"
+                >
                   {{ selectedEvent.type }}
                 </span>
-              </div>
-<div class="info-container">
-              <div class="poster-container">
-            <img
-              :src="`http://localhost:5000${selectedEvent.image}`"
-              class="event-image"
-              alt="Poster"
-            />
-          </div>
-          <!-- INFORMACIÓN DEL EVENTO -->
-
-<!-- DESCRIPCIÓN -->
-              <div class="event-info">
-           <!-- MAPA-->
-              <div
-                v-if="selectedEvent.location && selectedEvent.location.length > 0"
-                class="event-map-block"
-              >
-                <!--<label class="map-label">Ubicación en el mapa</label>-->
-                <EventMiniMap
-                  :key="'map-' + eventKey(selectedEvent)"
-                  :event="selectedEvent"
-                />
-              </div>
-
-
-                <div class="info-group">
-                  <label>Descripción</label>
-                  <p>{{ selectedEvent.description }}</p>
-                </div>
-<!-- FECHAS -->
-                <div class="info-group">
-                  <label>Fecha inicio</label>
-                  <p>{{ formatDateFull(selectedEvent.start) }}</p>
-                </div>
-                <div class="info-group">
-                  <label>Fecha fin</label>
-                  <p>{{ formatDateFull(selectedEvent.end) }}</p>
-                </div>
-<!-- UBICACIÓN -->
-                <div
-                  v-if="selectedEvent.location && selectedEvent.location.length > 0"
-                  class="info-group"
+                <button
+                  type="button"
+                  class="btn-primary back-btn"
+                  @click="closeDetail"
                 >
-                  <label>Ubicación</label>
-                  <p>{{ selectedEvent.location[0].location }}</p>
-                  <p class="coordinates">
-                    {{ selectedEvent.location[0].latitude }},
-                    {{ selectedEvent.location[0].longitude }}
-                  </p>
+                  ← Volver
+                </button>
+              </div>
+              <div class="info-container">
+                <div class="poster-container">
+                  <img
+                    :src="`http://localhost:5000${selectedEvent.image}`"
+                    class="event-image"
+                    alt="Poster"
+                  />
                 </div>
-<!-- ORGANIZADORES -->
-                <div class="info-group">
-                  <label>
-                    Organizadores
-                    <template v-if="!loadingModerators">
-                      ({{ resolvedModerators.length }})
-                    </template>
-                  </label>
-                  <div v-if="loadingModerators" class="attendees-loading">
-                    Cargando organizadores...
-                  </div>
+                <!-- INFORMACIÓN DEL EVENTO -->
+                <div class="event-info">
+                  <!-- MAPA-->
                   <div
-                    v-else-if="resolvedModerators.length > 0"
-                    class="moderators-list"
+                    v-if="
+                      selectedEvent.location &&
+                      selectedEvent.location.length > 0
+                    "
+                    class="event-map-block"
                   >
-                    <button
-                      v-for="mod in resolvedModerators"
-                      :key="mod.id"
-                      type="button"
-                      class="moderator-badge"
-                      :class="{ 'is-admin': mod.role === 'admin' }"
-                      @click="$emit('view-user', mod.id)"
-                    >
-                      <span class="mod-name">{{ mod.username }}</span>
-                      <span v-if="mod.role === 'admin'" class="mod-role">Admin</span>
-                      <span v-else class="mod-role">Moderador</span>
-                    </button>
-                  </div>
-                  <p v-else class="no-attendees">Sin organizadores asignados</p>
-                </div>
 
-                <div class="info-group">
-                  <label>
-                    Asistentes
-                    <template v-if="!loadingAttendees">
-                      ({{ resolvedAttendees.length }})
-                    </template>
-                  </label>
-                  <div v-if="loadingAttendees" class="attendees-loading">
-                    Cargando asistentes...
+                    <EventMiniMap
+                      :key="'map-' + eventKey(selectedEvent)"
+                      :event="selectedEvent"
+                    />
                   </div>
-                  <div
-                    v-else-if="resolvedAttendees.length > 0"
-                    class="attendees-list"
-                  >
-                    <span
-                      v-for="att in resolvedAttendees"
-                      :key="att.id"
-                      class="attendee-badge"
+                  
+                  <!-- ACCIONES -->
+                  <div class="action-buttons">
+                    <button
+                      type="button"
+                      class="btn-primary attend-btn"
+                      :disabled="attending || isAttendingSelected"
+                      @click="attendEvent"
                     >
-                      {{ att.username }}
-                    </span>
-                  </div>
-                  <p v-else class="no-attendees">Nadie apuntado aún</p>
-                </div>
-<!-- ACCIONES -->
-                <div class="action-buttons">
-                  <button
-                    type="button"
-                    class="btn-primary attend-btn"
-                    :disabled="attending || isAttendingSelected"
-                    @click="attendEvent"
-                  >
-                    {{
-                      attending
-                        ? "Apuntando..."
-                        : isAttendingSelected
+                      {{
+                        attending
+                          ? "Apuntando..."
+                          : isAttendingSelected
                           ? "Ya estás apuntado"
                           : "Asistir a este evento"
-                    }}
-                  </button>
-                </div>
+                      }}
+                    </button>
+                  </div>
+<!-- DESCRIPCION -->
 
+                  <div class="info-group">
+                    <label>Descripción</label>
+                    <p>{{ selectedEvent.description }}</p>
+                  </div>
+
+
+
+                  <!-- FECHAS -->
+                  <div class="info-group">
+                    <label>Fecha inicio</label>
+                    <p>{{ formatDateFull(selectedEvent.start) }}</p>
+                  </div>
+                  <div class="info-group">
+                    <label>Fecha fin</label>
+                    <p>{{ formatDateFull(selectedEvent.end) }}</p>
+                  </div>
+                  <!-- UBICACIÓN -->
+                  <div
+                    v-if="
+                      selectedEvent.location &&
+                      selectedEvent.location.length > 0
+                    "
+                    class="info-group"
+                  >
+                    <label>Ubicación</label>
+                    <p>{{ selectedEvent.location[0].location }}</p>
+                    <p class="coordinates">
+                      {{ selectedEvent.location[0].latitude }},
+                      {{ selectedEvent.location[0].longitude }}
+                    </p>
+                  </div>
+                  <!-- ORGANIZADORES -->
+                  <div class="info-group">
+                    <label>
+                      Organizadores
+                      <template v-if="!loadingModerators">
+                        ({{ resolvedModerators.length }})
+                      </template>
+                    </label>
+                    <div v-if="loadingModerators" class="attendees-loading">
+                      Cargando organizadores...
+                    </div>
+                    <div
+                      v-else-if="resolvedModerators.length > 0"
+                      class="moderators-list"
+                    >
+                      <button
+                        v-for="mod in resolvedModerators"
+                        :key="mod.id"
+                        type="button"
+                        class="moderator-badge"
+                        :class="{ 'is-admin': mod.role === 'admin' }"
+                        @click="$emit('view-user', mod.id)"
+                      >
+                        <span class="mod-name">{{ mod.username }}</span>
+                        <span v-if="mod.role === 'admin'" class="mod-role"
+                          >Admin</span
+                        >
+                        <span v-else class="mod-role">Moderador</span>
+                      </button>
+                    </div>
+                    <p v-else class="no-attendees">
+                      Sin organizadores asignados
+                    </p>
+                  </div>
+
+                  <div class="info-group">
+                    <label>
+                      Asistentes
+                      <template v-if="!loadingAttendees">
+                        ({{ resolvedAttendees.length }})
+                      </template>
+                    </label>
+                    <div v-if="loadingAttendees" class="attendees-loading">
+                      Cargando asistentes...
+                    </div>
+                    <div
+                      v-else-if="resolvedAttendees.length > 0"
+                      class="attendees-list"
+                    >
+                      <span
+                        v-for="att in resolvedAttendees"
+                        :key="att.id"
+                        class="attendee-badge"
+                      >
+                        {{ att.username }}
+                      </span>
+                    </div>
+                    <p v-else class="no-attendees">Nadie apuntado aún</p>
+                  </div>
+
+                </div>
               </div>
-</div>
             </div>
           </div>
         </div>
@@ -355,9 +370,10 @@ export default {
     },
 
     displayedEvents() {
-      const filtered = this.events.filter((event) =>
-        this.selectedTypes.includes(this.getEventType(event)) &&
-        this.isEventInsideDateRange(event)
+      const filtered = this.events.filter(
+        (event) =>
+          this.selectedTypes.includes(this.getEventType(event)) &&
+          this.isEventInsideDateRange(event),
       );
 
       return [...filtered].sort((a, b) => {
@@ -402,7 +418,10 @@ export default {
       if (url.includes("/concentraciones-de-coches-y-motos/")) return "coches";
       if (url.includes("/concentraciones-de-coches/")) return "coches";
       if (url.includes("/concentraciones-de-motos/")) return "motos";
-      if (url.includes("/calendario/competicion/") || url.includes("/competicion/")) {
+      if (
+        url.includes("/calendario/competicion/") ||
+        url.includes("/competicion/")
+      ) {
         return "competicion";
       }
       if (url.includes("/feria") || url.includes("/ferias")) return "feria";
@@ -410,7 +429,9 @@ export default {
     },
 
     getEventType(event) {
-      return this.normalizeEventType(event.type) || this.inferTypeFromUrl(event);
+      return (
+        this.normalizeEventType(event.type) || this.inferTypeFromUrl(event)
+      );
     },
 
     toggleTypeFilter(type) {
@@ -431,25 +452,24 @@ export default {
     },
 
     async activateLocation() {
-  this.locating = true;
+      this.locating = true;
 
-  try {
-    const location = await this.getBrowserLocation();
-    this.setUserLocation(location, "Ubicación activada");
+      try {
+        const location = await this.getBrowserLocation();
+        this.setUserLocation(location, "Ubicación activada");
+      } catch (error) {
+        console.warn("GPS falló:", error);
 
-  } catch (error) {
-    console.warn("GPS falló:", error);
+        const location = {
+          lat: 42.2406,
+          lng: -8.7823,
+        };
 
-    const location = {
-      lat: 42.2406,
-      lng: -8.7823
-    };
-
-    this.setUserLocation(location);
-  } finally {
-    this.locating = false;
-  }
-},
+        this.setUserLocation(location);
+      } finally {
+        this.locating = false;
+      }
+    },
 
     getBrowserLocation() {
       if (!navigator.geolocation) {
@@ -469,11 +489,10 @@ export default {
             enableHighAccuracy: false,
             timeout: 10000,
             maximumAge: 0,
-          }
+          },
         );
       });
     },
-
 
     setUserLocation(location, message) {
       this.userLocation = location;
@@ -508,7 +527,7 @@ export default {
           enableHighAccuracy: false,
           timeout: 10000,
           maximumAge: 0,
-        }
+        },
       );
     },
 
@@ -533,8 +552,10 @@ export default {
 
       const a =
         Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-        Math.cos(lat1) * Math.cos(lat2) *
-        Math.sin(dLng / 2) * Math.sin(dLng / 2);
+        Math.cos(lat1) *
+          Math.cos(lat2) *
+          Math.sin(dLng / 2) *
+          Math.sin(dLng / 2);
 
       return earthRadiusKm * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
     },
@@ -579,7 +600,8 @@ export default {
 
       const eventStart = this.getEventDateValue(event);
       const eventEnd = this.getEventEndDateValue(event);
-      if (!Number.isFinite(eventStart) && !Number.isFinite(eventEnd)) return false;
+      if (!Number.isFinite(eventStart) && !Number.isFinite(eventEnd))
+        return false;
 
       if (from !== null && eventEnd < from) return false;
       if (to !== null && eventStart > to) return false;
@@ -635,15 +657,15 @@ export default {
         this.notification = "";
       } catch (error) {
         console.error("Error cargando eventos:", error);
-        this.notification = error.message || "No se pudieron cargar los eventos";
+        this.notification =
+          error.message || "No se pudieron cargar los eventos";
         this.notificationClass = "error";
       }
     },
 
     eventPreview(event) {
       const raw = event.description || "";
-      const plain =
-        typeof raw === "string" ? raw.replace(/<[^>]*>/g, "") : "";
+      const plain = typeof raw === "string" ? raw.replace(/<[^>]*>/g, "") : "";
       return plain.length > 60 ? `${plain.slice(0, 60)}...` : plain || "—";
     },
 
@@ -656,7 +678,7 @@ export default {
       const match = this.events.find(
         (e) =>
           (targetId != null && e.id === targetId) ||
-          (targetMongoId && e._id === targetMongoId)
+          (targetMongoId && e._id === targetMongoId),
       );
 
       this.selectEvent(match || this.initialEvent);
@@ -684,7 +706,9 @@ export default {
       this.resolvedModerators = [];
 
       try {
-        this.resolvedModerators = await apiJson(`/events/${eventId}/moderators`);
+        this.resolvedModerators = await apiJson(
+          `/events/${eventId}/moderators`,
+        );
       } catch (error) {
         console.error(error);
         this.resolvedModerators = [];
@@ -740,15 +764,19 @@ export default {
       if (!this.selectedEvent) return;
 
       const eventId = eventIdentifier(this.selectedEvent);
+      const originalImage = this.selectedEvent.image;
       this.attending = true;
 
       try {
         const data = await apiJson(
           `/users/${userId}/joined-events/${eventId}`,
-          { method: "POST" }
+          { method: "POST" },
         );
 
         if (data.event) {
+                if (!data.event.image && originalImage) {
+        data.event.image = originalImage;
+      }
           this.updateEventInList(data.event);
           this.selectedEvent = data.event;
         }
@@ -775,7 +803,7 @@ export default {
       const idx = this.events.findIndex(
         (e) =>
           (updatedEvent._id && e._id === updatedEvent._id) ||
-          e.id === updatedEvent.id
+          e.id === updatedEvent.id,
       );
       if (!isUpcomingEvent(updatedEvent)) {
         if (idx >= 0) this.events.splice(idx, 1);
@@ -972,7 +1000,6 @@ export default {
   flex-wrap: wrap;
 }
 
-/* Filtro de fechas (mismo aspecto que map.vue) */
 .date-filter {
   display: flex;
   align-items: center;
@@ -1254,11 +1281,7 @@ export default {
   z-index: 20;
   display: flex;
   flex-direction: column;
-  background: linear-gradient(
-    135deg,
-    rgb(54, 54, 54),
-    rgb(0, 0, 0)
-  );
+  background: linear-gradient(135deg, rgb(54, 54, 54), rgb(0, 0, 0));
   backdrop-filter: blur(18px);
   -webkit-backdrop-filter: blur(18px);
   border: 1px solid rgba(255, 255, 255, 0.25);
@@ -1275,7 +1298,10 @@ export default {
 }
 
 .back-btn {
-  font-size: 0.9rem;
+  font-size: 0.75rem;
+  padding: 0.4em;
+  margin-top: 0.3rem;
+  border-radius: 0.3rem;
 }
 
 .details-scroll {
@@ -1308,11 +1334,10 @@ export default {
   flex-wrap: wrap;
   align-items: flex-start;
   gap: 0.6rem;
-  margin-bottom: 1.25rem;
+  margin-bottom: 0.5rem;
 }
 
 .details-content h1 {
-  
   margin: 0;
   font-size: 1.65rem;
   font-family: inherit;
@@ -1326,16 +1351,24 @@ export default {
 }
 
 .event-map-block {
-  margin-bottom: 1rem;
-}
+    border-radius: 0.6rem;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  overflow: hidden; 
+  line-height: 0;
+  font-size: 0;
 
+}
+.event-map-block > * {
+  margin: 0 !important;
+  padding: 0 !important;
+  display: block; 
+}
 .map-label {
   display: block;
   font-size: 0.85rem;
   font-weight: 600;
   font-family: inherit;
   color: rgba(255, 255, 255, 0.88);
-  margin-bottom: 0.45rem;
 }
 
 .images-gallery {
@@ -1346,27 +1379,24 @@ export default {
   display: flex;
   gap: 0.75rem;
   flex-wrap: wrap;
-}
-
-.event-image {
-  max-width: 220px;
-  max-height: 220px;
-  border-radius: 0.6rem;
-  object-fit: cover;
-  border: 1px solid rgba(255, 255, 255, 0.25);
+  width: 50rem;
 }
 
 .event-info {
   display: flex;
+  width: 60%;
   flex-direction: column;
-  gap: 0.85rem;
+  gap: 0.4rem;
 }
 
 .info-group {
+  display: flex;
+  flex-direction: row;
+  column-gap: 1rem;
   background: rgba(255, 255, 255, 0.08);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  padding: 0.85rem 1rem;
-  border-radius: 0.6rem;
+  padding: 0.4rem 0.5rem;
+border-radius: 0.4rem;
+
 }
 
 .info-group label {
@@ -1382,6 +1412,7 @@ export default {
   margin: 0;
   color: rgba(255, 255, 255, 0.85);
   line-height: 1.5;
+  font-size: 0.8rem;
 }
 
 .coordinates {
@@ -1394,14 +1425,15 @@ export default {
   display: flex;
   flex-wrap: wrap;
   gap: 0.45rem;
-  margin-top: 0.35rem;
 }
 
 .attendee-badge {
+  display:flex;
+  align-items: top;
   background: rgba(255, 255, 255, 0.12);
   border: 1px solid rgba(255, 255, 255, 0.25);
   color: rgba(255, 255, 255, 0.95);
-  padding: 0.3rem 0.65rem;
+  padding: 0.2rem 0.5rem;
   border-radius: 0.5rem;
   font-size: 0.82rem;
 }
@@ -1465,18 +1497,25 @@ export default {
 }
 
 .action-buttons {
-  margin-top: 0.5rem;
+  justify-content: center;
 }
 
 .attend-btn {
   width: 100%;
-  max-width: 320px;
-  padding: 0.85rem 1.5rem;
+  padding: 0.5rem 1.5rem;
   font-size: 0.95rem;
   font-weight: 600;
+    background: linear-gradient(
+    135deg,
+    rgb(59, 20, 90),
+    rgba(46, 76, 94, 0.726));
 }
-
-/* Transición al abrir detalle */
+.attend-btn :hover {
+    background: linear-gradient(
+    135deg,
+    rgb(59, 20, 90),
+    rgb(153, 125, 175), 0.726);
+}
 .detail-slide-enter-active,
 .detail-slide-leave-active {
   transition: transform 0.28s ease, opacity 0.28s ease;
@@ -1490,11 +1529,11 @@ export default {
 
 @media (max-width: 900px) {
   .events-controls {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.75rem;
-  align-items: center;
-}
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    align-items: center;
+  }
   .events-container {
     height: calc(100vh - 2rem);
     max-height: calc(100vh - 2rem);
@@ -1520,23 +1559,24 @@ export default {
     text-align: center;
   }
 }
-.poster-container{
+
+.info-container {
   display: flex;
   flex-direction: row;
-  justify-content: center;
-}
-.info-container{
-  display: flex;
-  flex-direction:row;
   justify-content: center;
 
   gap: 0.85rem;
 }
-.event-image{
-  max-width: 100%;
-  max-height: 55vh;
+.event-image {
+  max-width: 40vw;
+  max-height: 70vh;
   border-radius: 0.6rem;
   object-fit: cover;
-  border: 1px solid rgba(255, 255, 255, 0.25);
+}
+.poster-container {
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  flex: 1;
 }
 </style>

@@ -714,7 +714,6 @@ export default {
         .catch((error) => console.error("Error cargando mensajes:", error));
     },
     logout() {
-      // Llamar al servidor para establecer status en false
       const userId = this.currentUser.id;
 
       fetch("http://localhost:5000/logout", {
@@ -725,7 +724,7 @@ export default {
         body: JSON.stringify({ userId }),
       }).catch((error) => console.error("Error en logout:", error));
 
-      // Limpiar estado local
+  //Clean
       this.isLoggedIn = false;
       this.currentUser = null;
       this.chatOpen = false;
@@ -772,7 +771,7 @@ export default {
         })
         .catch((error) => {
           console.error("Error enviando mensaje:", error);
-          this.messageInput = messageText; // Restaurar el mensaje si falla
+          this.messageInput = messageText;
         });
     },
   },
@@ -869,7 +868,7 @@ export default {
   font-size: 1.3rem;
   font-weight: bold;
   font-family: "Inter", sans-serif;
-  white-space: nowrap;
+ 
 }
 
 .nav-menu {
@@ -879,7 +878,7 @@ export default {
   flex: 1;
   justify-content: center;
   -webkit-app-region: no-drag;
-  overflow: visible;
+
 }
 
 .nav-menu li:last-child {
@@ -897,14 +896,13 @@ export default {
   transition: all 0.3s ease;
   font-size: 0.95rem;
   font-weight: 500;
-  white-space: nowrap;
 }
 
 .nav-btn:hover {
   background: rgba(112, 41, 204, 0.2);
   border-color: rgba(159, 100, 255, 0.6);
   color: rgb(221, 195, 255);
-  transform: translateY(-2px);
+  
 }
 
 .nav-btn.active {
@@ -915,10 +913,9 @@ export default {
   );
   border-color: rgba(168, 85, 247, 0.8);
   color: rgba(255, 255, 255, 0.9);
-  box-shadow: 0 0 15px rgba(0, 68, 255, 0.507);
+  
 }
 
-/* ===== PROFILE GROUP & SUBMENU ===== */
 .profile-group {
   position: relative;
   display: flex;
