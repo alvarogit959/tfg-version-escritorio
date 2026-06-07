@@ -1,8 +1,8 @@
 <template>
   <div class="events-container">
-    <p v-if="notification" class="notification" :class="notificationClass">
+    <!--<p v-if="notification" class="notification" :class="notificationClass">
       {{ notification }}
-    </p>
+    </p> -->
 
     <div class="content-wrapper">
       <section class="panel-card filters-panel">
@@ -112,7 +112,7 @@
         </div>
       </section>
 
-      <section class="panel-card events-list-panel">
+      <section class="events-list-panel">
         <div class="events-list">
           <div
             v-for="event in displayedEvents"
@@ -187,38 +187,39 @@
                     "
                     class="event-map-block"
                   >
-
                     <EventMiniMap
                       :key="'map-' + eventKey(selectedEvent)"
                       :event="selectedEvent"
                     />
                   </div>
-                  
+
                   <!-- ACCIONES -->
                   <div class="action-buttons">
                     <button
                       type="button"
                       class="btn-primary attend-btn"
-                      :disabled="attending || isAttendingSelected"
-                      @click="attendEvent"
+                      :disabled="
+                        attending || leavingEventId === eventKey(selectedEvent)
+                      "
+                      @click="toggleAttendance"
                     >
                       {{
                         attending
                           ? "Apuntando..."
+                          : leavingEventId === eventKey(selectedEvent)
+                          ? "Desapuntando..."
                           : isAttendingSelected
-                          ? "Ya estás apuntado"
+                          ? "Desapuntarse del evento"
                           : "Asistir a este evento"
                       }}
                     </button>
                   </div>
-<!-- DESCRIPCION -->
+                  <!-- DESCRIPCION -->
 
                   <div class="info-group">
                     <label>Descripción</label>
                     <p>{{ selectedEvent.description }}</p>
                   </div>
-
-
 
                   <!-- FECHAS -->
                   <div class="info-group">
@@ -239,10 +240,10 @@
                   >
                     <label>Ubicación</label>
                     <p>{{ selectedEvent.location[0].location }}</p>
-                    <p class="coordinates">
+                   <!-- <p class="coordinates">
                       {{ selectedEvent.location[0].latitude }},
                       {{ selectedEvent.location[0].longitude }}
-                    </p>
+                    </p>-->
                   </div>
                   <!-- ORGANIZADORES -->
                   <div class="info-group">
@@ -293,17 +294,33 @@
                       v-else-if="resolvedAttendees.length > 0"
                       class="attendees-list"
                     >
-                      <span
+                    
+                    <!--<button
+              type="button"
+              class="user-link"
+              @click="$emit('view-user', att.id)"
+            >
+              {{ att.username }}
+            </button>-->
+            <button
+              type="button"
+              v-for="att in resolvedAttendees"
+                        :key="att.id"
+                        class="attendee-badge"
+              @click="$emit('view-user', att.id)"
+            >
+              {{ att.username }}
+            </button>
+                     <!-- <span
                         v-for="att in resolvedAttendees"
                         :key="att.id"
                         class="attendee-badge"
                       >
                         {{ att.username }}
-                      </span>
+                      </span>-->
                     </div>
                     <p v-else class="no-attendees">Nadie apuntado aún</p>
                   </div>
-
                 </div>
               </div>
             </div>
@@ -355,6 +372,7 @@ export default {
       sortMode: "date",
       dateFrom: "",
       dateTo: "",
+      leavingEventId: null,
       selectedTypes: ["coches", "motos", "competicion", "feria"],
       eventTypeFilters: [
         { value: "coches", label: "Coches" },
@@ -774,15 +792,15 @@ export default {
         );
 
         if (data.event) {
-                if (!data.event.image && originalImage) {
-        data.event.image = originalImage;
-      }
+          if (!data.event.image && originalImage) {
+            data.event.image = originalImage;
+          }
           this.updateEventInList(data.event);
           this.selectedEvent = data.event;
         }
 
         await this.loadAttendeesForSelected();
-        this.notification = `Te has apuntado a: ${this.selectedEvent.title}`;
+
         this.notificationClass = "success";
         this.$emit("events-updated", data.user);
       } catch (error) {
@@ -798,6 +816,79 @@ export default {
         }, 3500);
       }
     },
+
+    //TEST LEAVE EVENT=========================================================================================================================
+    async toggleAttendance() {
+  if (this.isAttendingSelected) {
+    await this.leaveEvent(this.selectedEvent);
+  } else {
+    await this.attendEvent();
+  }
+},
+
+  async leaveEvent(event) {
+  const userId = userIdFrom(this.currentUser);
+  if (!userId) {
+    this.notification = "Debes iniciar sesión para desapuntarte";
+    this.notificationClass = "error";
+    return;
+  }
+
+  const eventId = this.eventKey(event);
+  this.leavingEventId = eventId;
+
+  try {
+    //DELETE
+    const response = await fetch(
+      `http://localhost:5000/users/${userId}/joined-events/${eventId}`,
+      { method: "DELETE" }
+    );
+
+    if (!response.ok) {
+      throw new Error(`Error ${response.status}: ${response.statusText}`);
+    }
+
+//ACTUALIZAR LISTA
+    const eventIndex = this.events.findIndex(e => this.eventKey(e) === eventId);
+    if (eventIndex !== -1) {
+      const updatedEvent = { ...this.events[eventIndex] };
+      
+      //Eliminar al usuario actual
+      if (updatedEvent.attendees) {
+        updatedEvent.attendees = updatedEvent.attendees.filter(
+          id => id.toString() !== userId
+        );
+      }
+      
+      //Actualizar
+      this.events[eventIndex] = updatedEvent;
+      // Forzar actualización reactiva
+      this.events = [...this.events];
+
+      if (this.selectedEvent && this.eventKey(this.selectedEvent) === eventId) {
+        this.selectedEvent = updatedEvent;
+        this.resolvedAttendees = this.resolvedAttendees.filter(
+          att => att.id !== userId && att.id?.toString() !== userId
+        );
+      }
+    }
+
+    this.notification = "Has salido del evento";
+    this.notificationClass = "success";
+    this.$emit("events-updated");
+  } catch (error) {
+    console.error("Error al salir del evento:", error);
+    this.notification = error.message || "No se pudo salir del evento";
+    this.notificationClass = "error";
+  } finally {
+    this.leavingEventId = null;
+    setTimeout(() => {
+      this.notification = "";
+    }, 3500);
+  }
+},
+
+
 
     updateEventInList(updatedEvent) {
       const idx = this.events.findIndex(
@@ -913,12 +1004,18 @@ export default {
 
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.25);
 }
-
+.filters-panel{
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
 .events-list-panel {
   flex: 1;
   min-height: 0;
   display: flex;
   flex-direction: column;
+  background: none;
+  border: none;
 }
 
 .section-title {
@@ -987,6 +1084,10 @@ export default {
   flex-wrap: wrap;
   gap: 0.75rem;
   align-items: center;
+  justify-content:center;
+  flex:space-evenly;
+  width: 100%;
+  height: auto;
 }
 .location-controls,
 .filter-controls,
@@ -1190,7 +1291,11 @@ export default {
 .event-card {
   font-family: inherit;
   padding: 0.9rem 1rem;
-  background: rgba(255, 255, 255, 0.12);
+  background: linear-gradient(
+    135deg,
+    rgba(17, 13, 73, 0.404),
+    rgba(0, 0, 0, 0.596)
+  );
   backdrop-filter: blur(12px);
   border: 1px solid rgba(255, 255, 255, 0.25);
   border-radius: 0.8rem;
@@ -1199,7 +1304,7 @@ export default {
 }
 
 .event-card:hover {
-  background: rgba(255, 255, 255, 0.18);
+  background: rgba(55, 69, 116, 0.712);
   border-color: rgba(255, 255, 255, 0.4);
   transform: translateY(-2px);
 }
@@ -1235,7 +1340,7 @@ export default {
 .type-coches {
   background: rgba(255, 255, 255, 0.18);
   border-color: rgba(255, 255, 255, 0.35);
-  color: white;
+  color: rgb(185, 190, 233);
 }
 
 .event-date {
@@ -1302,6 +1407,7 @@ export default {
   padding: 0.4em;
   margin-top: 0.3rem;
   border-radius: 0.3rem;
+  background-color: rgba(83, 15, 15, 0.795);
 }
 
 .details-scroll {
@@ -1348,20 +1454,21 @@ export default {
 
 .detail-type {
   align-self: center;
+  border-width: 0rem;
+  background-color: rgba(0, 0, 0, 0);
 }
 
 .event-map-block {
-    border-radius: 0.6rem;
+  border-radius: 0.6rem;
   border: 1px solid rgba(255, 255, 255, 0.25);
-  overflow: hidden; 
+  overflow: hidden;
   line-height: 0;
   font-size: 0;
-
 }
 .event-map-block > * {
   margin: 0 !important;
   padding: 0 !important;
-  display: block; 
+  display: block;
 }
 .map-label {
   display: block;
@@ -1395,8 +1502,7 @@ export default {
   column-gap: 1rem;
   background: rgba(255, 255, 255, 0.08);
   padding: 0.4rem 0.5rem;
-border-radius: 0.4rem;
-
+  border-radius: 0.4rem;
 }
 
 .info-group label {
@@ -1428,7 +1534,7 @@ border-radius: 0.4rem;
 }
 
 .attendee-badge {
-  display:flex;
+  display: flex;
   align-items: top;
   background: rgba(255, 255, 255, 0.12);
   border: 1px solid rgba(255, 255, 255, 0.25);
@@ -1436,6 +1542,7 @@ border-radius: 0.4rem;
   padding: 0.2rem 0.5rem;
   border-radius: 0.5rem;
   font-size: 0.82rem;
+  cursor:pointer;
 }
 
 .moderators-list {
@@ -1505,16 +1612,15 @@ border-radius: 0.4rem;
   padding: 0.5rem 1.5rem;
   font-size: 0.95rem;
   font-weight: 600;
-    background: linear-gradient(
-    135deg,
-    rgb(59, 20, 90),
-    rgba(46, 76, 94, 0.726));
+  background: linear-gradient(135deg, rgb(59, 20, 90), rgba(46, 76, 94, 0.726));
 }
 .attend-btn :hover {
-    background: linear-gradient(
+  background: linear-gradient(
     135deg,
     rgb(59, 20, 90),
-    rgb(153, 125, 175), 0.726);
+    rgb(153, 125, 175),
+    0.726
+  );
 }
 .detail-slide-enter-active,
 .detail-slide-leave-active {
@@ -1533,6 +1639,7 @@ border-radius: 0.4rem;
     flex-wrap: wrap;
     gap: 0.75rem;
     align-items: center;
+    
   }
   .events-container {
     height: calc(100vh - 2rem);

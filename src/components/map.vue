@@ -527,7 +527,7 @@ activateGPS() {
       const lat = center.lat * Math.PI / 180;
       const lng = center.lng * Math.PI / 180;
       const angularDistance = radiusKm / 6371;
-
+      
       for (let i = 0; i <= points; i++) {
         const bearing = (i * 360 / points) * Math.PI / 180;
         const pointLat = Math.asin(
@@ -637,21 +637,32 @@ activateGPS() {
       const descripcion = typeof event.description === "string"
         ? event.description.replace(/<[^>]*>/g, "").slice(0, 120)
         : "";
-
+  const imageUrl = this.getEventImageUrl(event.id);
       const popupContent = document.createElement("div");
       popupContent.className = "mapbox-popup-content";
       popupContent.innerHTML = `
-        <div style="padding: 10px; max-width: 200px;background: linear-gradient(135deg, #000000 0%, #2E144A 100%);">
-          <b style="font-size: 1.1em; color:white">${event.title}</b><br>
-          <span style="color: white; font-size: 0.9em;">${fechaInicio}</span><br><br>
-          <p style="color: white; margin: 5px 0; font-size: 0.9em;">${descripcion}</p><br>
-          <button
-            class="map-popup-info-btn"
-            style="width: 100%; padding: 8px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; border-radius: 0.2rem; cursor: pointer; transition: transform 0.2s, box-shadow 0.2s;">
-            Más información
-          </button>
-        </div>
-      `;
+        <div style="padding: 10px; max-width: 220px; background: linear-gradient(135deg, #2a2a2a 0%, #1a1a1a 100%); border-radius: 8px;">
+    <div class="event-image-container" style="width: 100%; height: auto; overflow: hidden; border-radius: 6px; margin-bottom: 10px;">
+      <img 
+        src="${imageUrl}"
+        class="event-image-small" 
+        alt="Poster"
+        style="width: 100%; height: auto; max-height: 200px; object-fit: contain;"
+        onerror="this.style.display='none'; this.parentElement.style.display='none'"
+      />
+    </div>
+    <b style="font-size: 1.1em; color: white; display: block; margin-bottom: 5px;">${this.escapeHtml(event.title)}</b>
+    <span style="color: #cccccc; font-size: 0.85em;">${fechaInicio}</span>
+    <p style="color: #bbbbbb; margin: 8px 0; font-size: 0.9em; line-height: 1.3;">${this.escapeHtml(descripcion)}</p>
+    <button
+      class="map-popup-info-btn"
+      style="width: 100%; padding: 8px; background: #3a3a3a; color: white; border: none; border-radius: 4px; cursor: pointer; transition: all 0.2s; font-weight: 500;"
+      onmouseover="this.style.background='#4a4a4a'"
+      onmouseout="this.style.background='#3a3a3a'">
+      Más información
+    </button>
+  </div>
+`;
 
       const infoBtn = popupContent.querySelector(".map-popup-info-btn");
       infoBtn.addEventListener("click", (e) => {
@@ -673,7 +684,16 @@ activateGPS() {
 
       this.eventMarkers.push({ marker, event });
     },
+getEventImageUrl(eventId) {
+  return `http://localhost:5000/event-images/${eventId}/poster.jpg`;
+},
 
+escapeHtml(text) {
+  if (!text) return '';
+  const div = document.createElement('div');
+  div.textContent = text;
+  return div.innerHTML;
+},
     async createUser() {
       if (this.password !== this.confirmpassword) {
         this.notification = "Las contraseñas no coinciden";
@@ -741,6 +761,8 @@ activateGPS() {
 :deep(.mapboxgl-popup-close-button) {
   color: white;
   font-size: 18px;
+  margin-right: 8px;
+  margin-top: 4px;
 }
 
 :deep(.mapboxgl-popup-close-button:hover) {
@@ -748,7 +770,8 @@ activateGPS() {
   color: #ccc;
 }
 :deep(.mapboxgl-popup-content) {
-  background: linear-gradient(135deg, #000000 0%, #2E144A 100%) !important;
+  background: linear-gradient(135deg, #5a5a5ac2 0%, #361957ce 100%) !important;
+  padding: 2px !important;
 }
 /*FIN   TEST*/
 .mainarea {

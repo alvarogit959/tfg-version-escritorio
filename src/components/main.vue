@@ -231,6 +231,10 @@
     >
       <span v-if="!chatOpen">Chat</span>
       <span v-else>✕</span>
+      <span
+    v-if="hasUnreadMessages && !chatOpen"
+    class="notification-badge"
+  ></span>
     </button>
 
     <div v-if="isLoggedIn && chatOpen" class="chat-panel">
@@ -390,6 +394,7 @@ export default {
       eventFromMap: null,
       viewUserId: null,
       returnViewAfterUser: "inicio",
+      hasUnreadMessages: false,
     };
   },
   watch: {
@@ -421,6 +426,14 @@ export default {
 
       const exists = this.messages.some((m) => m.id === msg._id);
       if (exists) return;
+//NOTIFICACIÓN
+if (
+    !this.chatOpen ||
+    !this.conversationId ||
+    msgConvId !== String(this.conversationId)
+  ) {
+    this.hasUnreadMessages = true;
+  }
 
       this.messages.push({
         id: msg._id,
@@ -741,6 +754,10 @@ export default {
     },
     toggleChat() {
       this.chatOpen = !this.chatOpen;
+      if (this.chatOpen) {
+    this.hasUnreadMessages = false;
+  }
+
       if (this.chatOpen && !this.conversationId) {
         this.selectGroupChat();
       } else if (this.chatOpen) {
@@ -1142,7 +1159,14 @@ export default {
   z-index: 100;
   -webkit-app-region: no-drag;
 }
-
+.notification-badge {
+  margin-left: 0.5rem;
+  margin-bottom: 0.8rem;
+  width: 15px;
+  height: 15px;
+  background: red;
+  border-radius: 50%;
+}
 .chat-button:hover {
   background: rgb(154, 100, 255);
   color: rgb(47, 14, 77);
