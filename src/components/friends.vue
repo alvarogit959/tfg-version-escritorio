@@ -10,7 +10,7 @@
     <div v-if="loading" class="loading">Cargando...</div>
 
     <template v-else>
-      <!-- Buscar y añadir -->
+<!--SEARCH AND ADD FRIEND-->
       <section class="panel-card">
         <h2 class="section-title">Añadir amigo</h2>
         <form class="search-form" @submit.prevent="searchUsers">
@@ -42,7 +42,7 @@
         </ul>
       </section>
 
-      <!-- Solicitudes entrantes -->
+<!--INCOMING FRIENDSHIP lmao-->
       <section v-if="incoming.length" class="panel-card">
         <h2 class="section-title">Solicitudes recibidas</h2>
         <ul class="requests-list">
@@ -72,7 +72,7 @@
         </ul>
       </section>
 
-      <!-- Solicitudes enviadas -->
+<!--FRIENDSHIP PENDING-->
       <section v-if="outgoing.length" class="panel-card">
         <h2 class="section-title">Solicitudes enviadas</h2>
         <ul class="requests-list">
@@ -83,7 +83,7 @@
         </ul>
       </section>
 
-      <!-- Lista de amigos -->
+<!--FRIENDLIST-->
       <section class="panel-card">
         <h2 class="section-title">Mis amigos ({{ friends.length }})</h2>
         <div v-if="friends.length === 0" class="empty">

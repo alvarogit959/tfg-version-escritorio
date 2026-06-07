@@ -4,7 +4,7 @@
     <h3>CarMeet Club</h3>-->
     <!-- <p id="notifications">{{ notification }}</p> -->
 
-    <!--FILTROS -->
+<!--FILTERS -->
     <div class="filters-container">
       <button
         class="filter-btn" id="coches"
@@ -44,7 +44,7 @@
       </button>
 
       <div class="filter-group">
-        <!-- Ubicación -->
+<!--GPS-->
         <button class="filter-btn" @click="toggleUbicacion">
           Ubicación
         </button>
@@ -158,17 +158,17 @@ export default {
   async mounted() {
     await this.loadEvents();
 
-    // Dar más tiempo para que el DOM se renderice completamente
+    //More time or this shit blows up
     this.$nextTick(() => {
       setTimeout(() => {
         this.initializeMap();
-        // Agregar listener para cambios de tamaño
+        //Size changes
         window.addEventListener('resize', this.onWindowResize);
       }, 100);
     });
   },
   beforeUnmount() {
-    // Remover listener de resize
+//remove resize 
     window.removeEventListener('resize', this.onWindowResize);
     this.eventMarkers.forEach(({ marker }) => marker.remove());
     this.eventMarkers = [];
@@ -306,7 +306,7 @@ activateGPS() {
         duration: 1500
       });
 
-      // marcador usuario
+//user marker
       if (this.userMarker) {
         this.userMarker.remove();
       }
@@ -325,8 +325,6 @@ activateGPS() {
 
     async (error) => {
       console.warn("GPS falló:", error);
-
-      // 👉 fallback automático
       try {
         await this.fallbackLocation();
               this.showUbicacion = false;
@@ -373,13 +371,9 @@ activateGPS() {
     isEventHidden(event) {
     const type = this.getEventType(event);
     
-    // Verificar si el tipo está oculto
+    //VERIFY
     if (type && this.hiddenTypes.includes(type)) return true;
-    
-    // Verificar rango de fecha
     if (!this.isEventInsideDateRange(event)) return true;
-    
-    // Verificar distancia
     if (this.userLocation && !this.isEventInsideRange(event)) return true;
     
     return false;
@@ -624,14 +618,14 @@ activateGPS() {
     },
 
     initializeMap() {
-      // Verify DOM element exists
+      //Verify
       const mapContainer = document.getElementById('map');
       if (!mapContainer) {
         console.warn('Map container not found');
         return;
       }
 
-      // Crear mapa de Mapbox
+      //MAPBOX MAP
       this.map = new mapboxgl.Map({
         container: 'map',
         style: 'mapbox://styles/alvarod/cmpbzx3ho001z01s6bjz3eruc',

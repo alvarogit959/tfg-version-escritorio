@@ -130,7 +130,6 @@ export default {
       } catch (error) {
         console.warn("GPS falló:", error);
 
-        // fallback sin API externa
         const location = {
           lat: 42.2406,
           lng: -8.7823,
@@ -237,7 +236,7 @@ export default {
 };
 </script>
 
-<!-- Add "scoped" attribute to limit CSS to this component only -->
+
 <style scoped>
 html,
 body {

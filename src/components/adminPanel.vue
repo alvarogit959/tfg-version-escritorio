@@ -26,7 +26,7 @@
 
     <div v-if="loading" class="loading">Cargando...</div>
 
-    <!-- EVENTOS -->
+<!--EVENTS-->
     <section v-else-if="tab === 'events'" class="section">
       <p class="hint">Puedes editar, eliminar eventos y quitar asistentes de cualquier evento.</p>
 
@@ -132,10 +132,10 @@
       <p v-if="events.length === 0" class="empty">No hay eventos</p>
     </section>
 
-    <!-- USUARIOS -->
+<!--USERS-->
     <section v-else class="section">
       <p class="hint">
-        Eliminar un usuario es permanente: se quita de todos los eventos y se borra su cuenta.
+        Eliminar un usuario es permanente!
       </p>
 
       <ul class="users-list">

@@ -10,7 +10,6 @@
     </div>
 
     <template v-else-if="profile">
-
       <div class="profile-hero">
         <div class="hero-glow" />
         <div class="profile-header">
@@ -29,7 +28,10 @@
           <div class="header-info">
             <h1>{{ form.username }}</h1>
             <p class="email">{{ profile.email }}</p>
-            <span class="role-badge" :class="{ admin: profile.role === 'admin' }">
+            <span
+              class="role-badge"
+              :class="{ admin: profile.role === 'admin' }"
+            >
               {{ profile.role }}
             </span>
           </div>
@@ -44,16 +46,21 @@
             <span class="stat-value">{{ memberSinceYear }}</span>
             <span class="stat-label">Miembro desde</span>
           </div>
-          <div v-if="profile.location?.city || profile.location?.country" class="stat-card">
+          <div
+            v-if="profile.location?.city || profile.location?.country"
+            class="stat-card"
+          >
             <span class="stat-value stat-location">
               {{ profile.location.city || "—" }}
             </span>
-            <span class="stat-label">{{ profile.location.country || "Ubicación" }}</span>
+            <span class="stat-label">{{
+              profile.location.country || "Ubicación"
+            }}</span>
           </div>
         </div>
       </div>
 
-      <!-- Edición -->
+<!--Edit-->
       <section class="panel-card">
         <h2 class="section-title">Editar perfil</h2>
         <form class="profile-form" @submit.prevent="saveProfile">
@@ -84,10 +91,12 @@
         </form>
       </section>
 
-      <!-- Eventos apuntados -->
+<!--SAVED events -->
       <section class="panel-card joined-events-section">
         <h2 class="section-title">Eventos apuntados</h2>
-        <p class="section-hint">Eventos a los que te has inscrito como asistente.</p>
+        <p class="section-hint">
+          Eventos a los que te has inscrito como asistente.
+        </p>
 
         <div v-if="joinedEventsList.length === 0" class="no-events">
           <p>No estás apuntado a ningún evento</p>
@@ -245,14 +254,13 @@ export default {
 
     async leaveEvent(event) {
       const eventId = this.eventKey(event);
-      
 
       this.leavingEventId = eventId;
 
       try {
         const data = await apiJson(
           `/users/${this.userId}/joined-events/${eventId}`,
-          { method: "DELETE" }
+          { method: "DELETE" },
         );
         this.profile = data;
         this.showNotification("Has salido del evento", "success");
@@ -305,18 +313,18 @@ export default {
   gap: 1rem;
   background: linear-gradient(
     135deg,
-    rgba(255,255,255,0.12),
+    rgba(255, 255, 255, 0.12),
     rgba(0, 0, 0, 0.726)
   );
-  height: calc(100vh - 2rem - 60px); 
+  height: calc(100vh - 2rem - 60px);
   max-height: calc(100vh - 2rem - 60px);
-  overflow-y: auto; 
-  overflow-x: hidden; 
+  overflow-y: auto;
+  overflow-x: hidden;
   align-items: center;
   justify-content: flex-start;
   color: rgb(255, 255, 255);
   -webkit-app-region: no-drag;
-  box-sizing: border-box; 
+  box-sizing: border-box;
   margin-top: 0;
 }
 
@@ -389,13 +397,10 @@ export default {
   }
 }
 
-
 .profile-hero {
   width: 80%;
   align-self: center;
   position: relative;
-
-
 
   background: rgba(255, 255, 255, 0.08);
   backdrop-filter: blur(16px);
@@ -405,8 +410,6 @@ export default {
   padding: 1.5rem 1.5rem 1.25rem;
 }
 
-
-
 .profile-header {
   position: relative;
   display: flex;
@@ -414,8 +417,6 @@ export default {
   gap: 1.35rem;
   margin-bottom: 1.25rem;
 }
-
-
 
 .avatar {
   width: 100px;
@@ -489,11 +490,7 @@ export default {
   align-items: center;
   text-align: center;
   padding: 0.85rem 0.75rem;
-  background: linear-gradient(
-    180deg,
-    rgba(0, 0, 0, 0.25),
-    rgba(0, 0, 0, 0.08)
-  );
+  background: linear-gradient(180deg, rgba(0, 0, 0, 0.25), rgba(0, 0, 0, 0.08));
   border: 1px solid rgba(255, 255, 255, 0.2);
   border-radius: 0.2rem;
 }
@@ -535,17 +532,14 @@ export default {
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.25);
   border-radius: 0.2rem;
   padding: 1.25rem 1.35rem;
-
 }
 
 .section-title {
-  
   margin: 0 0 1rem;
   padding-bottom: 0.65rem;
   font-size: 1.2rem;
   font-weight: 700;
   color: white;
-
 }
 
 .section-hint {
@@ -565,7 +559,6 @@ export default {
 }
 
 .form-group {
-  
   display: flex;
   flex-direction: column;
   gap: 0.35rem;
@@ -581,11 +574,7 @@ export default {
 .form-group textarea {
   font-family: "Inter", sans-serif;
   padding: 0.75rem 1rem;
-  background: linear-gradient(
-    180deg,
-    rgba(0, 0, 0, 0.08),
-    rgba(0, 0, 0, 0.15)
-  );
+  background: linear-gradient(180deg, rgba(0, 0, 0, 0.08), rgba(0, 0, 0, 0.15));
   border: 1px solid rgba(255, 255, 255, 0.25);
   border-radius: 0.2rem;
   color: white;
@@ -605,7 +594,6 @@ export default {
 }
 
 .save-btn {
-
   padding: 0.8rem 1.6rem;
   font-family: "Inter", sans-serif;
   font-size: 0.95rem;
@@ -666,7 +654,6 @@ export default {
     rgba(255, 255, 255, 0.04)
   );
 
-
   border-radius: 0.2rem;
   transition: transform 0.2s ease, border-color 0.2s ease;
 }
@@ -720,13 +707,12 @@ export default {
 
 @media (max-width: 900px) {
   .profile-container {
-  height: calc(100vh - 2rem);
+    height: calc(100vh - 2rem);
     max-height: calc(100vh - 2rem);
   }
   .profile-header {
     flex-direction: column;
     text-align: center;
-
   }
 
   .header-info h1 {

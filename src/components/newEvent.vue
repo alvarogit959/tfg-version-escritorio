@@ -2,7 +2,9 @@
   <div class="new-event-container">
     <div class="header-row">
       <h1>Crear nuevo evento</h1>
-      <button type="button" class="cancel-btn" @click="$emit('cancel')">Cancelar</button>
+      <button type="button" class="cancel-btn" @click="$emit('cancel')">
+        Cancelar
+      </button>
     </div>
 
     <p v-if="notification" class="notification" :class="notificationClass">
@@ -13,7 +15,13 @@
       <form class="event-form" @submit.prevent="createEvent">
         <div class="form-group">
           <label for="title">Título *</label>
-          <input id="title" v-model="form.title" type="text" required placeholder="Nombre del evento" />
+          <input
+            id="title"
+            v-model="form.title"
+            type="text"
+            required
+            placeholder="Nombre del evento"
+          />
         </div>
 
         <div class="form-group">
@@ -39,11 +47,23 @@
         <div class="form-row">
           <div class="form-group">
             <label for="start">Inicio *</label>
-            <input id="start" v-model="form.start" type="datetime-local" :min="minDate" required />
+            <input
+              id="start"
+              v-model="form.start"
+              type="datetime-local"
+              :min="minDate"
+              required
+            />
           </div>
           <div class="form-group">
             <label for="end">Fin *</label>
-            <input id="end" v-model="form.end" type="datetime-local" :min="form.start || minDate" required />
+            <input
+              id="end"
+              v-model="form.end"
+              type="datetime-local"
+              :min="form.start || minDate"
+              required
+            />
           </div>
         </div>
 
@@ -72,7 +92,9 @@
       </form>
 
       <div class="map-section">
-        <p class="map-hint">Haz clic en el mapa para marcar la ubicación del evento</p>
+        <p class="map-hint">
+          Haz clic en el mapa para marcar la ubicación del evento
+        </p>
         <div id="new-event-map" ref="mapContainer"></div>
       </div>
     </div>
@@ -102,7 +124,9 @@ export default {
   data() {
     const now = new Date();
     const pad = (n) => String(n).padStart(2, "0");
-    const minDate = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}T${pad(now.getHours())}:${pad(now.getMinutes())}`;
+    const minDate = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(
+      now.getDate(),
+    )}T${pad(now.getHours())}:${pad(now.getMinutes())}`;
 
     return {
       form: {
@@ -187,7 +211,10 @@ export default {
       el.style.border = "3px solid white";
       el.style.boxShadow = "0 0 10px rgba(33, 150, 243, 0.8)";
 
-      this.placementMarker = new mapboxgl.Marker({ element: el, anchor: "center" })
+      this.placementMarker = new mapboxgl.Marker({
+        element: el,
+        anchor: "center",
+      })
         .setLngLat([lng, lat])
         .addTo(this.map);
     },
@@ -210,7 +237,10 @@ export default {
     async createEvent() {
       const userId = userIdFrom(this.currentUser);
       if (!userId) {
-        this.showNotification("Debes iniciar sesión para crear eventos", "error");
+        this.showNotification(
+          "Debes iniciar sesión para crear eventos",
+          "error",
+        );
         return;
       }
 
@@ -225,12 +255,18 @@ export default {
       }
 
       if (new Date(this.form.end) < new Date(this.form.start)) {
-        this.showNotification("La fecha de fin no puede ser anterior al inicio", "error");
+        this.showNotification(
+          "La fecha de fin no puede ser anterior al inicio",
+          "error",
+        );
         return;
       }
 
       if (!this.selectedCoords) {
-        this.showNotification("Selecciona la ubicación haciendo clic en el mapa", "error");
+        this.showNotification(
+          "Selecciona la ubicación haciendo clic en el mapa",
+          "error",
+        );
         return;
       }
 

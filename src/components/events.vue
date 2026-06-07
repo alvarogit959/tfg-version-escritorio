@@ -177,9 +177,9 @@
                     alt="Poster"
                   />
                 </div>
-                <!-- INFORMACIÓN DEL EVENTO -->
+ <!--INFO-->
                 <div class="event-info">
-                  <!-- MAPA-->
+                  <!--MAP-->
                   <div
                     v-if="
                       selectedEvent.location &&
@@ -193,7 +193,7 @@
                     />
                   </div>
 
-                  <!-- ACCIONES -->
+ <!--ACCIONES-->
                   <div class="action-buttons">
                     <button
                       type="button"
@@ -214,14 +214,14 @@
                       }}
                     </button>
                   </div>
-                  <!-- DESCRIPCION -->
+ <!--DESCRIPTION-->
 
                   <div class="info-group">
                     <label>Descripción</label>
                     <p>{{ selectedEvent.description }}</p>
                   </div>
 
-                  <!-- FECHAS -->
+ <!--FECHAS-->
                   <div class="info-group">
                     <label>Fecha inicio</label>
                     <p>{{ formatDateFull(selectedEvent.start) }}</p>
@@ -230,7 +230,7 @@
                     <label>Fecha fin</label>
                     <p>{{ formatDateFull(selectedEvent.end) }}</p>
                   </div>
-                  <!-- UBICACIÓN -->
+<!--UBICACION-->
                   <div
                     v-if="
                       selectedEvent.location &&
@@ -245,7 +245,7 @@
                       {{ selectedEvent.location[0].longitude }}
                     </p>-->
                   </div>
-                  <!-- ORGANIZADORES -->
+<!--ORGANIZADORES-->
                   <div class="info-group">
                     <label>
                       Organizadores
@@ -340,7 +340,7 @@ import {
   upcomingEvents,
   userIdFrom,
 } from "../utils/api.js";
-import EventMiniMap from "./EventMiniMap.vue";
+import EventMiniMap from "./eventMiniMap.vue"
 
 export default {
   name: "events-view",
@@ -632,8 +632,7 @@ export default {
     },
 
     /**
-     * Abre el selector nativo de fecha asociado al ref indicado.
-     * @param {string} refName - Nombre del ref del input type="date"
+      @param {string} refName 
      */
     openDatePicker(refName) {
       const picker = this.$refs[refName];
@@ -649,9 +648,8 @@ export default {
     },
 
     /**
-     * Formatea una fecha ISO (yyyy-mm-dd) para mostrarla en el botón del filtro.
-     * @param {string} date - Fecha en formato de input date
-     * @returns {string} Texto legible en locale es-ES
+     @param {string} date 
+     @returns {string} 
      */
     formatDateFilter(date) {
       if (!date) return "Fecha";
@@ -853,7 +851,7 @@ export default {
     if (eventIndex !== -1) {
       const updatedEvent = { ...this.events[eventIndex] };
       
-      //Eliminar al usuario actual
+      //Eliminar usuario actual
       if (updatedEvent.attendees) {
         updatedEvent.attendees = updatedEvent.attendees.filter(
           id => id.toString() !== userId
@@ -862,7 +860,7 @@ export default {
       
       //Actualizar
       this.events[eventIndex] = updatedEvent;
-      // Forzar actualización reactiva
+//Forzar actualizacion
       this.events = [...this.events];
 
       if (this.selectedEvent && this.eventKey(this.selectedEvent) === eventId) {

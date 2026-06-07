@@ -1,6 +1,6 @@
 <template>
   <div class="app-container">
-    <!-- BARRA DE NAVEGACIÓN SUPERIOR -->
+    <!--BARRA SUPERIOR -->
     <nav class="navbar">
       <div class="navbar-content">
         <div class="navbar-logo">
@@ -102,7 +102,7 @@
       </div>
     </nav>
 
-    <!-- CONTENIDO PRINCIPAL -->
+    <!--MAIN AREA -->
     <div class="main-content">
       <!-- Vista Inicio -->
       <div v-if="currentView === 'inicio'" class="view-container">
@@ -112,12 +112,10 @@
         />
       </div>
 
-      <!-- Vista Mapa -->
       <div v-if="currentView === 'map'" class="view-container">
         <MapView @open-event="openEventFromMap" />
       </div>
 
-      <!-- Vista Eventos -->
       <div v-if="currentView === 'events'" class="view-container">
         <EventsView
           :initial-event="eventFromMap"
@@ -128,7 +126,6 @@
         />
       </div>
 
-      <!-- Crear evento -->
       <div v-if="currentView === 'newEvent'" class="view-container">
         <NewEventView
           v-if="isLoggedIn && currentUser"
@@ -143,7 +140,6 @@
         />
       </div>
 
-      <!-- Perfil de otro usuario -->
       <div v-if="currentView === 'user'" class="view-container">
         <UserView
           v-if="viewUserId"
@@ -155,7 +151,6 @@
         />
       </div>
 
-      <!-- Panel administración -->
       <div v-if="currentView === 'admin'" class="view-container">
         <AdminPanelView
           v-if="isLoggedIn && isAdmin && currentUser"
@@ -166,7 +161,6 @@
         <p v-else class="access-denied">Acceso solo para administradores</p>
       </div>
 
-      <!-- Mis Eventos -->
       <div v-if="currentView === 'myevents'" class="view-container">
         <MyEventsView
           v-if="isLoggedIn && currentUser"
@@ -181,12 +175,10 @@
         />
       </div>
 
-      <!-- Vista Foro -->
       <div v-if="currentView === 'routes'" class="view-container">
         <RoutesView />
       </div>
 
-      <!-- Vista Perfil / Login -->
       <div v-if="currentView === 'profile'" class="view-container">
         <ProfileView
           v-if="isLoggedIn && currentUser"
@@ -232,9 +224,9 @@
       <span v-if="!chatOpen">Chat</span>
       <span v-else>✕</span>
       <span
-    v-if="hasUnreadMessages && !chatOpen"
-    class="notification-badge"
-  ></span>
+        v-if="hasUnreadMessages && !chatOpen"
+        class="notification-badge"
+      ></span>
     </button>
 
     <div v-if="isLoggedIn && chatOpen" class="chat-panel">
@@ -305,15 +297,15 @@
                 >
                   {{ msg.senderName }}
                 </button>
-               <!-- <span class="message-sender">{{ msg.senderName }}</span>-->
+                <!-- <span class="message-sender">{{ msg.senderName }}</span>-->
                 <!--TEST SEND MESSAGE-->
                 <button
-  type="button"
-  class="message-sender"
-  @click="openUserProfile(msg.senderId)"
->
-  {{ msg.senderName }}
-</button>
+                  type="button"
+                  class="message-sender"
+                  @click="openUserProfile(msg.senderId)"
+                >
+                  {{ msg.senderName }}
+                </button>
 
                 <p>{{ msg.text }}</p>
                 <span class="message-time">{{
@@ -436,14 +428,14 @@ export default {
 
       const exists = this.messages.some((m) => m.id === msg._id);
       if (exists) return;
-//NOTIFICACIÓN
-if (
-    !this.chatOpen ||
-    !this.conversationId ||
-    msgConvId !== String(this.conversationId)
-  ) {
-    this.hasUnreadMessages = true;
-  }
+      //NOTIFICACIÓN
+      if (
+        !this.chatOpen ||
+        !this.conversationId ||
+        msgConvId !== String(this.conversationId)
+      ) {
+        this.hasUnreadMessages = true;
+      }
 
       this.messages.push({
         id: msg._id,
@@ -514,7 +506,7 @@ if (
     },
 
     onAdminEventsChanged() {
-      // Refrescar datos si hace falta en otras vistas
+      //test refrescar datos
     },
 
     openEventFromMap(event) {
@@ -729,7 +721,7 @@ if (
             sentAt: msg.sentAt,
           }));
 
-          // SCROLL ABAJO
+//SCROLL ABAJO
           this.$nextTick(() => {
             this.scrollToBottom();
           });
@@ -747,7 +739,7 @@ if (
         body: JSON.stringify({ userId }),
       }).catch((error) => console.error("Error en logout:", error));
 
-  //Clean
+      //Clean
       this.isLoggedIn = false;
       this.currentUser = null;
       this.chatOpen = false;
@@ -765,8 +757,8 @@ if (
     toggleChat() {
       this.chatOpen = !this.chatOpen;
       if (this.chatOpen) {
-    this.hasUnreadMessages = false;
-  }
+        this.hasUnreadMessages = false;
+      }
 
       if (this.chatOpen && !this.conversationId) {
         this.selectGroupChat();
@@ -779,7 +771,7 @@ if (
 
       const messageText = this.messageInput;
 
-      // Enviar mensaje al servidor
+//Message to server
       fetch("http://localhost:5000/messages", {
         method: "POST",
         headers: {
@@ -895,7 +887,6 @@ if (
   font-size: 1.3rem;
   font-weight: bold;
   font-family: "Inter", sans-serif;
- 
 }
 
 .nav-menu {
@@ -905,7 +896,6 @@ if (
   flex: 1;
   justify-content: center;
   -webkit-app-region: no-drag;
-
 }
 
 .nav-menu li:last-child {
@@ -929,7 +919,6 @@ if (
   background: rgba(112, 41, 204, 0.2);
   border-color: rgba(159, 100, 255, 0.6);
   color: rgb(221, 195, 255);
-  
 }
 
 .nav-btn.active {
@@ -940,7 +929,6 @@ if (
   );
   border-color: rgba(168, 85, 247, 0.8);
   color: rgba(255, 255, 255, 0.9);
-  
 }
 
 .profile-group {
@@ -1070,7 +1058,7 @@ if (
   text-align: left;
 }
 
-/* ===== CONTENIDO PRINCIPAL ===== */
+/*=====CONTENIDO PRINCIPAL=============================== */
 .main-content {
   flex: 1;
   overflow: hidden;
@@ -1102,7 +1090,6 @@ if (
 
 /* ===== RESPONSIVE ===== */
 @media (max-width: 1024px) {
-
   .navbar-content {
     gap: 1rem;
   }
@@ -1434,19 +1421,19 @@ if (
   font-size: 0.9rem;
   color: rgb(201, 202, 255);
   background-color: rgba(0, 0, 0, 0);
-  border:none;
+  border: none;
   font-weight: 600;
   font-family: "Inter", sans-serif;
-  cursor:pointer;
+  cursor: pointer;
 }
 .message-sender:hover {
-width: auto;
-height: auto;
-transform: scale(1.1);
-background-color: rgb(61, 61, 99);
-border-radius: 1rem;
-margin: 0.5rem;
-transition: 0.5s;
+  width: auto;
+  height: auto;
+  transform: scale(1.1);
+  background-color: rgb(61, 61, 99);
+  border-radius: 1rem;
+  margin: 0.5rem;
+  transition: 0.5s;
 }
 .message-time {
   font-size: 0.75rem;

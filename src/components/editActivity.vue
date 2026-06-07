@@ -28,7 +28,7 @@
       type="number"
       placeholder="Duración en minutos..."
     />
-    <!--SOLO NUMEROS CAMBIAR!!!!!!!!!-->
+<!--SOLO NUMEROS CAMBIAR!!!!!!!!!-->
     <input
       v-model="activitymaxusers"
       type="number"
@@ -141,8 +141,6 @@ export default {
   },
 };
 </script>
-
-<!-- Add "scoped" attribute to limit CSS to this component only -->
 <style scoped>
 .mainarea {
   display: flex;

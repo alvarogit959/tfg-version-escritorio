@@ -1,6 +1,8 @@
 <template>
   <div class="user-profile-container">
-    <button type="button" class="back-btn" @click="$emit('back')">← Volver</button>
+    <button type="button" class="back-btn" @click="$emit('back')">
+      ← Volver
+    </button>
 
     <p v-if="notification" class="notification" :class="notificationClass">
       {{ notification }}
@@ -70,9 +72,7 @@
       </div>
 
       <div class="readonly-info">
-        <p v-if="showEmail">
-          <strong>Email:</strong> {{ profile.email }}
-        </p>
+        <p v-if="showEmail"><strong>Email:</strong> {{ profile.email }}</p>
         <p v-if="profile.location">
           <strong>Ubicación:</strong>
           {{ profile.location.city || "—" }},
@@ -97,12 +97,14 @@
             class="event-item"
           >
             <h3>{{ event.title || "Evento" }}</h3>
-            <p v-if="event.start" class="event-date">{{ formatDate(event.start) }}</p>
+            <p v-if="event.start" class="event-date">
+              {{ formatDate(event.start) }}
+            </p>
             <p
               v-if="event.location && event.location.length > 0"
               class="event-location"
             >
-               {{ event.location[0].location }}
+              {{ event.location[0].location }}
             </p>
           </li>
         </ul>
@@ -126,7 +128,11 @@
       </section>
 
       <div v-if="isOwnProfile" class="own-profile-hint">
-        <button type="button" class="link-btn" @click="$emit('open-own-profile')">
+        <button
+          type="button"
+          class="link-btn"
+          @click="$emit('open-own-profile')"
+        >
           Editar mi perfil
         </button>
       </div>
@@ -139,7 +145,12 @@
 </template>
 
 <script>
-import { apiJson, eventIdentifier, isAdminRole, normalizeEventList } from "../utils/api.js";
+import {
+  apiJson,
+  eventIdentifier,
+  isAdminRole,
+  normalizeEventList,
+} from "../utils/api.js";
 
 export default {
   name: "user-view",
@@ -200,11 +211,9 @@ export default {
 
     async loadProfile() {
       if (!this.viewUserId) return;
-
       this.loading = true;
       this.notification = "";
       this.imageError = false;
-
       try {
         this.profile = await apiJson(`/users/${this.viewUserId}`);
         await this.loadRelationship();
@@ -224,7 +233,7 @@ export default {
       }
       try {
         this.relationship = await apiJson(
-          `/users/${this.currentUser.id}/relationship/${this.viewUserId}`
+          `/users/${this.currentUser.id}/relationship/${this.viewUserId}`,
         );
       } catch {
         this.relationship = {};
@@ -252,14 +261,17 @@ export default {
       if (!this.relationship.incomingRequestId) return;
       this.friendActionLoading = true;
       try {
-        await apiJson(`/friend-requests/${this.relationship.incomingRequestId}`, {
-          method: "PATCH",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            userId: this.currentUser.id,
-            action: "accept",
-          }),
-        });
+        await apiJson(
+          `/friend-requests/${this.relationship.incomingRequestId}`,
+          {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              userId: this.currentUser.id,
+              action: "accept",
+            }),
+          },
+        );
         this.showNotification("¡Ahora sois amigos!", "success");
         await this.loadRelationship();
       } catch (error) {
@@ -436,7 +448,11 @@ export default {
 
 .add-btn,
 .accept-btn {
-  background: linear-gradient(135deg, rgba(255, 180, 100, 1), rgba(197, 41, 30, 0.85));
+  background: linear-gradient(
+    135deg,
+    rgba(255, 180, 100, 1),
+    rgba(197, 41, 30, 0.85)
+  );
   color: rgba(20, 8, 5, 0.95);
 }
 

@@ -9,7 +9,7 @@
     <div v-if="loading" class="loading">Cargando tus eventos...</div>
 
     <template v-else>
-      <!-- Eventos que moderas (creados) -->
+<!-- MY events -->
       <section class="section">
         <h2>Eventos que organizas</h2>
         <p class="section-hint">Eres moderador de estos eventos. Puedes editarlos y gestionar asistentes.</p>
@@ -47,7 +47,7 @@
               </button>
             </div>
 
-            <!-- Formulario de edición -->
+<!--Editrar opciones-->
             <form
               v-if="editingId === eventKey(event)"
               class="edit-form"
@@ -89,7 +89,7 @@
               </button>
             </form>
 
-            <!-- Asistentes -->
+<!--Asistentes-->
             <div class="attendees-block">
               <h4>Asistentes ({{ attendeesFor(event).length }})</h4>
               <div v-if="loadingAttendeesId === eventKey(event)" class="attendees-loading">
@@ -131,7 +131,7 @@
         </ul>
       </section>
 
-      <!-- Eventos apuntados -->
+<!--Joined events-->
       <section class="section">
         <h2>Eventos apuntados</h2>
         <p class="section-hint">Eventos a los que te has inscrito como asistente.</p>

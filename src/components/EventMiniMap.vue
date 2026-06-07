@@ -79,7 +79,7 @@ export default {
         {
           attribution: "&copy; OpenStreetMap contributors &copy; CARTO",
           maxZoom: 19,
-        }
+        },
       ).addTo(this.map);
 
       this.map.on("zoomend", () => {
@@ -110,7 +110,7 @@ export default {
       })
         .addTo(this.map)
         .bindPopup(
-          `<b>${this.event.title || "Evento"}</b><br>${loc.location || ""}`
+          `<b>${this.event.title || "Evento"}</b><br>${loc.location || ""}`,
         );
 
       this.map.setView([lat, lng], zoom, { animate: false, reset: true });
