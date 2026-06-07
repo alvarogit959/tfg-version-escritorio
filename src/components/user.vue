@@ -102,7 +102,7 @@
               v-if="event.location && event.location.length > 0"
               class="event-location"
             >
-              📍 {{ event.location[0].location }}
+               {{ event.location[0].location }}
             </p>
           </li>
         </ul>

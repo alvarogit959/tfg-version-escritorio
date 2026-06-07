@@ -915,7 +915,7 @@ export default {
   max-height: calc(100vh - 2rem - 60px);
   overflow-y: auto;
   overflow-x: hidden;
-  padding: 0.5rem;
+  
   color: white;
   font-family: "Inter", sans-serif;
   box-sizing: border-box;
@@ -986,23 +986,19 @@ export default {
   min-height: 0;
   display: flex;
   flex-direction: column;
-  gap: 1rem;
+
 }
 
 .panel-card {
   background: rgba(255, 255, 255, 0.12);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
+
 
   min-height: 4rem;
   height: auto;
 
-  border: 1px solid rgba(255, 255, 255, 0.25);
-  border-radius: 0.8rem;
-
+  
   padding: 0.8rem 1rem;
 
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.25);
 }
 .filters-panel{
   display: flex;
@@ -1016,6 +1012,7 @@ export default {
   flex-direction: column;
   background: none;
   border: none;
+  padding: 0.5rem;
 }
 
 .section-title {
@@ -1109,7 +1106,7 @@ export default {
   max-width: 100%;
   background: rgba(255, 255, 255, 0.08);
   padding: 0.25rem 0.45rem;
-  border-radius: 0.2rem;
+  border-radius: 0.8rem;
   border: 1px solid rgba(255, 255, 255, 0.25);
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.25);
   color: white;
@@ -1140,7 +1137,7 @@ export default {
 .date-clear-btn {
   width: auto;
   padding: 0.43rem 0.55rem;
-  border-radius: 0.3rem;
+  border-radius: 0.5rem;
   font-size: 0.74rem;
   white-space: nowrap;
   background: rgba(255, 255, 255, 0.12);
@@ -1185,7 +1182,7 @@ export default {
   justify-content: center;
   gap: 0.05rem;
   padding: 0.28rem 0.45rem;
-  border-radius: 0.3rem;
+  border-radius: 0.5rem;
   font-size: 0.78rem;
   background: rgba(255, 255, 255, 0.12);
   border: 1px solid rgba(255, 255, 255, 0.25);
@@ -1267,6 +1264,7 @@ export default {
   flex: 1;
   min-height: 0;
   padding-right: 0.25rem;
+  padding-top:0.2rem
 }
 
 .events-list::-webkit-scrollbar {
@@ -1326,7 +1324,7 @@ export default {
 
 .event-type {
   padding: 0.25rem 0.55rem;
-  border-radius: 0.2rem;
+  border-radius: 0.5rem;
   font-size: 0.72rem;
   font-weight: 600;
   white-space: nowrap;

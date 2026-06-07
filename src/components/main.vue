@@ -305,7 +305,16 @@
                 >
                   {{ msg.senderName }}
                 </button>
-                <span class="message-sender">{{ msg.senderName }}</span>
+               <!-- <span class="message-sender">{{ msg.senderName }}</span>-->
+                <!--TEST SEND MESSAGE-->
+                <button
+  type="button"
+  class="message-sender"
+  @click="openUserProfile(msg.senderId)"
+>
+  {{ msg.senderName }}
+</button>
+
                 <p>{{ msg.text }}</p>
                 <span class="message-time">{{
                   new Date(msg.sentAt).toLocaleTimeString()
@@ -361,6 +370,7 @@ export default {
     AdminPanelView,
     FriendsView,
   },
+  emits: ["view-user"],
   computed: {
     isAdmin() {
       return isAdminRole(this.currentUser?.role);
@@ -1051,6 +1061,7 @@ if (
   border: none;
   padding: 0 12px 4px 12px;
   color: rgba(150, 220, 255, 0.95);
+  background-color: black;
   cursor: pointer;
   text-decoration: underline;
   font-size: 0.8rem;
@@ -1225,14 +1236,14 @@ if (
   padding: 0.55rem 0.65rem;
   font-size: 0.82rem;
   font-weight: 700;
-  color: rgba(255, 149, 100, 0.95);
-  border-bottom: 1px solid rgba(255, 162, 100, 0.2);
+  color: rgba(246, 249, 255, 0.95);
+  border-bottom: 1px solid rgba(182, 214, 255, 0.2);
 }
 
 .sidebar-close {
   background: none;
   border: none;
-  color: rgba(255, 208, 186, 0.7);
+  color: rgba(186, 250, 255, 0.7);
   cursor: pointer;
   font-size: 0.9rem;
   padding: 0.15rem 0.35rem;
@@ -1268,7 +1279,7 @@ if (
 
 .chat-list-item.active {
   background: rgba(99, 102, 241, 0.18);
-  border-left-color: rgba(255, 149, 100, 0.95);
+  border-left-color: rgba(100, 162, 255, 0.95);
 }
 
 .chat-avatar {
@@ -1336,7 +1347,7 @@ if (
 
 .conversation-header {
   padding: 0.55rem 0.75rem;
-  border-bottom: 1px solid rgba(255, 162, 100, 0.2);
+  border-bottom: 1px solid rgba(191, 184, 255, 0.521);
   background: rgba(255, 162, 100, 0.06);
 }
 
@@ -1344,7 +1355,7 @@ if (
   margin: 0;
   font-size: 0.88rem;
   font-family: "Inter", sans-serif;
-  color: rgba(255, 149, 100, 0.95);
+  color: rgb(255, 255, 255);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -1420,13 +1431,23 @@ if (
 }
 
 .message-sender {
-  font-size: 0.8rem;
-  color: rgba(255, 255, 255, 0.6);
-  padding: 0 12px 4px 12px;
+  font-size: 0.9rem;
+  color: rgb(201, 202, 255);
+  background-color: rgba(0, 0, 0, 0);
+  border:none;
   font-weight: 600;
   font-family: "Inter", sans-serif;
+  cursor:pointer;
 }
-
+.message-sender:hover {
+width: auto;
+height: auto;
+transform: scale(1.1);
+background-color: rgb(61, 61, 99);
+border-radius: 1rem;
+margin: 0.5rem;
+transition: 0.5s;
+}
 .message-time {
   font-size: 0.75rem;
   color: rgba(255, 255, 255, 0.5);
@@ -1446,7 +1467,7 @@ if (
   flex: 1;
   padding: 7px 10px;
   background: rgba(255, 255, 255, 0.08);
-  border: 1px solid rgba(255, 162, 100, 0.3);
+  border: 1px solid rgba(135, 183, 255, 0.603);
   border-radius: 0.2rem;
   color: white;
   font-family: "Inter", sans-serif;
@@ -1460,7 +1481,7 @@ if (
 
 .chat-input button {
   padding: 7px 12px;
-  background: rgba(212, 154, 105, 0.9);
+  background: rgba(196, 204, 255, 0.9);
   border: 1px solid rgba(168, 85, 247, 0.7);
   border-radius: 0.2rem;
   color: rgba(20, 8, 5, 0.95);

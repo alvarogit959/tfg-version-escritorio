@@ -1,25 +1,11 @@
 <template>
   <div class="mainarea">
-    
     <!--<img id="image"  src="../assets/transport.png">
     <h3>CarMeet Club</h3>-->
-  
     <!-- <p id="notifications">{{ notification }}</p> -->
 
     <!--FILTROS -->
     <div class="filters-container">
-      <div class="filter-group">
-        <!-- Ubicación -->
-        <button class="filter-btn" @click="toggleUbicacion">
-          Ubicación
-        </button>
-        <div v-if="showUbicacion" class="submenu">
-          <button @click="activateGPS" class="submenu-btn">Activar GPS</button>
-          <input v-model="manualLocation" type="text" placeholder="Escribe tu ubicación">
-          <button @click="closeUbicacion" class="submenu-btn">Aplicar</button>
-        </div>
-      </div>
-
       <button
         class="filter-btn" id="coches"
         :class="{ 'filter-btn--hidden': isTypeHidden('coches') }"
@@ -57,7 +43,20 @@
         Talleres
       </button>
 
-      <div class="distance-filter">
+      <div class="filter-group">
+        <!-- Ubicación -->
+        <button class="filter-btn" @click="toggleUbicacion">
+          Ubicación
+        </button>
+        <div v-if="showUbicacion" class="submenu">
+          <button @click="activateGPS" class="submenu-btn">Activar GPS</button>
+          <input v-model="manualLocation" type="text" placeholder="Escribe tu ubicación">
+          <button @click="closeUbicacion" class="submenu-btn">Aplicar</button>
+        </div>
+      </div>
+
+<!--RANGE FILTER======-->
+      <div v-if="userLocation" class="distance-filter">
         <div class="distance-filter__header">
           <span>Rango</span>
           <strong>{{ distanceKm }} km</strong>
@@ -320,6 +319,8 @@ activateGPS() {
 
       this.updateRangeFilter();
       this.notification = "Ubicación GPS obtenida";
+//CLOSE TEST??
+      this.showUbicacion = false;
     },
 
     async (error) => {
@@ -328,6 +329,7 @@ activateGPS() {
       // 👉 fallback automático
       try {
         await this.fallbackLocation();
+              this.showUbicacion = false;
       } catch (fallbackError) {
         console.error("No se pudo obtener ubicación por IP:", fallbackError);
         this.notification = "No se pudo obtener la ubicación";
@@ -418,6 +420,30 @@ activateGPS() {
     updateRangeFilter() {
       this.updateDistanceCircle();
       this.updateMarkerVisibility();
+        if (this.userLocation) {
+    const bounds = new mapboxgl.LngLatBounds();
+
+    this.eventMarkers.forEach(({ event }) => {
+      if (!this.isEventHidden(event)) {
+        const coords = this.getEventCoordinates(event);
+        if (coords) {
+          bounds.extend([coords.lng, coords.lat]);
+        }
+      }
+    });
+
+    bounds.extend([
+      this.userLocation.lng,
+      this.userLocation.lat
+    ]);
+
+    if (!bounds.isEmpty()) {
+      this.map.fitBounds(bounds, {
+        padding: 50,
+        maxZoom: 12
+      });
+    }
+  }
     },
 
     getEventCoordinates(event) {
@@ -580,8 +606,8 @@ activateGPS() {
         type: "fill",
         source: this.rangeSourceId,
         paint: {
-          "fill-color": "#0099ff",
-          "fill-opacity": 0.14
+          "fill-color": "#3570B5",
+          "fill-opacity": 0.08
         }
       });
 
@@ -590,10 +616,10 @@ activateGPS() {
         type: "line",
         source: this.rangeSourceId,
         paint: {
-          "line-color": "#55c7ff",
-          "line-opacity": 0.9,
-          "line-width": 2
-        }
+  "line-color": "#3570B5",
+  "line-opacity": 1,
+  "line-width": 3
+}
       });
     },
 
