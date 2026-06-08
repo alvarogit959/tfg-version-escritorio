@@ -693,7 +693,7 @@ app.patch("/users/:userId", async (req, res) => {
     if (profileImage !== undefined) update.profileImage = profileImage;
     if (bio !== undefined) update.bio = bio;
 
-    const user = await User.findByIdAndUpdate(userId, update, { new: true })
+    const user = await User.findByIdAndUpdate(userId, update, { returnDocument: 'after' })
       .select("-passwordHash")
       .populate("joinedEvents");
 
@@ -1137,7 +1137,7 @@ app.post("/logout", async (req, res) => {
     const user = await User.findByIdAndUpdate(
       userId,
       { status: false },
-      { new: true }
+      { returnDocument: 'after' }
     );
 
     if (!user) {
@@ -1262,7 +1262,7 @@ app.put("/messages/:messageId/read", async (req, res) => {
     const message = await Message.findByIdAndUpdate(
       messageId,
       { $addToSet: { readBy: userId } },
-      { new: true }
+      { returnDocument: 'after' }
     );
 
     if (!message) {

@@ -35,7 +35,7 @@
               Eventos
             </button>
           </li>
-          <li>
+          <!--<li>
             <button
               class="nav-btn"
               :class="{ active: currentView === 'routes' }"
@@ -43,7 +43,7 @@
             >
               Rutas
             </button>
-          </li>
+          </li>-->
           <li>
             <div class="profile-group">
               <button class="profile-btn" @click="toggleProfileMenu">
@@ -174,10 +174,10 @@
           @login="handleLogin"
         />
       </div>
-
+<!--
       <div v-if="currentView === 'routes'" class="view-container">
         <RoutesView />
-      </div>
+      </div>-->
 
       <div v-if="currentView === 'profile'" class="view-container">
         <ProfileView
@@ -334,7 +334,7 @@ import "mapbox-gl/dist/mapbox-gl.css";
 import InicioView from "./inicio.vue";
 import MapView from "./map.vue";
 import EventsView from "./events.vue";
-import RoutesView from "./routesMap.vue";
+//import RoutesView from "./routesMap.vue";
 import LoginView from "./login-view.vue";
 import ProfileView from "./profile.vue";
 import MyEventsView from "./myEvents.vue";
@@ -352,7 +352,7 @@ export default {
     InicioView,
     MapView,
     EventsView,
-    RoutesView,
+    //RoutesView,
     LoginView,
     ProfileView,
     MyEventsView,
