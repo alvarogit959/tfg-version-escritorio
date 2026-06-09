@@ -2,7 +2,7 @@
 <template>
   <div class="mainarea">
     <h1>{{ msg }}</h1>
-    <img id="image"  src="../assets/transport1.png">
+    <!--<img id="image"  src="../assets/transport1.png">-->
     <h3>CarMeet Club</h3>
     <p >
       Bienvenido a la CarMeet Club, escriba su nombre de usuario y contraseña o cree una
@@ -92,14 +92,32 @@ methods: {
 };
 </script>
 
-<!-- Add "scoped" attribute to limit CSS to this component only -->
+
 <style scoped>
+.app-container{height: 100vh;
+}
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html, body {
+  width: 100%;
+  height: 100%;
+  overflow: hidden; 
+}
+
 .mainarea {
+  overflow: hidden;
   display: flex;
+  justify-content: flex-start;
   flex-direction: column;
-  row-gap: 1rem;
-  width: 60%;
-  height: 95%;
+  row-gap: 0.8rem;
+  width: 80vw;
+  max-width: 40rem;
+  height: calc(80vh);
+
   background: linear-gradient(
     135deg,
     rgba(255,255,255,0.12),
@@ -109,14 +127,13 @@ methods: {
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
   border: 3px solid rgba(175, 175, 175, 0.2);
-  border-radius: 16px;
+  border-radius: 3rem;
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.25);
-
+  
   align-items: center;
   justify-content: center;
-  border-radius: 3rem;
   color: rgb(255, 255, 255);
-  padding: 1rem;
+  padding: 2rem;
   -webkit-app-region: no-drag;
 }
 .glass {
@@ -150,7 +167,8 @@ h3{  font-family: "Inter", sans-serif;
 font-size: 1.7rem;}
 input {
   font-family: "Inter", sans-serif;
-  width: 60%;
+  width: 80%;
+  max-width: 300px;
   height: 2.8rem;
   padding: 0 1rem;
 
@@ -175,7 +193,8 @@ input:focus {
 }
 button {
   font-family: "Inter", sans-serif;
-  width: 45%;
+  width: 80%;
+  max-width: 300px;
   padding: 0.9rem;
 
   cursor: pointer;
@@ -202,7 +221,8 @@ button:active {
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
 }
 
-p{width: 80%;}
+p{width: 80%;
+ text-align: center;}
 a {
   color: #ffffff;
 }

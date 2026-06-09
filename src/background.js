@@ -18,6 +18,7 @@ async function createWindow() {
     width: 1080,
     height: 750,
     //resizable: false,
+    
         frame: false,
             //transparent: true,
             // backgroundColor: '#00000000',

@@ -1,7 +1,7 @@
 <template>
   <div class="mainarea">
-    <h1>{{ msg }}</h1>
-    <img id="image"  src="../assets/transport.png">
+    <!--<h1>{{ msg }}</h1>
+    <img id="image"  src="../assets/transport.png">-->
     <h3>CarMeet Club</h3>
     <p >
       Cree su nuevo usuario en CarMeet Club
@@ -138,11 +138,16 @@ methods: {
 <!-- Add "scoped" attribute to limit CSS to this component only -->
 <style scoped>
 .mainarea {
+  margin-top: 1rem;
+  overflow: hidden;
   display: flex;
+  justify-content: flex-start;
   flex-direction: column;
-  row-gap: 0.5rem;
-  width: 50%;
-  height: 88%;
+  row-gap: 0.8rem;
+  width: 80vw;
+  max-width: 40rem;
+  height: calc(80vh);
+
   background: linear-gradient(
     135deg,
     rgba(255,255,255,0.12),
@@ -152,14 +157,13 @@ methods: {
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
   border: 3px solid rgba(175, 175, 175, 0.2);
-  border-radius: 16px;
+  border-radius: 3rem;
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.25);
-
+  
   align-items: center;
   justify-content: center;
-  border-radius: 3rem;
   color: rgb(255, 255, 255);
-  padding: 1rem;
+  padding: 2rem;
   -webkit-app-region: no-drag;
 }
 .glass {
@@ -182,6 +186,7 @@ methods: {
   margin-bottom: -3rem;
 }
 #notifications{
+  color:red;
  margin-top: -0.5rem; 
   margin-bottom: -0.02rem;
 padding: 0;

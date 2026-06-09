@@ -63,11 +63,10 @@ height: 100vh;
 }
 
 #app {
-  
   padding-top: 2rem;
   margin-top: 0;
   width: 100vw;
-  height: 100vh-2rem;
+  height: calc(100vh);
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -93,7 +92,7 @@ height: 100vh;
   justify-content: flex-end;
   align-items: center;
   user-select: none;
-  background: rgba(20, 20, 40, 0.95);
+  background: rgba(14, 14, 32, 0.95);
   border-bottom: 1px solid rgba(100, 150, 255, 0.3);
 }
 @media (max-width: 768px) {

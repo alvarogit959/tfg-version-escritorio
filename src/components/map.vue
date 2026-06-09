@@ -771,7 +771,10 @@ escapeHtml(text) {
 
 <style scoped>
 /*TEST*/
-
+.view-container{
+    width: 100%;
+  max-height: 100vh;
+}
 
 
 .mapboxgl-popup-tip {
@@ -795,6 +798,7 @@ escapeHtml(text) {
 }
 /*FIN   TEST*/
 .mainarea {
+  margin-top: 2.5rem;
   overflow: hidden;
   display: flex;
   justify-content: flex-start;

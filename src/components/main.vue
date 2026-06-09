@@ -808,7 +808,11 @@ export default {
   display: flex;
   flex-direction: column;
   width: 100%;
-
+ background-image: url("@/assets/testbackground.png");
+ background-blend-mode: exclusion;
+    background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
   /* background: linear-gradient(135deg, rgba(10, 10, 20, 1), rgba(20, 20, 40, 1)); */
   -webkit-app-region: drag;
   /*background-image: url("@/assets/newbackground.svg");*/
@@ -862,11 +866,10 @@ export default {
 }
 
 .navbar {
-  background: rgba(20, 20, 40, 0);
-  backdrop-filter: blur(15px);
-  -webkit-backdrop-filter: blur(15px);
+  background: rgba(18, 18, 117, 0.089);
+  /*backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);*/
   padding: 0.8rem 1.5rem;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
   -webkit-app-region: drag;
   position: relative;
   z-index: 1000;
@@ -940,7 +943,7 @@ export default {
 
 .profile-btn {
   font-family: "Inter", sans-serif;
-  padding: 0.25rem 0.5rem;
+  padding: 0.6rem 1rem;
   background: rgba(103, 12, 139, 0.377);
   border: 1px solid rgba(171, 87, 226, 0.3);
   border-radius: 0.2rem;
@@ -1070,7 +1073,7 @@ export default {
 
 .view-container {
   width: 100%;
-  height: 100%;
+  height: calc(100vh - 6.5rem);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1135,6 +1138,11 @@ export default {
     padding: 0.4rem 0.8rem;
     font-size: 0.8rem;
   }
+  .view-container {
+
+  height: calc(100vh - 4rem);
+
+}
 }
 
 .chat-button {
