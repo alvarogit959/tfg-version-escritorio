@@ -912,7 +912,7 @@ export default {
   height: calc(100vh - 2rem - 60px);
   max-height: calc(100vh - 2rem - 60px);
   overflow-y: auto;
-  overflow-x: hidden;
+  
   
   color: white;
   font-family: "Inter", sans-serif;
@@ -921,7 +921,6 @@ export default {
 
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
 
   background: linear-gradient(
     135deg,
@@ -931,7 +930,7 @@ export default {
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
 
-  border: 3px solid rgba(175, 175, 175, 0.2);
+
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.25);
 }
 
@@ -989,13 +988,9 @@ export default {
 
 .panel-card {
   background: rgba(255, 255, 255, 0.12);
-
-
-  min-height: 4rem;
+  min-height: 1.5rem;
   height: auto;
-
-  
-  padding: 0.8rem 1rem;
+  padding: 0.4rem 1rem;
 
 }
 .filters-panel{

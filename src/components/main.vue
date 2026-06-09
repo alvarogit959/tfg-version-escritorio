@@ -808,7 +808,7 @@ export default {
   display: flex;
   flex-direction: column;
   width: 100%;
- background-image: url("@/assets/testbackground.png");
+ background-image: url("@/assets/rrreflection.svg");
  background-blend-mode: exclusion;
     background-size: cover;
   background-position: center;
@@ -866,7 +866,7 @@ export default {
 }
 
 .navbar {
-  background: rgba(18, 18, 117, 0.089);
+  background: rgba(16, 16, 32, 0.274);
   /*backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);*/
   padding: 0.8rem 1.5rem;
@@ -1063,7 +1063,7 @@ export default {
 
 /*=====CONTENIDO PRINCIPAL=============================== */
 .main-content {
-  flex: 1;
+  width: 100%;
   overflow: hidden;
   display: flex;
   align-items: center;

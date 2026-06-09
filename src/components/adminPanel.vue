@@ -436,7 +436,7 @@ export default {
   padding: 1.5rem 2rem;
   color: white;
   background: linear-gradient(135deg, rgba(80, 40, 120, 0.25), rgba(0, 0, 0, 0.75));
-  border: 2px solid rgba(180, 120, 255, 0.35);
+
   border-radius: 1rem;
   box-sizing: border-box;
   -webkit-app-region: no-drag;
