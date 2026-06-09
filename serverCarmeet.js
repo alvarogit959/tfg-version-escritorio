@@ -39,7 +39,7 @@ mongoose.connect(
   .catch((err) => console.error("Error de conexión:", err));
 
 
-// Esquema para cada ubicación
+//Esquema ubicación
 const locationSchema = new mongoose.Schema(
   {
     location: {
@@ -55,15 +55,15 @@ const locationSchema = new mongoose.Schema(
       required: true,
     },
   },
-  { _id: false } // evita que Mongo cree un _id para cada ubicación
+  { _id: false } //No id for ubication 
 );
 
-// Esquema principal del evento
+//Esquema evento===============
 const eventSchema = new mongoose.Schema({
   id: {
     type: Number,
     required: true,
-    unique: true, // el id original del evento será único
+    unique: true, 
   },
   title: {
     type: String,
@@ -708,7 +708,7 @@ app.patch("/users/:userId", async (req, res) => {
   }
 });
 
-// Estado de relación entre dos usuarios (amistad / solicitud)
+//Estado amistad / solicitud
 app.get("/users/:userId/relationship/:otherUserId", async (req, res) => {
   try {
     const { userId, otherUserId } = req.params;
@@ -766,7 +766,7 @@ app.get("/users/:userId/friends", async (req, res) => {
   }
 });
 
-// Solicitudes de amistad (entrantes y salientes pendientes)
+//Solicitudes de amistad (entrantes y salientes pendientes)
 app.get("/users/:userId/friend-requests", async (req, res) => {
   try {
     const userId = req.params.userId;
@@ -805,7 +805,7 @@ app.get("/users/:userId/friend-requests", async (req, res) => {
   }
 });
 
-// Enviar solicitud de amistad
+//Enviar solicitud amistad
 app.post("/users/:userId/friend-requests", async (req, res) => {
   try {
     const fromId = req.params.userId;
@@ -1023,7 +1023,7 @@ app.post("/users/:userId/conversations/private", async (req, res) => {
   }
 });
 
-// Eliminar usuario permanentemente (solo admin)
+//Eliminar usuario (admin)
 app.delete("/users/:userId", async (req, res) => {
   try {
     const adminId = req.query.adminId || req.body?.adminId;
@@ -1059,7 +1059,7 @@ app.delete("/users/:userId", async (req, res) => {
   }
 });
 
-// Apuntarse a un evento
+//Apuntarse
 app.post("/users/:userId/joined-events/:eventId", async (req, res) => {
   try {
     const { userId, eventId } = req.params;
@@ -1093,7 +1093,7 @@ app.post("/users/:userId/joined-events/:eventId", async (req, res) => {
   }
 });
 
-// Salir de un evento apuntado
+//Salir de un evento
 app.delete("/users/:userId/joined-events/:eventId", async (req, res) => {
   try {
     const { userId, eventId } = req.params;
@@ -1124,7 +1124,7 @@ app.delete("/users/:userId/joined-events/:eventId", async (req, res) => {
   }
 });
 
-// Logout de usuario
+//Logout 
 app.post("/logout", async (req, res) => {
   try {
     const { userId } = req.body;
@@ -1133,7 +1133,7 @@ app.post("/logout", async (req, res) => {
       return res.status(400).json({ error: "ID de usuario requerido" });
     }
 
-    // Buscar el usuario y establecer status en false
+//Find user
     const user = await User.findByIdAndUpdate(
       userId,
       { status: false },
@@ -1153,10 +1153,9 @@ app.post("/logout", async (req, res) => {
   }
 });
 
-// Obtener o crear conversación grupal
 app.get("/conversations/group", async (req, res) => {
   try {
-    // Buscar si ya existe una conversación grupal
+//Buscar si existe conversacion grupal
     let groupConversation = await Conversation.findOne({ type: "group" });
 
     // Si no existe, crear una nueva
@@ -1176,7 +1175,7 @@ app.get("/conversations/group", async (req, res) => {
   }
 });
 
-// Obtener mensajes de una conversación
+//Obtener mensajes
 app.get("/conversations/:conversationId/messages", async (req, res) => {
   try {
     const { conversationId } = req.params;
@@ -1192,7 +1191,7 @@ app.get("/conversations/:conversationId/messages", async (req, res) => {
   }
 });
 
-// Enviar un nuevo mensaje
+//Enviar un nuevo mensaje
 app.post("/messages", async (req, res) => {
   try {
     const { conversationId, senderId, text } = req.body;

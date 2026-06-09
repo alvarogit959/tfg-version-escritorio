@@ -1400,8 +1400,8 @@ export default {
 
 .back-btn {
   font-size: 0.75rem;
-  padding: 0.4em;
-  margin-top: 0.3rem;
+  padding: 0.6em 0.8rem;
+
   border-radius: 0.3rem;
   background-color: rgba(83, 15, 15, 0.795);
 }
@@ -1434,9 +1434,10 @@ export default {
 .details-title-row {
   display: flex;
   flex-wrap: wrap;
-  align-items: flex-start;
+  align-items: center;
+  justify-content: space-between;
   gap: 0.6rem;
-  margin-bottom: 0.5rem;
+  margin-bottom: 1rem;
 }
 
 .details-content h1 {

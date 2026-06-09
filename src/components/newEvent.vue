@@ -79,7 +79,7 @@
 
         <div v-if="selectedCoords" class="coords-info">
           <p>
-            📍 {{ selectedCoords.latitude }}, {{ selectedCoords.longitude }}
+             {{ selectedCoords.latitude }}, {{ selectedCoords.longitude }}
           </p>
           <p v-if="!form.locationLabel" class="hint">
             Haz clic en el mapa para fijar la ubicación exacta.
@@ -322,11 +322,15 @@ export default {
 </script>
 
 <style scoped>
+.view-container{
+    width: 100%;
+  max-height: 100vh;
+}
 .new-event-container {
   width: 100%;
-  height: 100%;
+  height: 100vh;
   overflow-y: auto;
-  padding: 1.5rem 2rem;
+  padding: 0.8rem 2rem;
   color: white;
   background: linear-gradient(
     135deg,
@@ -335,8 +339,6 @@ export default {
   );
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
-  border: 3px solid rgba(175, 175, 175, 0.2);
-  border-radius: 1rem;
   box-sizing: border-box;
   -webkit-app-region: no-drag;
 }
@@ -355,7 +357,7 @@ export default {
 
 .cancel-btn {
   padding: 0.6rem 1.2rem;
-  background: rgba(255, 255, 255, 0.12);
+  background: rgba(85, 18, 18, 0.39);
   border: 1px solid rgba(255, 255, 255, 0.25);
   border-radius: 0.8rem;
   color: white;
@@ -385,7 +387,7 @@ export default {
   display: grid;
   grid-template-columns: 1fr 1.2fr;
   gap: 1.5rem;
-  min-height: 420px;
+  height: 74vh;
 }
 
 @media (max-width: 900px) {
@@ -398,6 +400,9 @@ export default {
   display: flex;
   flex-direction: column;
   gap: 1rem;
+  justify-content: space-evenly;
+
+  max-width: 90vw;
 }
 
 .form-row {
