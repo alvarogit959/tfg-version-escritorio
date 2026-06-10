@@ -28,8 +28,6 @@
 
 <!--EVENTS-->
     <section v-else-if="tab === 'events'" class="section">
-      <p class="hint">Puedes editar, eliminar eventos y quitar asistentes de cualquier evento.</p>
-
       <ul class="events-list">
         <li
           v-for="event in events"
@@ -37,7 +35,8 @@
           class="event-card"
         >
           <div class="card-header">
-            <h3>{{ event.title || "Evento" }}</h3>
+            <h3 @click="selectEvent(event)"
+             class="event-title-clickable">{{ event.title || "Evento" }}</h3>
             <span v-if="event.type" class="type-badge">{{ event.type }}</span>
           </div>
           <p v-if="event.start" class="meta">{{ formatDate(event.start) }}</p>
@@ -423,6 +422,9 @@ export default {
         this.notificationClass = "";
       }, 3500);
     },
+            selectEvent(event) {
+      this.$emit("select-event", event);
+    },
   },
 };
 </script>
@@ -744,6 +746,21 @@ overflow-x: auto;
     rgba(99, 102, 241, 0.8),
     rgba(168, 85, 247, 0.8)
   );
+}
+.event-title-clickable {
+  cursor: pointer;
+  transition: color 0.2s ease;
+
+}
+
+.event-title-clickable:hover {
+  color: #71a7ee;
+  transition: color 1s ease;
+  transform: scale(1.1);
+}
+
+.event-title-clickable:active {
+  transform: scale(0.99);
 }
 @media (max-width: 700px) {
   .admin-panel {

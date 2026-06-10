@@ -150,6 +150,7 @@
           @back="closeUserView"
           @open-own-profile="openOwnProfile"
           @open-private-chat="openPrivateChat"
+          @select-event="openEventFromInicio"
         />
       </div>
 
@@ -159,6 +160,7 @@
           :admin-id="currentUser.id"
           @view-user="openUserProfile"
           @events-changed="onAdminEventsChanged"
+          @select-event="openEventFromInicio"
         />
         <p v-else class="access-denied">Acceso solo para administradores</p>
       </div>
@@ -169,6 +171,7 @@
           :user-id="currentUser.id"
           @events-updated="handleProfileUpdated"
           @view-user="openUserProfile"
+          @select-event="openEventFromInicio"
         />
         <LoginView
           v-else
@@ -186,6 +189,7 @@
           v-if="isLoggedIn && currentUser"
           :user-id="currentUser.id"
           @profile-updated="handleProfileUpdated"
+          @select-event="openEventFromInicio"
         />
         <LoginView
           v-else

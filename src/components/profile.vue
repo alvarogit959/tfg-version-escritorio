@@ -94,9 +94,7 @@
       <!--SAVED events -->
       <section class="panel-card joined-events-section">
         <h2 class="section-title">Eventos apuntados</h2>
-        <p class="section-hint">
-          Eventos a los que te has inscrito como asistente.
-        </p>
+
 
         <div v-if="joinedEventsList.length === 0" class="no-events">
           <p>No estás apuntado a ningún evento</p>
@@ -110,7 +108,8 @@
             class="joined-event-item"
           >
             <div class="event-info">
-              <h3>{{ event.title || "Evento" }}</h3>
+              <h3 @click="selectEvent(event)"
+             class="event-title-clickable">{{ event.title || "Evento" }}</h3>
               <p v-if="event.start" class="event-date">
                 {{ formatDate(event.start) }}
               </p>
@@ -294,6 +293,9 @@ export default {
         this.notification = "";
         this.notificationClass = "";
       }, 3500);
+    },
+        selectEvent(event) {
+      this.$emit("select-event", event);
     },
   },
 };
@@ -660,7 +662,7 @@ export default {
 
 .joined-event-item:hover {
   border-color: rgba(255, 255, 255, 0.4);
-  transform: translateX(4px);
+
 }
 
 .event-info h3 {
@@ -703,6 +705,21 @@ export default {
 .leave-btn:disabled {
   opacity: 0.5;
   cursor: not-allowed;
+}
+.event-title-clickable {
+  cursor: pointer;
+  transition: color 0.2s ease;
+
+}
+
+.event-title-clickable:hover {
+  color: #71a7ee;
+  transition: color 1s ease;
+  transform: scale(1.1);
+}
+
+.event-title-clickable:active {
+  transform: scale(0.99);
 }
 
 @media (max-width: 700px) {

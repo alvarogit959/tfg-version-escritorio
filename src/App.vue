@@ -103,7 +103,7 @@ height: 100vh;
   padding-bottom: 0rem;}
 }
 
-/* Buttons must NOT be draggable */
+
 .buttoncontanier {
   position: relative;
   border-radius: 0.3rem;

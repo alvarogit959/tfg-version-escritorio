@@ -296,11 +296,11 @@ export default {
 
   background: linear-gradient(
     135deg,
-    rgba(255, 255, 255, 0.12),
-    rgba(0, 0, 0, 0.726)
+    rgba(99, 86, 155, 0.247),
+    rgba(0, 0, 0, 0.705)
   );
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
+
+
 
 
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.25);

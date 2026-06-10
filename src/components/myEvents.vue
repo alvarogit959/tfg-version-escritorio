@@ -1,6 +1,6 @@
 <template>
   <div class="my-events-container">
-    <h1>Mis Eventos</h1>
+    <!--<h1>Mis Eventos</h1>-->
 
     <p v-if="notification" class="notification" :class="notificationClass">
       {{ notification }}
@@ -12,10 +12,7 @@
       <!-- MY events -->
       <section class="section">
         <h2>Eventos que organizas</h2>
-        <p class="section-hint">
-          Eres moderador de estos eventos. Puedes editarlos y gestionar
-          asistentes.
-        </p>
+
 
         <div v-if="moderatedEventsList.length === 0" class="no-events-inline">
           <p>No has creado ningún evento.</p>
@@ -31,7 +28,8 @@
             class="event-card moderated-card"
           >
             <div class="event-card-header">
-              <h3>{{ event.title || "Evento" }}</h3>
+              <h3 @click="selectEvent(event)"
+             class="event-title-clickable">{{ event.title || "Evento" }}</h3>
               <span class="badge-moderator">Moderador</span>
               <span
                 v-if="event.type"
@@ -162,9 +160,7 @@
       <!--Joined events-->
       <section class="section">
         <h2>Eventos apuntados</h2>
-        <p class="section-hint">
-          Eventos a los que te has inscrito como asistente.
-        </p>
+
 
         <div v-if="joinedOnlyList.length === 0" class="no-events-inline">
           <p>No estás apuntado a otros eventos.</p>
@@ -175,9 +171,11 @@
             v-for="event in joinedOnlyList"
             :key="'join-' + eventKey(event)"
             class="event-card"
+           
           >
             <div class="event-card-header">
-              <h3>{{ event.title || "Evento" }}</h3>
+              <h3  @click="selectEvent(event)"
+             class="event-title-clickable">{{ event.title || "Evento" }}</h3>
               <span
                 v-if="event.type"
                 class="event-type"
@@ -508,6 +506,9 @@ export default {
         this.notificationClass = "";
       }, 3500);
     },
+    selectEvent(event) {
+      this.$emit("select-event", event);
+    },
   },
 };
 </script>
@@ -522,11 +523,11 @@ export default {
   color: white;
   background: linear-gradient(
     135deg,
-    rgba(255, 255, 255, 0.12),
-    rgba(0, 0, 0, 0.726)
+    rgba(99, 86, 155, 0.247),
+    rgba(0, 0, 0, 0.705)
   );
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
+  
+
 
   box-sizing: border-box;
   -webkit-app-region: no-drag;
@@ -837,6 +838,22 @@ h1 {
     rgba(168, 85, 247, 0.8)
   );
 }
+.event-title-clickable {
+  cursor: pointer;
+  transition: color 0.2s ease;
+  display: inline-block; 
+}
+
+.event-title-clickable:hover {
+  color: #71a7ee;
+  transition: color 1s ease;
+  transform: scale(1.1);
+}
+
+.event-title-clickable:active {
+  transform: scale(0.99);
+}
+
 @media (max-width: 700px) {
   .my-events-container {
     max-height: 100vh;

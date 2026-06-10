@@ -444,10 +444,11 @@ export default {
 .accept-btn {
   background: linear-gradient(
     135deg,
-    rgba(255, 180, 100, 1),
-    rgba(197, 41, 30, 0.85)
+    rgb(49, 33, 75),
+    rgba(0, 0, 0, 0.85)
   );
-  color: rgba(20, 8, 5, 0.95);
+  color: rgba(255, 255, 255, 0.95);
+  border-color: blueviolet;
 }
 
 .chat-btn {

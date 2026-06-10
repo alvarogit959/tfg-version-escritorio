@@ -225,17 +225,17 @@
  <!--DESCRIPTION-->
 
                   <div class="info-group">
-                    <label>Descripción</label>
+                    <label>Descripción: </label>
                     <p>{{ selectedEvent.description }}</p>
                   </div>
 
  <!--FECHAS-->
                   <div class="info-group">
-                    <label>Fecha inicio</label>
+                    <label>Fecha inicio:</label>
                     <p>{{ formatDateFull(selectedEvent.start) }}</p>
                   </div>
                   <div class="info-group">
-                    <label>Fecha fin</label>
+                    <label>Fecha fin:</label>
                     <p>{{ formatDateFull(selectedEvent.end) }}</p>
                   </div>
 <!--UBICACION-->
@@ -246,7 +246,7 @@
                     "
                     class="info-group"
                   >
-                    <label>Ubicación</label>
+                    <label>Ubicación:</label>
                     <p>{{ selectedEvent.location[0].location }}</p>
                    <!-- <p class="coordinates">
                       {{ selectedEvent.location[0].latitude }},
@@ -256,7 +256,7 @@
 <!--ORGANIZADORES-->
                   <div class="info-group">
                     <label>
-                      Organizadores
+                      Organizadores: 
                       <template v-if="!loadingModerators">
                         ({{ resolvedModerators.length }})
                       </template>
@@ -290,7 +290,7 @@
 
                   <div class="info-group">
                     <label>
-                      Asistentes
+                      Asistentes: 
                       <template v-if="!loadingAttendees">
                         ({{ resolvedAttendees.length }})
                       </template>
@@ -1540,7 +1540,7 @@ export default {
 .info-group {
   display: flex;
   flex-direction: row;
-
+  column-gap: 0.5rem;
   background: rgba(255, 255, 255, 0.08);
   padding: 0.2rem 0.4rem;
   border-radius: 0.4rem;
