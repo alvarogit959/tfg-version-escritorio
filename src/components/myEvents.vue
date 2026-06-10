@@ -9,14 +9,19 @@
     <div v-if="loading" class="loading">Cargando tus eventos...</div>
 
     <template v-else>
-<!-- MY events -->
+      <!-- MY events -->
       <section class="section">
         <h2>Eventos que organizas</h2>
-        <p class="section-hint">Eres moderador de estos eventos. Puedes editarlos y gestionar asistentes.</p>
+        <p class="section-hint">
+          Eres moderador de estos eventos. Puedes editarlos y gestionar
+          asistentes.
+        </p>
 
         <div v-if="moderatedEventsList.length === 0" class="no-events-inline">
           <p>No has creado ningún evento.</p>
-          <p class="hint">Crea uno desde <strong>Eventos → + Crear evento</strong>.</p>
+          <p class="hint">
+            Crea uno desde <strong>Eventos → + Crear evento</strong>.
+          </p>
         </div>
 
         <ul v-else class="events-list">
@@ -28,26 +33,34 @@
             <div class="event-card-header">
               <h3>{{ event.title || "Evento" }}</h3>
               <span class="badge-moderator">Moderador</span>
-              <span v-if="event.type" class="event-type" :class="`type-${event.type}`">
+              <span
+                v-if="event.type"
+                class="event-type"
+                :class="`type-${event.type}`"
+              >
                 {{ event.type }}
               </span>
             </div>
-            <p v-if="event.start" class="event-date">{{ formatDate(event.start) }}</p>
+            <p v-if="event.start" class="event-date">
+              {{ formatDate(event.start) }}
+            </p>
             <p
               v-if="event.location && event.location.length > 0"
               class="event-location"
             >
-               {{ event.location[0].location }}
+              {{ event.location[0].location }}
             </p>
             <p class="event-preview">{{ eventPreview(event) }}</p>
 
             <div class="card-actions">
               <button type="button" class="edit-btn" @click="toggleEdit(event)">
-                {{ editingId === eventKey(event) ? "Cerrar edición" : "Editar" }}
+                {{
+                  editingId === eventKey(event) ? "Cerrar edición" : "Editar"
+                }}
               </button>
             </div>
 
-<!--Editrar opciones-->
+            <!--Editrar opciones-->
             <form
               v-if="editingId === eventKey(event)"
               class="edit-form"
@@ -73,11 +86,19 @@
               <div class="form-row">
                 <div class="form-group">
                   <label>Inicio</label>
-                  <input v-model="editForm.start" type="datetime-local" required />
+                  <input
+                    v-model="editForm.start"
+                    type="datetime-local"
+                    required
+                  />
                 </div>
                 <div class="form-group">
                   <label>Fin</label>
-                  <input v-model="editForm.end" type="datetime-local" required />
+                  <input
+                    v-model="editForm.end"
+                    type="datetime-local"
+                    required
+                  />
                 </div>
               </div>
               <div class="form-group">
@@ -89,10 +110,13 @@
               </button>
             </form>
 
-<!--Asistentes-->
+            <!--Asistentes-->
             <div class="attendees-block">
               <h4>Asistentes ({{ attendeesFor(event).length }})</h4>
-              <div v-if="loadingAttendeesId === eventKey(event)" class="attendees-loading">
+              <div
+                v-if="loadingAttendeesId === eventKey(event)"
+                class="attendees-loading"
+              >
                 Cargando...
               </div>
               <ul v-else-if="attendeesFor(event).length" class="attendees-list">
@@ -110,11 +134,15 @@
                     {{ att.username }}
                   </button>
                   <span v-else>{{ att.username }}</span>
-                  <span v-if="att.email" class="attendee-email">{{ att.email }}</span>
+                  <span v-if="att.email" class="attendee-email">{{
+                    att.email
+                  }}</span>
                   <button
                     type="button"
                     class="remove-attendee-btn"
-                    :disabled="removingAttendee === attendeeRemoveKey(event, att)"
+                    :disabled="
+                      removingAttendee === attendeeRemoveKey(event, att)
+                    "
                     @click="removeAttendee(event, att)"
                   >
                     {{
@@ -131,10 +159,12 @@
         </ul>
       </section>
 
-<!--Joined events-->
+      <!--Joined events-->
       <section class="section">
         <h2>Eventos apuntados</h2>
-        <p class="section-hint">Eventos a los que te has inscrito como asistente.</p>
+        <p class="section-hint">
+          Eventos a los que te has inscrito como asistente.
+        </p>
 
         <div v-if="joinedOnlyList.length === 0" class="no-events-inline">
           <p>No estás apuntado a otros eventos.</p>
@@ -148,16 +178,22 @@
           >
             <div class="event-card-header">
               <h3>{{ event.title || "Evento" }}</h3>
-              <span v-if="event.type" class="event-type" :class="`type-${event.type}`">
+              <span
+                v-if="event.type"
+                class="event-type"
+                :class="`type-${event.type}`"
+              >
                 {{ event.type }}
               </span>
             </div>
-            <p v-if="event.start" class="event-date">{{ formatDate(event.start) }}</p>
+            <p v-if="event.start" class="event-date">
+              {{ formatDate(event.start) }}
+            </p>
             <p
               v-if="event.location && event.location.length > 0"
               class="event-location"
             >
-               {{ event.location[0].location }}
+              {{ event.location[0].location }}
             </p>
             <p class="event-preview">{{ eventPreview(event) }}</p>
             <button
@@ -166,7 +202,11 @@
               :disabled="leavingEventId === eventKey(event)"
               @click="leaveEvent(event)"
             >
-              {{ leavingEventId === eventKey(event) ? "Desapuntando..." : "Desapuntarse" }}
+              {{
+                leavingEventId === eventKey(event)
+                  ? "Desapuntando..."
+                  : "Desapuntarse"
+              }}
             </button>
           </li>
         </ul>
@@ -225,11 +265,9 @@ export default {
     },
     joinedOnlyList() {
       const modIds = new Set(
-        this.moderatedEventsList.map((e) => this.eventKey(e))
+        this.moderatedEventsList.map((e) => this.eventKey(e)),
       );
-      return this.joinedEventsList.filter(
-        (e) => !modIds.has(this.eventKey(e))
-      );
+      return this.joinedEventsList.filter((e) => !modIds.has(this.eventKey(e)));
     },
   },
   watch: {
@@ -259,8 +297,7 @@ export default {
 
     eventPreview(event) {
       const raw = event.description || "";
-      const plain =
-        typeof raw === "string" ? raw.replace(/<[^>]*>/g, "") : "";
+      const plain = typeof raw === "string" ? raw.replace(/<[^>]*>/g, "") : "";
       return plain.length > 100 ? `${plain.slice(0, 100)}...` : plain || "—";
     },
 
@@ -273,11 +310,10 @@ export default {
       try {
         const data = await apiJson(`/users/${this.userId}`);
         this.joinedEvents = data.joinedEvents || [];
-        this.moderatedEvents =
-          data.moderatedEvents || data.managedEvents || [];
+        this.moderatedEvents = data.moderatedEvents || data.managedEvents || [];
 
         await Promise.all(
-          this.moderatedEventsList.map((ev) => this.loadAttendees(ev))
+          this.moderatedEventsList.map((ev) => this.loadAttendees(ev)),
         );
       } catch (error) {
         console.error(error);
@@ -316,7 +352,9 @@ export default {
       this.editForm = {
         title: event.title || "",
         type: event.type || "coches",
-        description: (event.description || "").replace(/<[^>]*>/g, "").slice(0, 2000),
+        description: (event.description || "")
+          .replace(/<[^>]*>/g, "")
+          .slice(0, 2000),
         start: toDatetimeLocal(event.start),
         end: toDatetimeLocal(event.end),
         locationLabel: loc?.location || "",
@@ -341,7 +379,10 @@ export default {
       const eventId = this.eventKey(event);
 
       if (new Date(this.editForm.end) < new Date(this.editForm.start)) {
-        this.showNotification("La fecha de fin no puede ser anterior al inicio", "error");
+        this.showNotification(
+          "La fecha de fin no puede ser anterior al inicio",
+          "error",
+        );
         return;
       }
 
@@ -394,8 +435,10 @@ export default {
 
       try {
         const updated = await apiJson(
-          `/events/${eventId}/attendees/${encodeURIComponent(attendee.id)}?moderatorId=${this.userId}`,
-          { method: "DELETE" }
+          `/events/${eventId}/attendees/${encodeURIComponent(
+            attendee.id,
+          )}?moderatorId=${this.userId}`,
+          { method: "DELETE" },
         );
 
         this.updateEventInLists(updated);
@@ -418,7 +461,7 @@ export default {
       try {
         const data = await apiJson(
           `/users/${this.userId}/joined-events/${eventId}`,
-          { method: "DELETE" }
+          { method: "DELETE" },
         );
         this.joinedEvents = data.joinedEvents || [];
 
@@ -472,7 +515,7 @@ export default {
 <style scoped>
 .my-events-container {
   width: 100%;
-    height: calc(100vh - 2rem - 60px); 
+  height: calc(100vh - 2rem - 60px);
   max-height: calc(100vh - 2rem - 60px);
   overflow-y: auto;
   padding: 1.5rem 2rem;
@@ -484,8 +527,7 @@ export default {
   );
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
-  border: 3px solid rgba(175, 175, 175, 0.2);
-  border-radius: 1rem;
+
   box-sizing: border-box;
   -webkit-app-region: no-drag;
 }
@@ -658,7 +700,12 @@ h1 {
   grid-template-columns: 1fr 1fr;
   gap: 0.5rem;
 }
-
+@media (max-width: 700px) {
+  .form-row {
+    display: flex;
+    flex-direction: column;
+  }
+}
 .save-btn {
   padding: 0.6rem 1rem;
   background: rgba(76, 175, 80, 0.45);
@@ -789,5 +836,15 @@ h1 {
     rgba(99, 102, 241, 0.8),
     rgba(168, 85, 247, 0.8)
   );
+}
+@media (max-width: 700px) {
+  .my-events-container {
+    max-height: 100vh;
+
+    width: 100%;
+    height: 100vh;
+    margin: 0;
+    padding-bottom: 3rem;
+  }
 }
 </style>

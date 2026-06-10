@@ -539,4 +539,14 @@ export default {
 .friends-container::-webkit-scrollbar-thumb:hover {
   background: rgba(255, 255, 255, 0.42);
 }
+@media (max-width: 700px) {
+  .friends-container {
+    max-height: 100vh;
+    width: 100%;
+    height: 100vh;
+    margin: 0;
+    padding-bottom: 5rem;
+  }}
+
+
 </style>

@@ -135,10 +135,9 @@ methods: {
 };
 </script>
 
-<!-- Add "scoped" attribute to limit CSS to this component only -->
 <style scoped>
 .mainarea {
-  margin-top: 1rem;
+  margin: 1rem;
   overflow: hidden;
   display: flex;
   justify-content: flex-start;
@@ -147,6 +146,7 @@ methods: {
   width: 80vw;
   max-width: 40rem;
   height: calc(80vh);
+  max-height: 100vh;
 
   background: linear-gradient(
     135deg,
@@ -249,4 +249,10 @@ p{width: 80%;}
 a {
   color: #ffffff;
 }
+@media (max-width: 700px) {
+  .mainarea {
+    width: 90%;
+    margin-top: -5rem;
+    
+  }}
 </style>

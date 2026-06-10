@@ -1231,7 +1231,7 @@ export default {
   }
   .view-container {
 
-  height: calc(100vh - 4rem);
+  height: calc(100vh);
 
 }
 }

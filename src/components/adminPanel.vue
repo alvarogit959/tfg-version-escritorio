@@ -605,8 +605,14 @@ h1 {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 0.5rem;
+overflow-y: auto;
+overflow-x: auto;
 }
-
+@media (max-width: 700px) {
+  .form-row  {
+    display:flex;
+    flex-direction: column;
+  }}
 .save-btn {
   align-self: flex-start;
   padding: 0.5rem 1rem;
@@ -739,4 +745,12 @@ h1 {
     rgba(168, 85, 247, 0.8)
   );
 }
+@media (max-width: 700px) {
+  .admin-panel {
+    max-height: 100vh;
+    width: 100%;
+    height: 100vh;
+    margin: 0;
+    padding-bottom: 5rem;
+  }}
 </style>

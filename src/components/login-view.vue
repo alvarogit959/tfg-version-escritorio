@@ -226,4 +226,10 @@ p{width: 80%;
 a {
   color: #ffffff;
 }
+@media (max-width: 700px) {
+  .mainarea {
+    width: 90%;
+    margin-top: -5rem;
+    
+  }}
 </style>

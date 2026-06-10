@@ -684,7 +684,7 @@ a {
 }
 
 .nav-btn {
-  width: 20%;
+  width: 14rem;
   padding: 0.8rem 1rem;
   cursor: pointer;
   transition: all 0.25s ease;
@@ -758,13 +758,14 @@ a {
   cursor: not-allowed;
 }
 
-@media (max-width: 900px) {
+
+@media (max-width: 700px) {
   .mainarea {
-    height: calc(100vh - 2rem);
-    max-height: calc(100vh - 2rem);
-    padding: 0rem;
+    max-height: 100vh;
+    width: 100%;
+    height: 100vh;
     margin: 0;
-    gap: 0;
+    padding-bottom: 2rem;
   }
 }
 </style>

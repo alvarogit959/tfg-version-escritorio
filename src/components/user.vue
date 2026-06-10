@@ -73,11 +73,6 @@
 
       <div class="readonly-info">
         <p v-if="showEmail"><strong>Email:</strong> {{ profile.email }}</p>
-        <p v-if="profile.location">
-          <strong>Ubicación:</strong>
-          {{ profile.location.city || "—" }},
-          {{ profile.location.country || "—" }}
-        </p>
         <p>
           <strong>Miembro desde:</strong>
           {{ formatDate(profile.createdAt) }}
@@ -334,8 +329,7 @@ export default {
     rgba(0, 0, 0, 0.726)
   );
   backdrop-filter: blur(10px);
-  border: 3px solid rgba(175, 175, 175, 0.2);
-  border-radius: 1rem;
+
   box-sizing: border-box;
   -webkit-app-region: no-drag;
 }
@@ -538,4 +532,12 @@ export default {
   color: white;
   cursor: pointer;
 }
+@media (max-width: 700px) {
+  .user-profile-container {
+    max-height: 100vh;
+    width: 100%;
+    height: 100vh;
+    margin: 0;
+    padding-bottom: 5rem;
+  }}
 </style>

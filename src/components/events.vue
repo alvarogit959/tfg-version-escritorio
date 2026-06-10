@@ -1683,8 +1683,12 @@ export default {
     
   }
   .events-container {
-    height: calc(100vh - 2rem);
-    max-height: calc(100vh - 2rem);
+    max-height: 100vh;
+    width: 100%;
+    height: 100vh;
+    margin: 0;
+    padding-bottom: 3.5rem;
+ 
   }
   .location-controls,
   .filter-controls,

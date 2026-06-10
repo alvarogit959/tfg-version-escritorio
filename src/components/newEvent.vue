@@ -327,8 +327,10 @@ export default {
   max-height: 100vh;
 }
 .new-event-container {
+  align-items: center;
+  justify-content: center;
   width: 100%;
-  height: 100vh;
+  height: calc(100vh - 2rem - 60px);
   overflow-y: auto;
   padding: 0.8rem 2rem;
   color: white;
@@ -385,6 +387,8 @@ export default {
 
 .layout {
   display: grid;
+  align-items: center;
+  justify-content: center;
   grid-template-columns: 1fr 1.2fr;
   gap: 1.5rem;
   height: 74vh;
@@ -432,6 +436,7 @@ export default {
   border-radius: 0.8rem;
   color: white;
   outline: none;
+  max-width: 90vw;
 }
 
 .form-group select option {
@@ -457,8 +462,7 @@ export default {
 }
 
 .map-section {
-  display: flex;
-  flex-direction: column;
+  display:block;
   min-height: 380px;
 }
 
@@ -466,7 +470,7 @@ export default {
   flex: 1;
   min-height: 360px;
   border-radius: 0.8rem;
-  overflow: hidden;
+  height: 50vh;
   border: 1px solid rgba(255, 255, 255, 0.25);
 }
 
@@ -489,4 +493,21 @@ export default {
   opacity: 0.6;
   cursor: not-allowed;
 }
+@media (max-width: 700px) {
+  .new-event-container {
+    max-height: 100vh;
+    width: 100%;
+    height: 100vh;
+    margin: 0;
+    padding-bottom: 30.5rem;
+  }
+  .form-row {
+  display: flex;
+  flex-direction: column;
+}
+#new-event-map {
+  height: 20vh;
+  
+}
+  }
 </style>

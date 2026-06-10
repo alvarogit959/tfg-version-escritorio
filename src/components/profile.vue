@@ -60,7 +60,7 @@
         </div>
       </div>
 
-<!--Edit-->
+      <!--Edit-->
       <section class="panel-card">
         <h2 class="section-title">Editar perfil</h2>
         <form class="profile-form" @submit.prevent="saveProfile">
@@ -91,7 +91,7 @@
         </form>
       </section>
 
-<!--SAVED events -->
+      <!--SAVED events -->
       <section class="panel-card joined-events-section">
         <h2 class="section-title">Eventos apuntados</h2>
         <p class="section-hint">
@@ -705,10 +705,13 @@ export default {
   cursor: not-allowed;
 }
 
-@media (max-width: 900px) {
+@media (max-width: 700px) {
   .profile-container {
-    height: calc(100vh - 2rem);
-    max-height: calc(100vh - 2rem);
+    max-height: 100vh;
+    width: 100%;
+    height: 100vh;
+    margin: 0;
+    padding-bottom: 5rem;
   }
   .profile-header {
     flex-direction: column;

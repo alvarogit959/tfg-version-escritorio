@@ -252,17 +252,65 @@ this.userMarker = new mapboxgl.Marker({
       return colors[eventType] || "#9e9e9e";
     },
 
-    createMarkerElement(eventType) {
+    getEventOpacity(event) {
+      const now = new Date();
+      const startDate = new Date(event.start);
+      if (!startDate || isNaN(startDate.getTime())) return 0.7;
+
+      const diffMs = startDate.getTime() - now.getTime();
+      const diffDays = diffMs / (1000 * 60 * 60 * 24);
+
+ 
+
+      if (diffDays < 0) return 0.5;
+
+      if (diffDays <= 7) return 1;
+
+      if (diffDays <= 14) return 0.8;
+
+      if (diffDays <= 30) return 0.6;
+  
+      return 0.4;
+    },
+
+    getEventGlowAlpha(event) {
+      const now = new Date();
+      const startDate = new Date(event.start);
+      if (!startDate || isNaN(startDate.getTime())) return 0.3;
+
+      const diffMs = startDate.getTime() - now.getTime();
+      const diffDays = diffMs / (1000 * 60 * 60 * 24);
+
+      if (diffDays < -7) return 0.08;
+      if (diffDays < 0) return 0.15;
+      if (diffDays <= 7) return 0.8;
+      if (diffDays <= 14) return 0.4;
+      if (diffDays <= 30) return 0.25;
+      return 0.12;
+    },
+
+    hexToRgba(hex, alpha) {
+      const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex.trim());
+      if (!result) return `rgba(158, 158, 158, ${alpha})`;
+      return `rgba(${parseInt(result[1], 16)}, ${parseInt(result[2], 16)}, ${parseInt(result[3], 16)}, ${alpha})`;
+    },
+
+    createMarkerElement(eventType, event) {
       const color = this.getMarkerColor(eventType);
       const el = document.createElement("div");
+      const opacity = this.getEventOpacity(event);
+      const glowAlpha = this.getEventGlowAlpha(event);
 
-      el.style.width = "18px";
-      el.style.height = "18px";
-      el.style.borderRadius = "50%";
-      el.style.backgroundColor = color;
-      el.style.border = "1px solid rgba(220, 210, 240, 0.9)";
-      el.style.boxShadow = `0 0 10px ${color}`;
-      el.style.cursor = "pointer";
+      el.style.cssText = `
+        width: 18px !important;
+        height: 18px !important;
+        border-radius: 50% !important;
+        background-color: ${color} !important;
+        opacity: ${opacity} !important;
+        border: 2px solid rgba(220, 210, 240, 0.9) !important;
+        box-shadow: 0 0 12px ${this.hexToRgba(color, glowAlpha)} !important;
+        cursor: pointer !important;
+      `;
 
       return el;
     },
@@ -695,7 +743,7 @@ activateGPS() {
 
       const eventType = this.getEventType(event);
       const marker = new mapboxgl.Marker({
-        element: this.createMarkerElement(eventType),
+        element: this.createMarkerElement(eventType, event),
         anchor: "center",
       })
         .setLngLat([lng, lat])
@@ -1250,6 +1298,17 @@ a {
   margin: 0 !important;
   padding: 0 !important;
   border: none !important;
+}
+@media (max-width: 700px) {
+  .mainarea {
+    max-height: 100vh;
+    width: 100%;
+    height: 100vh;
+    margin: 0;
+    padding-bottom: 1.5rem;
+  }
+
+
 }
 
 </style>
