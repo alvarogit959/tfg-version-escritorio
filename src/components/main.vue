@@ -123,6 +123,8 @@
           @events-updated="handleProfileUpdated"
           @create-event="switchView('newEvent')"
           @view-user="openUserProfile"
+          @event-chat-joined="onEventChatJoined"
+          @event-chat-left="onEventChatLeft"
         />
       </div>
 
@@ -268,6 +270,20 @@
               </span>
             </button>
           </li>
+          <li v-for="eventConv in eventConversations" :key="eventConv.conversationId">
+            <button
+              type="button"
+              class="chat-list-item"
+              :class="{ active: eventChatActive?.conversationId === eventConv.conversationId }"
+              @click="selectEventChat(eventConv)"
+            >
+              <span class="chat-avatar event-chat-avatar">E</span>
+              <span class="chat-list-info">
+                <span class="chat-list-name">{{ eventConv.title }}</span>
+                <span class="chat-list-preview">Chat del evento</span>
+              </span>
+            </button>
+          </li>
         </ul>
       </aside>
 
@@ -375,6 +391,7 @@ export default {
     },
     activeChatTitle() {
       if (this.isGroupActive) return "Chat grupal";
+      if (this.eventChatActive) return this.eventChatActive.title || "Chat del evento";
       if (this.privateChatFriend) return this.privateChatFriend.username;
       return "Mensajes";
     },
@@ -392,6 +409,8 @@ export default {
       groupConversationId: null,
       privateChatFriend: null,
       privateFriendsList: [],
+      eventConversations: [],
+      eventChatActive: null,
       showProfileMenu: false,
       eventFromMap: null,
       viewUserId: null,
@@ -463,6 +482,42 @@ export default {
   },
 
   methods: {
+    onEventChatJoined({ eventId, openChat }) {
+      this.loadEventConversations();
+      if (openChat) {
+        // Find and select the event chat
+        setTimeout(() => {
+          const found = this.eventConversations.find(
+            (ec) => String(ec.eventId) === String(eventId)
+          );
+          if (found) {
+            this.chatOpen = true;
+            this.selectEventChat(found);
+          } else {
+            // Refresh and try again
+            this.loadEventConversations().then(() => {
+              const retry = this.eventConversations.find(
+                (ec) => String(ec.eventId) === String(eventId)
+              );
+              if (retry) {
+                this.chatOpen = true;
+                this.selectEventChat(retry);
+              }
+            });
+          }
+        }, 500);
+      }
+    },
+    onEventChatLeft({ eventId }) {
+      // Remove the event chat from list if currently active
+      if (this.eventChatActive && String(this.eventChatActive.eventId) === String(eventId)) {
+        this.eventChatActive = null;
+        this.conversationId = null;
+        this.messages = [];
+        this.selectGroupChat();
+      }
+      this.loadEventConversations();
+    },
     scrollToBottom() {
       this.$nextTick(() => {
         requestAnimationFrame(() => {
@@ -598,6 +653,7 @@ export default {
         .catch((error) => console.error("Error cargando conversación:", error));
 
       this.loadPrivateFriendsList();
+      this.loadEventConversations();
     },
 
     async loadPrivateFriendsList() {
@@ -615,12 +671,16 @@ export default {
     selectGroupChat() {
       this.chatMode = "group";
       this.privateChatFriend = null;
+      this.eventChatActive = null;
       if (
         this.conversationId &&
         this.groupConversationId &&
         String(this.conversationId) !== String(this.groupConversationId)
       ) {
         socket.emit("leave-private-chat", {
+          conversationId: this.conversationId,
+        });
+        socket.emit("leave-event-chat", {
           conversationId: this.conversationId,
         });
       }
@@ -630,6 +690,37 @@ export default {
       } else {
         this.loadGroupConversation();
       }
+    },
+
+    async loadEventConversations() {
+      if (!this.currentUser?.id) return;
+      try {
+        this.eventConversations = await apiJson(
+          `/users/${this.currentUser.id}/conversations/event`,
+        );
+      } catch (e) {
+        console.error(e);
+        this.eventConversations = [];
+      }
+    },
+
+    async selectEventChat(eventConv) {
+      this.chatMode = "event";
+      this.privateChatFriend = null;
+      this.eventChatActive = eventConv;
+
+      if (this.conversationId && this.conversationId !== eventConv.conversationId) {
+        socket.emit("leave-private-chat", {
+          conversationId: this.conversationId,
+        });
+        socket.emit("leave-event-chat", {
+          conversationId: this.conversationId,
+        });
+      }
+
+      this.conversationId = eventConv.conversationId;
+      socket.emit("join-event-chat", { conversationId: eventConv.conversationId });
+      this.loadMessages();
     },
 
     async startPrivateChatWith(friend) {
@@ -1300,6 +1391,15 @@ export default {
     135deg,
     rgba(99, 102, 241, 0.9),
     rgba(168, 85, 247, 0.85)
+  );
+  color: rgba(255, 255, 255, 0.95);
+}
+
+.event-chat-avatar {
+  background: linear-gradient(
+    135deg,
+    rgba(255, 162, 100, 0.9),
+    rgba(255, 100, 50, 0.85)
   );
   color: rgba(255, 255, 255, 0.95);
 }

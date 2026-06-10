@@ -389,14 +389,6 @@ export default {
     },
 
     async removeAttendee(event, attendee) {
-      if (
-        !confirm(
-          `¿Eliminar a "${attendee.username}" del evento "${event.title}"?`
-        )
-      ) {
-        return;
-      }
-
       const eventId = this.eventKey(event);
       this.removingAttendee = this.attendeeRemoveKey(event, attendee);
 
@@ -420,9 +412,6 @@ export default {
 
     async leaveEvent(event) {
       const eventId = this.eventKey(event);
-      if (!confirm(`¿Desapuntarte de "${event.title || "este evento"}"?`)) {
-        return;
-      }
 
       this.leavingEventId = eventId;
 
@@ -432,6 +421,22 @@ export default {
           { method: "DELETE" }
         );
         this.joinedEvents = data.joinedEvents || [];
+
+        // Quitar al usuario del chat del evento
+        const eventMongoId = event._id || eventId;
+        try {
+          await apiJson(`/events/${eventMongoId}/conversation/leave`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ userId: this.userId }),
+          });
+        } catch (chatError) {
+          console.error("Error saliendo del chat del evento:", chatError);
+        }
+        this.$emit("event-chat-left", {
+          eventId: eventMongoId,
+        });
+
         this.showNotification("Te has desapuntado del evento", "success");
         this.$emit("events-updated", data);
       } catch (error) {

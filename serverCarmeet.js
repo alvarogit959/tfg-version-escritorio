@@ -213,13 +213,22 @@ const FriendRequest = mongoose.model("FriendRequest", friendRequestSchema);
 const conversationSchema = new mongoose.Schema({
   type: {
     type: String,
-    enum: ["private", "group"],
+    enum: ["private", "group", "event"],
     default: "group",
   },
   participants: {
     type: [mongoose.Schema.Types.ObjectId],
     ref: "User",
     default: [],
+  },
+  eventId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "Event",
+    default: null,
+  },
+  title: {
+    type: String,
+    default: "",
   },
   lastMessage: {
     text: {
@@ -962,6 +971,170 @@ app.delete("/users/:userId/friends/:friendId", async (req, res) => {
   }
 });
 
+// Conversaciones de eventos del usuario
+app.get("/users/:userId/conversations/event", async (req, res) => {
+  try {
+    const userId = new mongoose.Types.ObjectId(req.params.userId);
+
+    const conversations = await Conversation.find({
+      type: "event",
+      participants: userId,
+    })
+      .sort({ "lastMessage.sentAt": -1 });
+
+    const list = conversations.map((conv) => ({
+      conversationId: conv._id,
+      eventId: conv.eventId,
+      title: conv.title,
+      lastMessage: conv.lastMessage,
+    }));
+
+    res.status(200).json(list);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "Error obteniendo chats de eventos" });
+  }
+});
+
+// Obtener o crear conversación de evento
+app.post("/events/:eventId/conversation", async (req, res) => {
+  try {
+    const { eventId } = req.params;
+
+    const event = await findEventByIdentifier(eventId);
+    if (!event) {
+      return res.status(404).json({ error: "Evento no encontrado" });
+    }
+
+    // Buscar si ya existe una conversación para este evento
+    let conversation = await Conversation.findOne({
+      type: "event",
+      eventId: event._id,
+    });
+
+    // Si no existe, crear una nueva
+    if (!conversation) {
+      // Get all moderators + attendees as ObjectIds
+      const participantIds = new Set();
+
+      // Add moderators
+      for (const mod of event.moderators || []) {
+        const modId = mod?._id ? mod._id.toString() : mod.toString();
+        participantIds.add(modId);
+      }
+
+      // Add attendees (they are string IDs but we need ObjectIds)
+      for (const att of event.attendees || []) {
+        if (mongoose.Types.ObjectId.isValid(att)) {
+          participantIds.add(att);
+        }
+      }
+
+      const participants = Array.from(participantIds).map(
+        (id) => new mongoose.Types.ObjectId(id)
+      );
+
+      conversation = new Conversation({
+        type: "event",
+        participants,
+        eventId: event._id,
+        title: event.title,
+        lastMessage: {},
+      });
+      await conversation.save();
+    }
+
+    res.status(200).json(conversation);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "Error obteniendo conversación del evento" });
+  }
+});
+
+// Quitar usuario de la conversación del evento
+app.post("/events/:eventId/conversation/leave", async (req, res) => {
+  try {
+    const { eventId } = req.params;
+    const { userId } = req.body;
+
+    if (!userId) {
+      return res.status(400).json({ error: "userId es obligatorio" });
+    }
+
+    const event = await findEventByIdentifier(eventId);
+    if (!event) {
+      return res.status(404).json({ error: "Evento no encontrado" });
+    }
+
+    // Buscar conversación del evento
+    const conversation = await Conversation.findOne({
+      type: "event",
+      eventId: event._id,
+    });
+
+    if (conversation) {
+      conversation.participants = conversation.participants.filter(
+        (p) => p.toString() !== userId
+      );
+      await conversation.save();
+    }
+
+    res.status(200).json({ message: "Usuario eliminado del chat del evento" });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "Error saliendo de la conversación del evento" });
+  }
+});
+
+// Agregar usuario a la conversación del evento
+app.post("/events/:eventId/conversation/join", async (req, res) => {
+  try {
+    const { eventId } = req.params;
+    const { userId } = req.body;
+
+    if (!userId) {
+      return res.status(400).json({ error: "userId es obligatorio" });
+    }
+
+    const event = await findEventByIdentifier(eventId);
+    if (!event) {
+      return res.status(404).json({ error: "Evento no encontrado" });
+    }
+
+    // Buscar o crear conversación del evento
+    let conversation = await Conversation.findOne({
+      type: "event",
+      eventId: event._id,
+    });
+
+    if (!conversation) {
+      conversation = new Conversation({
+        type: "event",
+        participants: [],
+        eventId: event._id,
+        title: event.title,
+        lastMessage: {},
+      });
+    }
+
+    // Add user as participant if not already
+    if (!conversation.participants.some((p) => p.toString() === userId)) {
+      conversation.participants.push(new mongoose.Types.ObjectId(userId));
+      await conversation.save();
+    } else {
+      await conversation.save();
+    }
+
+    res.status(200).json({
+      conversationId: conversation._id,
+      title: conversation.title,
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "Error uniendo a la conversación del evento" });
+  }
+});
+
 // Conversaciones privadas del usuario
 app.get("/users/:userId/conversations/private", async (req, res) => {
   try {
@@ -1233,6 +1406,11 @@ app.post("/messages", async (req, res) => {
 
     if (conversation?.type === "private") {
       io.to(privateRoomName(conversationId)).emit(
+        "new-message",
+        populatedMessage
+      );
+    } else if (conversation?.type === "event") {
+      io.to(`event-${conversationId}`).emit(
         "new-message",
         populatedMessage
       );
@@ -1613,6 +1791,16 @@ io.on("connection", (socket) => {
   socket.on("leave-private-chat", ({ conversationId }) => {
     if (!conversationId) return;
     socket.leave(privateRoomName(conversationId));
+  });
+
+  socket.on("join-event-chat", ({ conversationId }) => {
+    if (!conversationId) return;
+    socket.join(`event-${conversationId}`);
+  });
+
+  socket.on("leave-event-chat", ({ conversationId }) => {
+    if (!conversationId) return;
+    socket.leave(`event-${conversationId}`);
   });
   
   // Evento: nuevo mensaje

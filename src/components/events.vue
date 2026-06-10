@@ -213,6 +213,14 @@
                           : "Asistir a este evento"
                       }}
                     </button>
+                    <button
+                      v-if="isAttendingSelected"
+                      type="button"
+                      class="btn-primary chat-event-btn"
+                      @click="goToEventChat"
+                    >
+                      Chat del evento
+                    </button>
                   </div>
  <!--DESCRIPTION-->
 
@@ -355,7 +363,7 @@ export default {
       default: null,
     },
   },
-  emits: ["events-updated", "create-event", "view-user"],
+  emits: ["events-updated", "create-event", "view-user", "event-chat-joined", "event-chat-left"],
   data() {
     return {
       events: [],
@@ -784,7 +792,7 @@ export default {
       this.attending = true;
 
       try {
-        const data = await apiJson(
+      const data = await apiJson(
           `/users/${userId}/joined-events/${eventId}`,
           { method: "POST" },
         );
@@ -798,6 +806,22 @@ export default {
         }
 
         await this.loadAttendeesForSelected();
+
+        // Unir al usuario al chat del evento
+        const eventMongoId = this.selectedEvent?._id || eventId;
+        try {
+          await apiJson(`/events/${eventMongoId}/conversation/join`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ userId }),
+          });
+          this.$emit("event-chat-joined", {
+            eventId: eventMongoId,
+            title: this.selectedEvent?.title || "Evento",
+          });
+        } catch (chatError) {
+          console.error("Error uniendo al chat del evento:", chatError);
+        }
 
         this.notificationClass = "success";
         this.$emit("events-updated", data.user);
@@ -871,6 +895,21 @@ export default {
       }
     }
 
+    // Quitar al usuario del chat del evento
+    const eventMongoId = event._id || eventId;
+    try {
+      await apiJson(`/events/${eventMongoId}/conversation/leave`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId }),
+      });
+    } catch (chatError) {
+      console.error("Error saliendo del chat del evento:", chatError);
+    }
+    this.$emit("event-chat-left", {
+      eventId: eventMongoId,
+    });
+
     this.notification = "Has salido del evento";
     this.notificationClass = "success";
     this.$emit("events-updated");
@@ -887,6 +926,16 @@ export default {
 },
 
 
+
+    goToEventChat() {
+      if (!this.selectedEvent) return;
+      const eventMongoId = this.selectedEvent._id || eventIdentifier(this.selectedEvent);
+      this.$emit("event-chat-joined", {
+        eventId: eventMongoId,
+        title: this.selectedEvent.title || "Evento",
+        openChat: true,
+      });
+    },
 
     updateEventInList(updatedEvent) {
       const idx = this.events.findIndex(
@@ -1491,9 +1540,9 @@ export default {
 .info-group {
   display: flex;
   flex-direction: row;
-  column-gap: 1rem;
+
   background: rgba(255, 255, 255, 0.08);
-  padding: 0.4rem 0.5rem;
+  padding: 0.2rem 0.4rem;
   border-radius: 0.4rem;
 }
 
@@ -1678,4 +1727,5 @@ export default {
   justify-content: center;
   flex: 1;
 }
+.chat-event-btn{margin-top: 0.4rem;}
 </style>
