@@ -95,7 +95,7 @@ const eventSchema = new mongoose.Schema({
     default: "",
   },
   attendees: {
-    type: [String], // array de IDs, nombres o emails de asistentes
+    type: [String],
     default: [],
   },
   location: {
@@ -109,10 +109,8 @@ const eventSchema = new mongoose.Schema({
   },
 });
 
-// Modelo para la colección "events"
 const Event = mongoose.model("Event", eventSchema);
 
-// Esquema para usuarios
 const userSchema = new mongoose.Schema({
   username: {
     type: String,
@@ -175,10 +173,8 @@ const userSchema = new mongoose.Schema({
   },
 });
 
-// Modelo para la colección "users"
 const User = mongoose.model("User", userSchema);
 
-// Solicitudes de amistad (colección friendrequests)
 const friendRequestSchema = new mongoose.Schema({
   from: {
     type: mongoose.Schema.Types.ObjectId,
@@ -209,7 +205,6 @@ friendRequestSchema.index({ from: 1, to: 1 }, { unique: true });
 
 const FriendRequest = mongoose.model("FriendRequest", friendRequestSchema);
 
-// Esquema para conversaciones
 const conversationSchema = new mongoose.Schema({
   type: {
     type: String,
@@ -251,10 +246,8 @@ const conversationSchema = new mongoose.Schema({
   },
 });
 
-// Modelo para la colección "conversations"
 const Conversation = mongoose.model("Conversation", conversationSchema);
 
-// Esquema para mensajes
 const messageSchema = new mongoose.Schema({
   conversationId: {
     type: mongoose.Schema.Types.ObjectId,
@@ -294,31 +287,27 @@ const messageSchema = new mongoose.Schema({
   },
 });
 
-// Modelo para la colección "messages"
 const Message = mongoose.model("Message", messageSchema);
 
-
-
-// Crear nuevo usuario
 app.post("/users", async (req, res) => {
   try {
     const { username, email, password, location } = req.body;
 
-    // Validar que todos los campos requeridos estén presentes
+
     if (!username || !email || !password) {
       return res.status(400).json({ error: "Faltan campos requeridos" });
     }
 
-    // Verificar si el usuario ya existe
+
     const existingUser = await User.findOne({ $or: [{ username }, { email }] });
     if (existingUser) {
       return res.status(400).json({ error: "El usuario o correo ya existe" });
     }
 
-    // Hash de la contraseña
+
     const passwordHash = await bcrypt.hash(password, 10);
 
-    // Crear nuevo usuario
+
     const newUser = new User({
       username,
       email,
@@ -334,7 +323,6 @@ app.post("/users", async (req, res) => {
       status: false,
     });
 
-    // Guardar el usuario en la base de datos
     await newUser.save();
 
     res.status(201).json({
@@ -351,35 +339,29 @@ app.post("/users", async (req, res) => {
   }
 });
 
-// Login de usuario
 app.post("/login", async (req, res) => {
   try {
     const { username, password } = req.body;
 
-    // Validar que los campos requeridos estén presentes
     if (!username || !password) {
       return res.status(400).json({ error: "Faltan campos requeridos" });
     }
 
-    // Buscar el usuario por username o email
     const user = await User.findOne({ $or: [{ username }, { email: username }] });
     
     if (!user) {
       return res.status(401).json({ error: "Usuario o contraseña incorrectos" });
     }
 
-    // Comparar contraseña
     const passwordMatch = await bcrypt.compare(password, user.passwordHash);
     
     if (!passwordMatch) {
       return res.status(401).json({ error: "Usuario o contraseña incorrectos" });
     }
 
-    // Establecer usuario como logueado
     user.status = true;
     await user.save();
 
-    // Retornar datos del usuario
     res.status(200).json({
       message: "Login exitoso",
       user: {
@@ -610,7 +592,7 @@ app.get("/api/location", async (req, res) => {
   }
 });
 
-// Listar usuarios (solo admin)
+//Listar usuarios
 app.get("/users", async (req, res) => {
   try {
     const { adminId } = req.query;
@@ -627,7 +609,6 @@ app.get("/users", async (req, res) => {
   }
 });
 
-// Buscar usuarios por nombre (para añadir amigos)
 app.get("/users/search", async (req, res) => {
   try {
     const { username, currentUserId } = req.query;
@@ -655,7 +636,7 @@ app.get("/users/search", async (req, res) => {
   }
 });
 
-// Obtener perfil de usuario
+//get profile
 app.get("/users/:userId", async (req, res) => {
   try {
     const user = await User.findById(req.params.userId)
@@ -681,7 +662,6 @@ app.get("/users/:userId", async (req, res) => {
   }
 });
 
-// Actualizar perfil de usuario
 app.patch("/users/:userId", async (req, res) => {
   try {
     const { username, profileImage, bio } = req.body;
@@ -717,7 +697,6 @@ app.patch("/users/:userId", async (req, res) => {
   }
 });
 
-//Estado amistad / solicitud
 app.get("/users/:userId/relationship/:otherUserId", async (req, res) => {
   try {
     const { userId, otherUserId } = req.params;
@@ -753,7 +732,6 @@ app.get("/users/:userId/relationship/:otherUserId", async (req, res) => {
   }
 });
 
-// Listar amigos
 app.get("/users/:userId/friends", async (req, res) => {
   try {
     const user = await User.findById(req.params.userId)
@@ -775,7 +753,6 @@ app.get("/users/:userId/friends", async (req, res) => {
   }
 });
 
-//Solicitudes de amistad (entrantes y salientes pendientes)
 app.get("/users/:userId/friend-requests", async (req, res) => {
   try {
     const userId = req.params.userId;
@@ -814,7 +791,6 @@ app.get("/users/:userId/friend-requests", async (req, res) => {
   }
 });
 
-//Enviar solicitud amistad
 app.post("/users/:userId/friend-requests", async (req, res) => {
   try {
     const fromId = req.params.userId;
@@ -902,7 +878,6 @@ app.post("/users/:userId/friend-requests", async (req, res) => {
   }
 });
 
-// Aceptar o rechazar solicitud
 app.patch("/friend-requests/:requestId", async (req, res) => {
   try {
     const { userId, action } = req.body;
@@ -951,8 +926,7 @@ app.patch("/friend-requests/:requestId", async (req, res) => {
     res.status(500).json({ error: "Error respondiendo solicitud" });
   }
 });
-
-// Eliminar amigo
+//Deletefriend
 app.delete("/users/:userId/friends/:friendId", async (req, res) => {
   try {
     const { userId, friendId } = req.params;
@@ -971,7 +945,7 @@ app.delete("/users/:userId/friends/:friendId", async (req, res) => {
   }
 });
 
-// Conversaciones de eventos del usuario
+//Conversaciones eventos
 app.get("/users/:userId/conversations/event", async (req, res) => {
   try {
     const userId = new mongoose.Types.ObjectId(req.params.userId);
@@ -996,7 +970,7 @@ app.get("/users/:userId/conversations/event", async (req, res) => {
   }
 });
 
-// Obtener o crear conversación de evento
+//get obtain conversation
 app.post("/events/:eventId/conversation", async (req, res) => {
   try {
     const { eventId } = req.params;
@@ -1006,24 +980,19 @@ app.post("/events/:eventId/conversation", async (req, res) => {
       return res.status(404).json({ error: "Evento no encontrado" });
     }
 
-    // Buscar si ya existe una conversación para este evento
     let conversation = await Conversation.findOne({
       type: "event",
       eventId: event._id,
     });
 
-    // Si no existe, crear una nueva
     if (!conversation) {
-      // Get all moderators + attendees as ObjectIds
       const participantIds = new Set();
 
-      // Add moderators
       for (const mod of event.moderators || []) {
         const modId = mod?._id ? mod._id.toString() : mod.toString();
         participantIds.add(modId);
       }
 
-      // Add attendees (they are string IDs but we need ObjectIds)
       for (const att of event.attendees || []) {
         if (mongoose.Types.ObjectId.isValid(att)) {
           participantIds.add(att);
@@ -1051,7 +1020,6 @@ app.post("/events/:eventId/conversation", async (req, res) => {
   }
 });
 
-// Quitar usuario de la conversación del evento
 app.post("/events/:eventId/conversation/leave", async (req, res) => {
   try {
     const { eventId } = req.params;
@@ -1066,7 +1034,6 @@ app.post("/events/:eventId/conversation/leave", async (req, res) => {
       return res.status(404).json({ error: "Evento no encontrado" });
     }
 
-    // Buscar conversación del evento
     const conversation = await Conversation.findOne({
       type: "event",
       eventId: event._id,
@@ -1086,7 +1053,6 @@ app.post("/events/:eventId/conversation/leave", async (req, res) => {
   }
 });
 
-// Agregar usuario a la conversación del evento
 app.post("/events/:eventId/conversation/join", async (req, res) => {
   try {
     const { eventId } = req.params;
@@ -1101,7 +1067,6 @@ app.post("/events/:eventId/conversation/join", async (req, res) => {
       return res.status(404).json({ error: "Evento no encontrado" });
     }
 
-    // Buscar o crear conversación del evento
     let conversation = await Conversation.findOne({
       type: "event",
       eventId: event._id,
@@ -1117,7 +1082,6 @@ app.post("/events/:eventId/conversation/join", async (req, res) => {
       });
     }
 
-    // Add user as participant if not already
     if (!conversation.participants.some((p) => p.toString() === userId)) {
       conversation.participants.push(new mongoose.Types.ObjectId(userId));
       await conversation.save();
@@ -1135,7 +1099,6 @@ app.post("/events/:eventId/conversation/join", async (req, res) => {
   }
 });
 
-// Conversaciones privadas del usuario
 app.get("/users/:userId/conversations/private", async (req, res) => {
   try {
     const userId = new mongoose.Types.ObjectId(req.params.userId);
@@ -1165,7 +1128,6 @@ app.get("/users/:userId/conversations/private", async (req, res) => {
   }
 });
 
-// Obtener o crear chat privado con un amigo
 app.post("/users/:userId/conversations/private", async (req, res) => {
   try {
     const userId = req.params.userId;
@@ -1196,7 +1158,6 @@ app.post("/users/:userId/conversations/private", async (req, res) => {
   }
 });
 
-//Eliminar usuario (admin)
 app.delete("/users/:userId", async (req, res) => {
   try {
     const adminId = req.query.adminId || req.body?.adminId;
@@ -1231,8 +1192,7 @@ app.delete("/users/:userId", async (req, res) => {
     res.status(500).json({ error: "Error eliminando usuario" });
   }
 });
-
-//Apuntarse
+//sign in
 app.post("/users/:userId/joined-events/:eventId", async (req, res) => {
   try {
     const { userId, eventId } = req.params;
@@ -1266,7 +1226,7 @@ app.post("/users/:userId/joined-events/:eventId", async (req, res) => {
   }
 });
 
-//Salir de un evento
+//get out of event
 app.delete("/users/:userId/joined-events/:eventId", async (req, res) => {
   try {
     const { userId, eventId } = req.params;
@@ -1328,10 +1288,10 @@ app.post("/logout", async (req, res) => {
 
 app.get("/conversations/group", async (req, res) => {
   try {
-//Buscar si existe conversacion grupal
+//chekc if it exist
     let groupConversation = await Conversation.findOne({ type: "group" });
 
-    // Si no existe, crear una nueva
+//TEST make if it doenst
     if (!groupConversation) {
       groupConversation = new Conversation({
         type: "group",
@@ -1348,7 +1308,7 @@ app.get("/conversations/group", async (req, res) => {
   }
 });
 
-//Obtener mensajes
+//GET MESSAGES========================================================================================
 app.get("/conversations/:conversationId/messages", async (req, res) => {
   try {
     const { conversationId } = req.params;
@@ -1364,7 +1324,6 @@ app.get("/conversations/:conversationId/messages", async (req, res) => {
   }
 });
 
-//Enviar un nuevo mensaje
 app.post("/messages", async (req, res) => {
   try {
     const { conversationId, senderId, text } = req.body;
@@ -1373,7 +1332,6 @@ app.post("/messages", async (req, res) => {
       return res.status(400).json({ error: "Faltan campos requeridos" });
     }
 
-    // Crear el mensaje
     const newMessage = new Message({
       conversationId,
       senderId,
@@ -1385,7 +1343,6 @@ app.post("/messages", async (req, res) => {
 
     await newMessage.save();
 
-    // Actualizar último mensaje de la conversación
     await Conversation.findByIdAndUpdate(conversationId, {
       lastMessage: {
         text,
@@ -1394,7 +1351,6 @@ app.post("/messages", async (req, res) => {
       }
     });
 
-    // Poblar los datos del usuario en el mensaje
     const populatedMessage = await Message.findById(newMessage._id).populate(
       "senderId",
       "username profileImage"
@@ -1426,7 +1382,6 @@ app.post("/messages", async (req, res) => {
   }
 });
 
-// Marcar mensaje como leído
 app.put("/messages/:messageId/read", async (req, res) => {
   try {
     const { messageId } = req.params;
@@ -1453,7 +1408,6 @@ app.put("/messages/:messageId/read", async (req, res) => {
   }
 });
 
-// Agregar usuario a la conversación grupal
 app.post("/conversations/:conversationId/add-participant", async (req, res) => {
   try {
     const { conversationId } = req.params;
@@ -1480,7 +1434,6 @@ app.post("/conversations/:conversationId/add-participant", async (req, res) => {
   }
 });
 
-//Todos los eventos
 app.get("/events", async (req, res) => {
   try {
     const events = await Event.find().sort({ start: 1 });
@@ -1528,7 +1481,6 @@ const buildEventUrl = (type, title) => {
   return `${prefixes[type] || "/calendario/eventos/"}${slug}`;
 };
 
-// Crear nuevo evento
 app.post("/events", async (req, res) => {
   try {
     const {
@@ -1595,7 +1547,7 @@ app.post("/events", async (req, res) => {
   }
 });
 
-// Actualizar evento (solo moderadores)
+//UPDATE event
 app.patch("/events/:eventId", async (req, res) => {
   try {
     const { moderatorId, title, description, type, start, end, location } =
@@ -1635,7 +1587,6 @@ app.patch("/events/:eventId", async (req, res) => {
   }
 });
 
-// Eliminar asistente de un evento (solo moderadores)
 app.delete("/events/:eventId/attendees/:attendeeId", async (req, res) => {
   try {
     const moderatorId = req.query.moderatorId || req.body?.moderatorId;
@@ -1670,7 +1621,6 @@ app.delete("/events/:eventId/attendees/:attendeeId", async (req, res) => {
   }
 });
 
-// Eliminar evento (moderador del evento o admin)
 app.delete("/events/:eventId", async (req, res) => {
   try {
     const moderatorId = req.query.moderatorId || req.body?.moderatorId;
@@ -1696,7 +1646,6 @@ app.delete("/events/:eventId", async (req, res) => {
   }
 });
 
-// Resolver nombres de moderadores / organizadores del evento
 app.get("/events/:eventId/moderators", async (req, res) => {
   try {
     const event = await findEventByIdentifier(req.params.eventId);
@@ -1736,7 +1685,6 @@ app.get("/events/:eventId/moderators", async (req, res) => {
   }
 });
 
-// Resolver nombres de asistentes
 app.get("/events/:eventId/attendees", async (req, res) => {
   try {
     const event = await findEventByIdentifier(req.params.eventId);
@@ -1768,16 +1716,11 @@ app.get("/events/:eventId/attendees", async (req, res) => {
 });
 
 
-
-
-
-
-
-// ===== SOCKET.IO EVENT LISTENERS =====
+// =====SOCKET.IO EVENT LISTENERS ======================
 io.on("connection", (socket) => {
   console.log("Nuevo usuario conectado:", socket.id);
 
-  // Evento: unirse a la sala grupal
+  //join group chat
   socket.on("join-group-chat", (userId) => {
     socket.join("group-chat");
     console.log(`${userId} se unió al chat grupal`);
@@ -1803,10 +1746,10 @@ io.on("connection", (socket) => {
     socket.leave(`event-${conversationId}`);
   });
   
-  // Evento: nuevo mensaje
+  //NEW MESSAGE
   socket.on("send-message", async (messageData) => {
     try {
-      // Emitir a todos en la sala
+      //SEND TO ALL
       io.to("group-chat").emit("new-message", messageData);
     } catch (error) {
       console.error("Error emitiendo mensaje:", error);
@@ -1814,7 +1757,7 @@ io.on("connection", (socket) => {
   });
   
 
-  // Evento: desconexión
+  //desonectar
   socket.on("disconnect", () => {
     console.log("Usuario desconectado:", socket.id);
   });
