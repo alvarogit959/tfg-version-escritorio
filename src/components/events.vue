@@ -23,6 +23,12 @@
           </div>
 
           <div class="filter-controls">
+                    <input
+          v-model="eventSearchText"
+          type="text"
+          placeholder="Buscar por nombre"
+          class="search-input"
+        />
             <button
               v-for="type in eventTypeFilters"
               :key="type.value"
@@ -381,6 +387,7 @@ export default {
       dateFrom: "",
       dateTo: "",
       leavingEventId: null,
+      eventSearchText: "",
       selectedTypes: ["coches", "motos", "competicion", "feria"],
       eventTypeFilters: [
         { value: "coches", label: "Coches" },
@@ -391,17 +398,32 @@ export default {
     };
   },
   computed: {
+        hasActiveFilters() {
+      return (
+        this.eventSearchText ||
+        this.selectedEventType ||
+        this.dateFrom ||
+        this.dateTo
+      );
+    },
     isAttendingSelected() {
       return isUserAttending(this.selectedEvent, this.currentUser);
     },
 
     displayedEvents() {
-      const filtered = this.events.filter(
+      
+      let filtered = this.events.filter(
         (event) =>
           this.selectedTypes.includes(this.getEventType(event)) &&
           this.isEventInsideDateRange(event),
       );
-
+//SEARCH BY NAME: 
+if (this.eventSearchText && this.eventSearchText.trim()) {
+      const searchLower = this.eventSearchText.toLowerCase().trim();
+      filtered = filtered.filter(event => 
+        event.title?.toLowerCase().includes(searchLower)
+      );
+    }
       return [...filtered].sort((a, b) => {
         if (this.sortMode === "distance" && this.userLocation) {
           const distanceA = this.getEventDistanceValue(a);
@@ -958,8 +980,8 @@ export default {
 <style scoped>
 .events-container {
   width: 100%;
-  height: calc(100vh - 2rem - 60px);
-  max-height: calc(100vh - 2rem - 60px);
+  height: calc(100vh - 2rem - 75px);
+  max-height: calc(100vh - 2rem - 75px);
   overflow-y: auto;
   
   
@@ -1040,12 +1062,15 @@ export default {
   min-height: 1.5rem;
   height: auto;
   padding: 0.4rem 1rem;
+  display:flex;
+  flex-direction: row;
+
+
+
 
 }
 .filters-panel{
-  display: flex;
-  align-items: center;
-  justify-content: center;
+
 }
 .events-list-panel {
   flex: 1;
@@ -1111,7 +1136,25 @@ export default {
   padding: 0.35rem 0.75rem;
   font-size: 0.82rem;
 }
-
+.search-input {
+  width: 8rem;
+  padding: 0.3rem 0.8rem;
+  background: rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  border-radius: 0.6rem;
+  color: white;
+  font-family: inherit;
+  font-size: 0.9rem;
+  transition: all 0.2s ease;
+}
+.search-input:focus {
+  outline: none;
+  border-color: rgba(255, 255, 255, 0.5);
+  background: rgba(255, 255, 255, 0.18);
+}
+.search-input::placeholder {
+  color: rgba(255, 255, 255, 0.5);
+}
 .type-filter-btn.active,
 .sort-btn.active {
   background: rgba(255, 255, 255, 0.22);
@@ -1131,13 +1174,16 @@ export default {
 .location-controls,
 .filter-controls,
 .sort-control {
+
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 0.45rem;
 }
 
 .filter-controls {
   flex-wrap: wrap;
+  max-width: 100vw;
 }
 
 .date-filter {
@@ -1274,7 +1320,6 @@ export default {
 }
 
 .sort-control {
-  justify-content: flex-end;
   color: rgba(255, 255, 255, 0.75);
   font-size: 0.8rem;
 }
@@ -1681,6 +1726,7 @@ export default {
     gap: 0.75rem;
     align-items: center;
     
+    
   }
   .events-container {
     max-height: 100vh;
@@ -1697,9 +1743,7 @@ export default {
     flex-shrink: 0;
   }
 
-  .sort-control {
-    justify-content: flex-start;
-  }
+
 
   .page-header {
     flex-direction: column;

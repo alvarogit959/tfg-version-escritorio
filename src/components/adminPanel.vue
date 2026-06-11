@@ -1,11 +1,6 @@
 <template>
   <div class="admin-panel">
     <h1>Panel de administración</h1>
-    <p class="subtitle">Gestiona todos los eventos y usuarios de la plataforma.</p>
-
-    <p v-if="notification" class="notification" :class="notificationClass">
-      {{ notification }}
-    </p>
 
     <div class="tabs">
       <button
@@ -24,26 +19,159 @@
       </button>
     </div>
 
+    <!--FILTERS EVENTS-->
+    <div v-if="tab === 'events'" class="filters-section">
+      <div class="filters-row">
+        <input
+          v-model="eventSearchText"
+          type="text"
+          placeholder="Buscar por nombre"
+          class="search-input"
+        />
+
+        <div class="filter-group">
+          <select v-model="selectedEventType" class="filter-select">
+            <option value="">Todos</option>
+            <option value="coches">Coches</option>
+            <option value="motos">Motos</option>
+            <option value="competicion">Competición</option>
+            <option value="feria">Feria</option>
+            <option value="carmeet">Car meet</option>
+          </select>
+        </div>
+
+        <div class="date-range">
+          <div class="date-picker-field">
+            <button
+              type="button"
+              class="date-picker-btn"
+              @click="openDatePicker('dateFromInput')"
+            >
+              <span>Desde</span>
+              <strong v-if="dateFrom">{{ formatDateFilter(dateFrom) }}</strong>
+            </button>
+            <input
+              ref="dateFromInput"
+              v-model="dateFrom"
+              class="date-picker-native"
+              type="date"
+            />
+          </div>
+          <span class="date-filter-arrow">→</span>
+          <div class="date-picker-field">
+            <button
+              type="button"
+              class="date-picker-btn"
+              @click="openDatePicker('dateToInput')"
+            >
+              <span>Hasta</span>
+              <strong v-if="dateTo">{{ formatDateFilter(dateTo) }}</strong>
+            </button>
+            <input
+              ref="dateToInput"
+              v-model="dateTo"
+              class="date-picker-native"
+              type="date"
+            />
+          </div>
+          <button
+            type="button"
+            class="date-clear-btn"
+            :disabled="!dateFrom && !dateTo"
+            @click="clearDateFilters"
+          >
+            Limpiar
+          </button>
+        </div>
+
+        <div class="sort-control">
+          <span>Ordenar por:</span>
+          <button
+            type="button"
+            class="sort-btn"
+            :class="{ active: sortMode === 'date' }"
+            @click="setSortMode('date')"
+          >
+            Fecha
+          </button>
+          <button
+            type="button"
+            class="sort-btn"
+            :class="{ active: sortMode === 'name' }"
+            @click="setSortMode('name')"
+          >
+            Nombre
+          </button>
+          <button
+            v-if="sortMode"
+            type="button"
+            class="sort-dir-btn"
+            @click="toggleSortDirection"
+          >
+            {{ sortDirection === "asc" ? "↑" : "↓" }}
+          </button>
+        </div>
+
+        <button
+          v-if="hasActiveFilters"
+          type="button"
+          class="clear-filters-btn"
+          @click="clearAllFilters"
+        >
+          Limpiar todos los filtros
+        </button>
+      </div>
+    </div>
+
+    <!--FILTERS USERS-->
+    <div v-if="tab === 'users'" class="filters-section">
+      <div class="filters-row">
+        <input
+          v-model="userSearchText"
+          type="text"
+          placeholder="Buscar por nombre de usuario o email..."
+          class="search-input"
+        />
+
+        <div class="filter-group">
+          <select v-model="selectedRole" class="filter-select">
+            <option value="">Todos</option>
+            <option value="admin">Admin</option>
+            <option value="user">Usuario</option>
+          </select>
+        </div>
+        <button
+          v-if="userSearchText || selectedRole"
+          type="button"
+          class="clear-filters-btn"
+          @click="clearUserFilters"
+        >
+          Limpiar filtros
+        </button>
+      </div>
+    </div>
+
     <div v-if="loading" class="loading">Cargando...</div>
 
-<!--EVENTS-->
+    <!-- EVENTS -->
     <section v-else-if="tab === 'events'" class="section">
-      <ul class="events-list">
+      <p v-if="filteredEvents.length === 0" class="empty">
+        No hay eventos que coincidan con los filtros
+      </p>
+      <ul v-else class="events-list">
         <li
-          v-for="event in events"
+          v-for="event in filteredEvents"
           :key="eventKey(event)"
           class="event-card"
         >
           <div class="card-header">
-            <h3 @click="selectEvent(event)"
-             class="event-title-clickable">{{ event.title || "Evento" }}</h3>
+            <h3 @click="selectEvent(event)" class="event-title-clickable">
+              {{ event.title || "Evento" }}
+            </h3>
             <span v-if="event.type" class="type-badge">{{ event.type }}</span>
           </div>
           <p v-if="event.start" class="meta">{{ formatDate(event.start) }}</p>
-          <p
-            v-if="event.location?.length"
-            class="meta"
-          >
+          <p v-if="event.location?.length" class="meta">
             {{ event.location[0].location }}
           </p>
 
@@ -57,7 +185,9 @@
               :disabled="deletingEventId === eventKey(event)"
               @click="deleteEvent(event)"
             >
-              {{ deletingEventId === eventKey(event) ? "..." : "Eliminar evento" }}
+              {{
+                deletingEventId === eventKey(event) ? "..." : "Eliminar evento"
+              }}
             </button>
           </div>
 
@@ -87,7 +217,11 @@
             <div class="form-row">
               <div class="form-group">
                 <label>Inicio</label>
-                <input v-model="editForm.start" type="datetime-local" required />
+                <input
+                  v-model="editForm.start"
+                  type="datetime-local"
+                  required
+                />
               </div>
               <div class="form-group">
                 <label>Fin</label>
@@ -128,28 +262,27 @@
           </div>
         </li>
       </ul>
-      <p v-if="events.length === 0" class="empty">No hay eventos</p>
     </section>
 
-<!--USERS-->
+    <!-- USERS -->
     <section v-else class="section">
-      <p class="hint">
-        Eliminar un usuario es permanente!
-      </p>
+      <p class="hint">Eliminar un usuario es permanente!</p>
 
       <ul class="users-list">
-        <li
-          v-for="u in users"
-          :key="u.id"
-          class="user-row"
-        >
+        <li v-for="u in filteredUsers" :key="u.id" class="user-row">
           <div class="user-info">
             <strong>{{ u.username }}</strong>
             <span class="user-email">{{ u.email }}</span>
-            <span class="role-tag" :class="{ admin: u.role === 'admin' }">{{ u.role }}</span>
+            <span class="role-tag" :class="{ admin: u.role === 'admin' }">{{
+              u.role
+            }}</span>
           </div>
           <div class="user-actions">
-            <button type="button" class="view-btn" @click="$emit('view-user', u.id)">
+            <button
+              type="button"
+              class="view-btn"
+              @click="$emit('view-user', u.id)"
+            >
               Ver perfil
             </button>
             <button
@@ -165,7 +298,9 @@
           </div>
         </li>
       </ul>
-      <p v-if="users.length === 0" class="empty">No hay usuarios</p>
+      <p v-if="filteredUsers.length === 0" class="empty">
+        No hay usuarios que coincidan
+      </p>
     </section>
   </div>
 </template>
@@ -187,7 +322,7 @@ export default {
       required: true,
     },
   },
-  emits: ["view-user", "events-changed"],
+  emits: ["view-user", "events-changed", "select-event"],
   data() {
     return {
       tab: "events",
@@ -209,7 +344,97 @@ export default {
       removingAttendee: null,
       notification: "",
       notificationClass: "",
+
+
+      eventSearchText: "",
+      selectedEventType: "",
+      dateFrom: "",
+      dateTo: "",
+      sortMode: "date", 
+      sortDirection: "asc", 
+
+
+      userSearchText: "",
+      selectedRole: "",
     };
+  },
+  computed: {
+    hasActiveFilters() {
+      return (
+        this.eventSearchText ||
+        this.selectedEventType ||
+        this.dateFrom ||
+        this.dateTo
+      );
+    },
+
+    filteredEvents() {
+      let result = [...this.events];
+
+//TEST FILTER BY NAME
+      if (this.eventSearchText) {
+        const searchLower = this.eventSearchText.toLowerCase();
+        result = result.filter((event) =>
+          event.title?.toLowerCase().includes(searchLower),
+        );
+      }
+
+      if (this.selectedEventType) {
+        result = result.filter(
+          (event) =>
+            this.normalizeEventType(event.type) === this.selectedEventType,
+        );
+      }
+
+      if (this.dateFrom) {
+        const fromDate = new Date(this.dateFrom);
+        fromDate.setHours(0, 0, 0, 0);
+        result = result.filter((event) => {
+          const eventDate = new Date(event.start);
+          return eventDate >= fromDate;
+        });
+      }
+
+      if (this.dateTo) {
+        const toDate = new Date(this.dateTo);
+        toDate.setHours(23, 59, 59, 999);
+        result = result.filter((event) => {
+          const eventDate = new Date(event.start);
+          return eventDate <= toDate;
+        });
+      }
+
+      result.sort((a, b) => {
+        let comparison = 0;
+        if (this.sortMode === "date") {
+          comparison = new Date(a.start) - new Date(b.start);
+        } else if (this.sortMode === "name") {
+          comparison = (a.title || "").localeCompare(b.title || "");
+        }
+        return this.sortDirection === "asc" ? comparison : -comparison;
+      });
+
+      return result;
+    },
+
+    filteredUsers() {
+      let result = [...this.users];
+
+      if (this.userSearchText) {
+        const searchLower = this.userSearchText.toLowerCase();
+        result = result.filter(
+          (user) =>
+            user.username?.toLowerCase().includes(searchLower) ||
+            user.email?.toLowerCase().includes(searchLower),
+        );
+      }
+
+      if (this.selectedRole) {
+        result = result.filter((user) => user.role === this.selectedRole);
+      }
+
+      return result;
+    },
   },
   watch: {
     adminId: {
@@ -225,6 +450,62 @@ export default {
     },
   },
   methods: {
+    normalizeEventType(type) {
+      if (!type) return "";
+      const normalized = String(type).toLowerCase();
+      if (normalized === "ferias") return "feria";
+      if (normalized === "rally") return "competicion";
+      if (normalized === "competición") return "competicion";
+      if (normalized === "carmeet") return "coches";
+      return normalized;
+    },
+
+    openDatePicker(refName) {
+      this.$refs[refName]?.click();
+    },
+
+    formatDateFilter(date) {
+      if (!date) return "";
+      const d = new Date(date);
+      return d.toLocaleDateString("es-ES", {
+        day: "numeric",
+        month: "short",
+        year: "numeric",
+      });
+    },
+
+    clearDateFilters() {
+      this.dateFrom = "";
+      this.dateTo = "";
+    },
+
+    setSortMode(mode) {
+      if (this.sortMode === mode) {
+        this.toggleSortDirection();
+      } else {
+        this.sortMode = mode;
+        this.sortDirection = "asc";
+      }
+    },
+
+    toggleSortDirection() {
+      this.sortDirection = this.sortDirection === "asc" ? "desc" : "asc";
+    },
+
+    clearAllFilters() {
+      this.eventSearchText = "";
+      this.selectedEventType = "";
+      this.dateFrom = "";
+      this.dateTo = "";
+      this.sortMode = "date";
+      this.sortDirection = "asc";
+    },
+
+    clearUserFilters() {
+      this.userSearchText = "";
+      this.selectedRole = "";
+    },
+
     eventKey(event) {
       return eventIdentifier(event) || String(event);
     },
@@ -285,7 +566,9 @@ export default {
       this.editForm = {
         title: event.title || "",
         type: event.type || "coches",
-        description: (event.description || "").replace(/<[^>]*>/g, "").slice(0, 2000),
+        description: (event.description || "")
+          .replace(/<[^>]*>/g, "")
+          .slice(0, 2000),
         start: toDatetimeLocal(event.start),
         end: toDatetimeLocal(event.end),
       };
@@ -324,7 +607,7 @@ export default {
         });
         if (isUpcomingEvent(updated)) {
           this.events = this.events.map((e) =>
-            this.eventKey(e) === eventId ? updated : e
+            this.eventKey(e) === eventId ? updated : e,
           );
         } else {
           this.events = this.events.filter((e) => this.eventKey(e) !== eventId);
@@ -345,10 +628,9 @@ export default {
 
       this.deletingEventId = eventId;
       try {
-        await apiJson(
-          `/events/${eventId}?moderatorId=${this.adminId}`,
-          { method: "DELETE" }
-        );
+        await apiJson(`/events/${eventId}?moderatorId=${this.adminId}`, {
+          method: "DELETE",
+        });
         this.events = this.events.filter((e) => this.eventKey(e) !== eventId);
         this.showNotification("Evento eliminado", "success");
         this.$emit("events-changed");
@@ -366,8 +648,10 @@ export default {
       this.removingAttendee = this.removeKey(event, attendee);
       try {
         await apiJson(
-          `/events/${eventId}/attendees/${encodeURIComponent(attendee.id)}?moderatorId=${this.adminId}`,
-          { method: "DELETE" }
+          `/events/${eventId}/attendees/${encodeURIComponent(
+            attendee.id,
+          )}?moderatorId=${this.adminId}`,
+          { method: "DELETE" },
         );
         await this.loadAttendees(event);
         this.showNotification("Asistente eliminado del evento", "success");
@@ -382,7 +666,7 @@ export default {
     async deleteUser(user) {
       if (
         !confirm(
-          `¿Eliminar PERMANENTEMENTE al usuario "${user.username}"? Esta acción no se puede deshacer.`
+          `¿Eliminar PERMANENTEMENTE al usuario "${user.username}"? Esta acción no se puede deshacer.`,
         )
       ) {
         return;
@@ -422,7 +706,8 @@ export default {
         this.notificationClass = "";
       }, 3500);
     },
-            selectEvent(event) {
+
+    selectEvent(event) {
       this.$emit("select-event", event);
     },
   },
@@ -432,12 +717,16 @@ export default {
 <style scoped>
 .admin-panel {
   width: 100%;
-    height: calc(100vh - 2rem - 60px); 
+  height: calc(100vh - 2rem - 60px);
   max-height: calc(100vh - 2rem - 60px);
   overflow-y: auto;
   padding: 1.5rem 2rem;
   color: white;
-  background: linear-gradient(135deg, rgba(80, 40, 120, 0.25), rgba(0, 0, 0, 0.75));
+  background: linear-gradient(
+    135deg,
+    rgba(80, 40, 120, 0.25),
+    rgba(0, 0, 0, 0.75)
+  );
 
   border-radius: 1rem;
   box-sizing: border-box;
@@ -445,33 +734,270 @@ export default {
 }
 
 h1 {
-  margin: 0 0 0.25rem;
+  margin: 0 0 0.25rem 0;
+  font-size: 1.7rem;
+  color: white;
 }
 
 .subtitle {
-  margin: 0 0 1rem;
-  opacity: 0.8;
-  font-size: 0.95rem;
+  margin: 0 0 1rem 0;
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 0.9rem;
 }
 
 .tabs {
   display: flex;
   gap: 0.5rem;
-  margin-bottom: 1.25rem;
+  margin-bottom: 0.5rem;
+  padding-bottom: 0.5rem;
 }
 
 .tabs button {
-  padding: 0.5rem 1.2rem;
-  background: rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: white;
+  padding: 0.5rem 1.25rem;
+  border-radius: 0.6rem;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 0.9rem;
+  transition: all 0.25s ease;
+}
+
+.tabs button:hover {
+  background: rgba(255, 255, 255, 0.18);
+  transform: translateY(-1px);
+}
+
+.tabs button.active {
+  background: rgba(255, 255, 255, 0.22);
+  border-color: rgba(255, 255, 255, 0.45);
+}
+.filters-section {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 0.8rem;
+  padding: 1rem;
+  margin-bottom: 1.25rem;
+  backdrop-filter: blur(8px);
+}
+
+.search-input {
+  width: 8rem;
+  padding: 0.6rem 0.8rem;
+  background: rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  border-radius: 0.6rem;
+  color: white;
+  font-family: inherit;
+  font-size: 0.9rem;
+  transition: all 0.2s ease;
+}
+.search-input:focus {
+  outline: none;
+  border-color: rgba(255, 255, 255, 0.5);
+  background: rgba(255, 255, 255, 0.18);
+}
+.search-input::placeholder {
+  color: rgba(255, 255, 255, 0.5);
+}
+.filters-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  align-items: center;
+  justify-content: center;
+}
+.filter-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+.filter-group label {
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.8);
+}
+.filter-select {
+  padding: 0.5rem 0.8rem;
+  background: rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  border-radius: 0.6rem;
+  color: white;
+  font-family: inherit;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+.filter-select:hover {
+  background: rgba(255, 255, 255, 0.18);
+}
+.filter-select:focus {
+  outline: none;
+  border-color: rgba(255, 255, 255, 0.5);
+}
+.filter-select option {
+  background: #2a2a2a;
+  color: white;
+}
+.date-range {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  background: rgba(255, 255, 255, 0.08);
+  padding: 0.25rem 0.45rem;
+  border-radius: 0.8rem;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+}
+
+.date-picker-field {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.date-picker-field span {
+  color: white;
+  font-family: "Inter", sans-serif;
+  font-size: 0.82rem;
+  white-space: nowrap;
+}
+
+.date-picker-btn {
+  min-height: 2.15rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 0.05rem;
+  padding: 0.28rem 0.6rem;
+  border-radius: 0.5rem;
+  font-size: 0.78rem;
+  background: rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  color: rgb(255, 255, 255);
+  cursor: pointer;
+  font-family: inherit;
+  transition: all 0.2s ease;
+  pointer-events: none;
+}
+
+.date-picker-btn:hover {
+  background: rgba(255, 255, 255, 0.22);
+  transform: translateY(-1px);
+}
+
+.date-picker-btn span {
+  font-size: 0.7rem;
+  line-height: 1;
+  opacity: 0.8;
+}
+
+.date-picker-btn strong {
+  font-size: 0.65rem;
+  line-height: 1;
+  font-weight: 600;
+  color: #55c7ff;
+}
+
+.date-picker-native {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  cursor: pointer;
+  z-index: 1;
+}
+.date-picker-native::-webkit-calendar-picker-indicator {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  cursor: pointer;
+  opacity: 0;
+}
+.date-filter-arrow {
+  color: rgba(255, 255, 255, 0.6);
+  font-size: 0.9rem;
+}
+
+.date-clear-btn,
+.clear-filters-btn {
+  padding: 0.5rem 0.8rem;
+  background: rgba(255, 255, 255, 0.12);
   border: 1px solid rgba(255, 255, 255, 0.25);
   border-radius: 0.6rem;
   color: white;
   cursor: pointer;
+  font-family: inherit;
+  font-size: 0.8rem;
+  transition: all 0.2s ease;
 }
 
-.tabs button.active {
-  background: rgba(180, 120, 255, 0.45);
-  border-color: rgba(200, 150, 255, 0.7);
+.date-clear-btn:hover:not(:disabled),
+.clear-filters-btn:hover {
+  background: rgba(255, 255, 255, 0.22);
+  transform: translateY(-1px);
+}
+
+.date-clear-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  transform: none;
+}
+.sort-control {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: rgba(255, 255, 255, 0.08);
+  padding: 0.25rem 0.75rem;
+  border-radius: 0.8rem;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 0.8rem;
+}
+
+.sort-btn {
+  padding: 0.35rem 0.7rem;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 0.5rem;
+  color: white;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 0.75rem;
+  transition: all 0.2s ease;
+}
+
+.sort-btn:hover {
+  background: rgba(255, 255, 255, 0.18);
+}
+
+.sort-btn.active {
+  background: rgba(255, 255, 255, 0.22);
+  border-color: rgba(255, 255, 255, 0.45);
+}
+
+.sort-dir-btn {
+  padding: 0.35rem 0.5rem;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 0.5rem;
+  color: white;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 1rem;
+  transition: all 0.2s ease;
+}
+
+.sort-dir-btn:hover {
+  background: rgba(255, 255, 255, 0.18);
 }
 
 .notification {
@@ -607,14 +1133,15 @@ h1 {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 0.5rem;
-overflow-y: auto;
-overflow-x: auto;
+  overflow-y: auto;
+  overflow-x: auto;
 }
 @media (max-width: 700px) {
-  .form-row  {
-    display:flex;
+  .form-row {
+    display: flex;
     flex-direction: column;
-  }}
+  }
+}
 .save-btn {
   align-self: flex-start;
   padding: 0.5rem 1rem;
@@ -750,7 +1277,6 @@ overflow-x: auto;
 .event-title-clickable {
   cursor: pointer;
   transition: color 0.2s ease;
-
 }
 
 .event-title-clickable:hover {
@@ -762,6 +1288,7 @@ overflow-x: auto;
 .event-title-clickable:active {
   transform: scale(0.99);
 }
+
 @media (max-width: 700px) {
   .admin-panel {
     max-height: 100vh;
@@ -769,5 +1296,6 @@ overflow-x: auto;
     height: 100vh;
     margin: 0;
     padding-bottom: 5rem;
-  }}
+  }
+}
 </style>
