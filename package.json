@@ -1,6 +1,8 @@
 {
-  "name": "vue-electron-app",
+    "name": "vue-electron-app",
   "version": "0.1.0",
+  "description": "CarMeet Club first test",
+  "author": "Álvaro Del Valle Fernández",
   "private": true,
   "scripts": {
     "serve": "vue-cli-service serve",
@@ -26,35 +28,7 @@
     "vue-router": "^5.0.4",
     "zod": "^4.3.6"
   },
-  "build": {
-    "appId": "com.carmeet.club",
-    "productName": "CarMeet Club",
-    "directories": {
-      "output": "dist_electron"
-    },
-    "files": [
-      "dist/**/*",
-      "background.js",
-      "serverCarmeet.js",
-      "package.json"
-    ],
-    "extraResources": [
-      {
-        "from": "node_modules",
-        "to": "node_modules"
-      }
-    ],
-    "win": {
-      "target": [
-        "nsis",
-        "portable"
-      ]
-    },
-    "nsis": {
-      "oneClick": false,
-      "allowToChangeInstallationDirectory": true
-    }
-  },
+
   "devDependencies": {
     "@babel/core": "^7.12.16",
     "@babel/eslint-parser": "^7.12.16",

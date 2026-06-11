@@ -1069,9 +1069,7 @@ if (this.eventSearchText && this.eventSearchText.trim()) {
 
 
 }
-.filters-panel{
 
-}
 .events-list-panel {
   flex: 1;
   min-height: 0;

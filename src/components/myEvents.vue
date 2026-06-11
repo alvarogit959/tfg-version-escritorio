@@ -601,7 +601,7 @@ h1 {
 
 .moderated-card {
   border-color: rgba(255, 193, 7, 0.35);
-  background: rgba(255, 193, 7, 0.06);
+  background: rgba(12, 3, 59, 0.24);
 }
 
 .event-card-header {

@@ -630,7 +630,7 @@ a {
   align-items: center;
   justify-content: center;
   gap: 1rem;
-  background-image: url("../assets/mapscreenshot.png");
+  background-image: url('~@/assets/mapscreenshot.png');
   background-size: cover;
   background-position: center;
   border-radius: 0.4rem;
