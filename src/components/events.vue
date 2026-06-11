@@ -1157,8 +1157,8 @@ if (this.eventSearchText && this.eventSearchText.trim()) {
 }
 .type-filter-btn.active,
 .sort-btn.active {
-  background: rgba(255, 255, 255, 0.22);
-  border-color: rgba(255, 255, 255, 0.45);
+  background: rgba(119, 120, 196, 0.315);
+  border-color: rgba(255, 255, 255, 0.767);
 }
 
 .events-controls {

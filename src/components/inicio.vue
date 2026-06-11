@@ -84,10 +84,17 @@ export default {
       locating: false,
       notification: "",
       notificationClass: "",
+      windowWidth: window.innerWidth,
     };
   },
   computed: {
     nearbyEvents() {
+         let maxEvents = 5;
+    if (this.windowWidth <= 700) {
+      maxEvents = 3;
+    } else if (this.windowWidth <= 1024) {
+      maxEvents = 4;
+    }
       const sorted = [...this.events]
         .map((event) => ({
           event,
@@ -95,7 +102,7 @@ export default {
         }))
         .filter(({ distance }) => Number.isFinite(distance))
         .sort((a, b) => a.distance - b.distance)
-        .slice(0, 5)
+              .slice(0, maxEvents)
         .map(({ event }) => event);
 
       return sorted;
@@ -106,9 +113,14 @@ export default {
     },
   },
   async mounted() {
+    window.addEventListener('resize', this.handleResize);
     await this.loadEvents();
   },
+
   methods: {
+    handleResize() {
+    this.windowWidth = window.innerWidth;
+  },
     async loadEvents() {
       try {
         const data = await apiJson("/events");
@@ -767,5 +779,23 @@ a {
     margin: 0;
     padding-bottom: 2rem;
   }
+    .events-flex-container {
+    justify-content: flex-start;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    gap: 0.8rem;
+    padding: 0.5rem;
+    width: 95%;
+  }
+  
+  .event-card-small {
+    min-width: calc(33.333% - 0.8rem);
+    max-width: calc(33.333% - 0.8rem);
+    scroll-snap-align: start;
+    height: 45vh;
+  }
+  .mainarea::-webkit-scrollbar {
+  width: 0px;
+}
 }
 </style>
