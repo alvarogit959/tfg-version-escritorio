@@ -302,7 +302,7 @@
 
         <template v-else>
           <div class="chat-messages" ref="chatMessages">
-            <div
+          <div
               v-for="msg in messages"
               :key="msg.id"
               class="message"
@@ -327,7 +327,19 @@
                   {{ msg.senderName }}
                 </button>
 
-                <p>{{ msg.text }}</p>
+<!--SHOW DA THINGI-->
+                <div v-if="msg.isEventShare" class="shared-event-card" @click="openSharedEvent(msg.eventData)">
+                  <div class="shared-event-image-container">
+                    <img :src="msg.eventData.image" class="shared-event-image" alt="Poster" />
+                  </div>
+                  <div class="shared-event-details">
+                    <h5>{{ msg.eventData.title }}</h5>
+                    <p class="shared-event-date">{{ msg.eventData.date }}</p>
+                    <p v-if="msg.eventData.distance" class="shared-event-distance">{{ msg.eventData.distance }}</p>
+                    <p v-if="msg.eventData.location" class="shared-event-location">{{ msg.eventData.location }}</p>
+                  </div>
+                </div>
+                <p v-else>{{ msg.text }}</p>
                 <span class="message-time">{{
                   new Date(msg.sentAt).toLocaleTimeString()
                 }}</span>
@@ -460,18 +472,7 @@ export default {
         this.hasUnreadMessages = true;
       }
 
-      this.messages.push({
-        id: msg._id,
-        text: msg.text,
-        senderId: msg.senderId._id || msg.senderId,
-        senderName: msg.senderId.username || "Usuario",
-        senderImage: msg.senderId.profileImage || "",
-        type:
-          (msg.senderId._id || msg.senderId) === this.currentUser?.id
-            ? "user"
-            : "bot",
-        sentAt: msg.sentAt,
-      });
+      this.messages.push(this.processMessage(msg));
     });
 
     if (savedLoginState === "true" && savedUser) {
@@ -566,6 +567,18 @@ export default {
 
     onAdminEventsChanged() {
       //test refrescar datos
+    },
+
+    openSharedEvent(eventData) {
+      this.chatOpen = false;
+      this.eventFromMap = { 
+        id: eventData.eventId,
+        _id: eventData.eventId,
+        title: eventData.title,
+        image: eventData.image ? eventData.image.replace('http://localhost:5000', '') : null,
+        start: eventData.date,
+      };
+      this.currentView = "events";
     },
 
     openEventFromMap(event) {
@@ -798,6 +811,36 @@ export default {
           break;
       }
     },
+    parseEventShare(messageText) {
+      if (!messageText || !messageText.startsWith('[EVENT_SHARE]')) return null;
+      const payload = messageText.replace('[EVENT_SHARE]', '');
+      const parts = payload.split('||');
+      if (parts.length < 3) return null;
+      return {
+        eventId: parts[0],
+        title: parts[1],
+        image: parts[2],
+        date: parts[3] || '',
+        distance: parts[4] || '',
+        location: parts[5] || '',
+      };
+    },
+
+    processMessage(msg) {
+      const eventData = this.parseEventShare(msg.text);
+      return {
+        id: msg._id,
+        text: msg.text,
+        senderId: msg.senderId._id,
+        senderName: msg.senderId.username,
+        senderImage: msg.senderId.profileImage,
+        type: msg.senderId._id === this.currentUser.id ? "user" : "bot",
+        sentAt: msg.sentAt,
+        isEventShare: !!eventData,
+        eventData: eventData,
+      };
+    },
+
     loadMessages() {
       if (!this.conversationId) return;
 
@@ -806,15 +849,7 @@ export default {
       )
         .then((res) => res.json())
         .then((messages) => {
-          this.messages = messages.map((msg) => ({
-            id: msg._id,
-            text: msg.text,
-            senderId: msg.senderId._id,
-            senderName: msg.senderId.username,
-            senderImage: msg.senderId.profileImage,
-            type: msg.senderId._id === this.currentUser.id ? "user" : "bot",
-            sentAt: msg.sentAt,
-          }));
+          this.messages = messages.map((msg) => this.processMessage(msg));
 
 //SCROLL ABAJO
           this.$nextTick(() => {
@@ -899,11 +934,11 @@ export default {
   box-sizing: border-box;
 }
 
-.app-container {
+ .app-container {
   display: flex;
   flex-direction: column;
   width: 100%;
- background-image: url("@/assets/rrreflection.svg");
+ background-image: url("http://localhost:5000/event-images/rrreflection.svg");
  background-blend-mode: exclusion;
     background-size: cover;
   background-position: center;
@@ -1630,4 +1665,75 @@ export default {
 .chat-conversation {
   min-height: 0;
 }
+
+.shared-event-card {
+  display: flex;
+  flex-direction: column;
+  background: rgba(29, 14, 43, 0.5);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 0.4rem;
+  overflow: hidden;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  margin: 4px 0;
+  max-width: 100%;
+}
+
+.shared-event-card:hover {
+  border-color: rgba(99, 102, 241, 0.6);
+  transform: translateY(-1px);
+  background: rgba(29, 14, 43, 0.7);
+}
+
+.shared-event-image-container {
+  width: 100%;
+  height: 100px;
+  overflow: hidden;
+}
+
+.shared-event-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.shared-event-details {
+  padding: 6px 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.shared-event-details h5 {
+  margin: 0;
+  font-size: 0.8rem;
+  color: rgb(255, 255, 255);
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.shared-event-date {
+  margin: 0;
+  font-size: 0.72rem;
+  color: rgb(96, 168, 250);
+}
+
+.shared-event-distance {
+  margin: 0;
+  font-size: 0.7rem;
+  color: rgba(184, 245, 184, 0.85);
+  font-weight: 500;
+}
+
+.shared-event-location {
+  margin: 0;
+  font-size: 0.7rem;
+  color: rgba(255, 255, 255, 0.6);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 </style>

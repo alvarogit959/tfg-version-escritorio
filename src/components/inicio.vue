@@ -623,22 +623,26 @@ a {
 
 
 .go-map {
+  background-image: url("http://localhost:5000/event-images/map-bg.png");
   position: relative;
   width: 90%;
+  min-height: 22rem;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   gap: 1rem;
-  background-image: url('~@/assets/mapscreenshot.png');
+  border-radius: 0.4rem;
+  overflow: hidden;
+  
   background-size: cover;
   background-position: center;
-  border-radius: 0.4rem;
+  border: 1px solid rgb(78, 78, 78);
 }
 .blurtest {
   background: rgba(0, 0, 0, 0.39);
   position: relative;
-  height: 20rem;
+  height: 100%;
   width: 100%;
   display: flex;
   flex-direction: column;

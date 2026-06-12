@@ -23,12 +23,12 @@
           </div>
 
           <div class="filter-controls">
-                    <input
-          v-model="eventSearchText"
-          type="text"
-          placeholder="Buscar por nombre"
-          class="search-input"
-        />
+            <input
+              v-model="eventSearchText"
+              type="text"
+              placeholder="Buscar por nombre"
+              class="search-input"
+            />
             <button
               v-for="type in eventTypeFilters"
               :key="type.value"
@@ -183,7 +183,7 @@
                     alt="Poster"
                   />
                 </div>
- <!--INFO-->
+                <!--INFO-->
                 <div class="event-info">
                   <!--MAP-->
                   <div
@@ -199,7 +199,7 @@
                     />
                   </div>
 
- <!--ACCIONES-->
+                  <!--ACCIONES-->
                   <div class="action-buttons">
                     <button
                       type="button"
@@ -215,7 +215,7 @@
                           : leavingEventId === eventKey(selectedEvent)
                           ? "Desapuntando..."
                           : isAttendingSelected
-                          ? "Desapuntarse del evento"
+                          ? "Salir de evento"
                           : "Asistir a este evento"
                       }}
                     </button>
@@ -227,15 +227,87 @@
                     >
                       Chat del evento
                     </button>
+                    <button
+                      type="button"
+                      class="btn-primary chat-event-btn"
+                      @click="openSharePopup"
+                    >
+                      Compartir en chat
+                    </button>
+                    <button
+                      type="button"
+                      class="btn-primary chat-event-btn"
+                      @click="copyEventInfo"
+                    >
+                      Copiar información
+                    </button>
                   </div>
- <!--DESCRIPTION-->
+ <!--POPUP -->
+                  <div
+                    v-if="showSharePopup"
+                    class="share-popup-overlay"
+                    @click.self="closeSharePopup"
+                  >
+                    <div class="share-popup">
+                      <div class="share-popup-header">
+                        <span>Compartir en chat</span>
+                        <button
+                          type="button"
+                          class="share-popup-close"
+                          @click="closeSharePopup"
+                        >
+                          ✕
+                        </button>
+                      </div>
+                      <div class="share-popup-body">
+                        <div v-if="shareLoading" class="share-loading">
+                          Cargando chats...
+                        </div>
+                        <div
+                          v-else-if="shareChats.length === 0"
+                          class="share-empty"
+                        >
+                          No hay chats disponibles
+                        </div>
+                        <div v-else class="share-chat-list">
+                          <button
+                            v-for="chat in shareChats"
+                            :key="chat.key"
+                            type="button"
+                            class="share-chat-item"
+                            :disabled="sendingTo === chat.key"
+                            @click="sendEventToChat(chat)"
+                          >
+                            <span class="share-chat-avatar">{{
+                              chat.avatar
+                            }}</span>
+                            <span class="share-chat-info">
+                              <span class="share-chat-name">{{
+                                chat.name
+                              }}</span>
+                              <span class="share-chat-type">{{
+                                chat.typeLabel
+                              }}</span>
+                            </span>
+                            <span
+                              v-if="sendingTo === chat.key"
+                              class="share-sending"
+                              >Enviando...</span
+                            >
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!--DESCRIPTION-->
 
                   <div class="info-group">
                     <label>Descripción: </label>
                     <p>{{ selectedEvent.description }}</p>
                   </div>
 
- <!--FECHAS-->
+                  <!--FECHAS-->
                   <div class="info-group">
                     <label>Fecha inicio:</label>
                     <p>{{ formatDateFull(selectedEvent.start) }}</p>
@@ -244,7 +316,7 @@
                     <label>Fecha fin:</label>
                     <p>{{ formatDateFull(selectedEvent.end) }}</p>
                   </div>
-<!--UBICACION-->
+                  <!--UBICACION-->
                   <div
                     v-if="
                       selectedEvent.location &&
@@ -254,15 +326,15 @@
                   >
                     <label>Ubicación:</label>
                     <p>{{ selectedEvent.location[0].location }}</p>
-                   <!-- <p class="coordinates">
+                    <!-- <p class="coordinates">
                       {{ selectedEvent.location[0].latitude }},
                       {{ selectedEvent.location[0].longitude }}
                     </p>-->
                   </div>
-<!--ORGANIZADORES-->
+                  <!--ORGANIZADORES-->
                   <div class="info-group">
                     <label>
-                      Organizadores: 
+                      Organizadores:
                       <template v-if="!loadingModerators">
                         ({{ resolvedModerators.length }})
                       </template>
@@ -296,7 +368,7 @@
 
                   <div class="info-group">
                     <label>
-                      Asistentes: 
+                      Asistentes:
                       <template v-if="!loadingAttendees">
                         ({{ resolvedAttendees.length }})
                       </template>
@@ -308,24 +380,23 @@
                       v-else-if="resolvedAttendees.length > 0"
                       class="attendees-list"
                     >
-                    
-                    <!--<button
+                      <!--<button
               type="button"
               class="user-link"
               @click="$emit('view-user', att.id)"
             >
               {{ att.username }}
             </button>-->
-            <button
-              type="button"
-              v-for="att in resolvedAttendees"
+                      <button
+                        type="button"
+                        v-for="att in resolvedAttendees"
                         :key="att.id"
                         class="attendee-badge"
-              @click="$emit('view-user', att.id)"
-            >
-              {{ att.username }}
-            </button>
-                     <!-- <span
+                        @click="$emit('view-user', att.id)"
+                      >
+                        {{ att.username }}
+                      </button>
+                      <!-- <span
                         v-for="att in resolvedAttendees"
                         :key="att.id"
                         class="attendee-badge"
@@ -354,7 +425,7 @@ import {
   upcomingEvents,
   userIdFrom,
 } from "../utils/api.js";
-import EventMiniMap from "./eventMiniMap.vue"
+import EventMiniMap from "./eventMiniMap.vue";
 
 export default {
   name: "events-view",
@@ -369,7 +440,13 @@ export default {
       default: null,
     },
   },
-  emits: ["events-updated", "create-event", "view-user", "event-chat-joined", "event-chat-left"],
+  emits: [
+    "events-updated",
+    "create-event",
+    "view-user",
+    "event-chat-joined",
+    "event-chat-left",
+  ],
   data() {
     return {
       events: [],
@@ -395,10 +472,14 @@ export default {
         { value: "competicion", label: "Competición" },
         { value: "feria", label: "Ferias" },
       ],
+      showSharePopup: false,
+      shareChats: [],
+      shareLoading: false,
+      sendingTo: null,
     };
   },
   computed: {
-        hasActiveFilters() {
+    hasActiveFilters() {
       return (
         this.eventSearchText ||
         this.selectedEventType ||
@@ -411,19 +492,18 @@ export default {
     },
 
     displayedEvents() {
-      
       let filtered = this.events.filter(
         (event) =>
           this.selectedTypes.includes(this.getEventType(event)) &&
           this.isEventInsideDateRange(event),
       );
-//SEARCH BY NAME: 
-if (this.eventSearchText && this.eventSearchText.trim()) {
-      const searchLower = this.eventSearchText.toLowerCase().trim();
-      filtered = filtered.filter(event => 
-        event.title?.toLowerCase().includes(searchLower)
-      );
-    }
+      //SEARCH BY NAME:
+      if (this.eventSearchText && this.eventSearchText.trim()) {
+        const searchLower = this.eventSearchText.toLowerCase().trim();
+        filtered = filtered.filter((event) =>
+          event.title?.toLowerCase().includes(searchLower),
+        );
+      }
       return [...filtered].sort((a, b) => {
         if (this.sortMode === "distance" && this.userLocation) {
           const distanceA = this.getEventDistanceValue(a);
@@ -814,7 +894,7 @@ if (this.eventSearchText && this.eventSearchText.trim()) {
       this.attending = true;
 
       try {
-      const data = await apiJson(
+        const data = await apiJson(
           `/users/${userId}/joined-events/${eventId}`,
           { method: "POST" },
         );
@@ -863,101 +943,290 @@ if (this.eventSearchText && this.eventSearchText.trim()) {
 
     //TEST LEAVE EVENT=========================================================================================================================
     async toggleAttendance() {
-  if (this.isAttendingSelected) {
-    await this.leaveEvent(this.selectedEvent);
-  } else {
-    await this.attendEvent();
-  }
-},
-
-  async leaveEvent(event) {
-  const userId = userIdFrom(this.currentUser);
-  if (!userId) {
-    this.notification = "Debes iniciar sesión para desapuntarte";
-    this.notificationClass = "error";
-    return;
-  }
-
-  const eventId = this.eventKey(event);
-  this.leavingEventId = eventId;
-
-  try {
-    //DELETE
-    const response = await fetch(
-      `http://localhost:5000/users/${userId}/joined-events/${eventId}`,
-      { method: "DELETE" }
-    );
-
-    if (!response.ok) {
-      throw new Error(`Error ${response.status}: ${response.statusText}`);
-    }
-
-//ACTUALIZAR LISTA
-    const eventIndex = this.events.findIndex(e => this.eventKey(e) === eventId);
-    if (eventIndex !== -1) {
-      const updatedEvent = { ...this.events[eventIndex] };
-      
-      //Eliminar usuario actual
-      if (updatedEvent.attendees) {
-        updatedEvent.attendees = updatedEvent.attendees.filter(
-          id => id.toString() !== userId
-        );
+      if (this.isAttendingSelected) {
+        await this.leaveEvent(this.selectedEvent);
+      } else {
+        await this.attendEvent();
       }
-      
-      //Actualizar
-      this.events[eventIndex] = updatedEvent;
-//Forzar actualizacion
-      this.events = [...this.events];
+    },
 
-      if (this.selectedEvent && this.eventKey(this.selectedEvent) === eventId) {
-        this.selectedEvent = updatedEvent;
-        this.resolvedAttendees = this.resolvedAttendees.filter(
-          att => att.id !== userId && att.id?.toString() !== userId
-        );
+    async leaveEvent(event) {
+      const userId = userIdFrom(this.currentUser);
+      if (!userId) {
+        this.notification = "Debes iniciar sesión para desapuntarte";
+        this.notificationClass = "error";
+        return;
       }
-    }
 
-    // Quitar al usuario del chat del evento
-    const eventMongoId = event._id || eventId;
-    try {
-      await apiJson(`/events/${eventMongoId}/conversation/leave`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ userId }),
-      });
-    } catch (chatError) {
-      console.error("Error saliendo del chat del evento:", chatError);
-    }
-    this.$emit("event-chat-left", {
-      eventId: eventMongoId,
-    });
+      const eventId = this.eventKey(event);
+      this.leavingEventId = eventId;
 
-    this.notification = "Has salido del evento";
-    this.notificationClass = "success";
-    this.$emit("events-updated");
-  } catch (error) {
-    console.error("Error al salir del evento:", error);
-    this.notification = error.message || "No se pudo salir del evento";
-    this.notificationClass = "error";
-  } finally {
-    this.leavingEventId = null;
-    setTimeout(() => {
-      this.notification = "";
-    }, 3500);
-  }
-},
+      try {
+        //DELETE
+        const response = await fetch(
+          `http://localhost:5000/users/${userId}/joined-events/${eventId}`,
+          { method: "DELETE" },
+        );
 
+        if (!response.ok) {
+          throw new Error(`Error ${response.status}: ${response.statusText}`);
+        }
 
+        //ACTUALIZAR LISTA
+        const eventIndex = this.events.findIndex(
+          (e) => this.eventKey(e) === eventId,
+        );
+        if (eventIndex !== -1) {
+          const updatedEvent = { ...this.events[eventIndex] };
+
+          //Eliminar usuario actual
+          if (updatedEvent.attendees) {
+            updatedEvent.attendees = updatedEvent.attendees.filter(
+              (id) => id.toString() !== userId,
+            );
+          }
+
+          //Actualizar
+          this.events[eventIndex] = updatedEvent;
+          //Forzar actualizacion
+          this.events = [...this.events];
+
+          if (
+            this.selectedEvent &&
+            this.eventKey(this.selectedEvent) === eventId
+          ) {
+            this.selectedEvent = updatedEvent;
+            this.resolvedAttendees = this.resolvedAttendees.filter(
+              (att) => att.id !== userId && att.id?.toString() !== userId,
+            );
+          }
+        }
+
+        // Quitar al usuario del chat del evento
+        const eventMongoId = event._id || eventId;
+        try {
+          await apiJson(`/events/${eventMongoId}/conversation/leave`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ userId }),
+          });
+        } catch (chatError) {
+          console.error("Error saliendo del chat del evento:", chatError);
+        }
+        this.$emit("event-chat-left", {
+          eventId: eventMongoId,
+        });
+
+        this.notification = "Has salido del evento";
+        this.notificationClass = "success";
+        this.$emit("events-updated");
+      } catch (error) {
+        console.error("Error al salir del evento:", error);
+        this.notification = error.message || "No se pudo salir del evento";
+        this.notificationClass = "error";
+      } finally {
+        this.leavingEventId = null;
+        setTimeout(() => {
+          this.notification = "";
+        }, 3500);
+      }
+    },
 
     goToEventChat() {
       if (!this.selectedEvent) return;
-      const eventMongoId = this.selectedEvent._id || eventIdentifier(this.selectedEvent);
+      const eventMongoId =
+        this.selectedEvent._id || eventIdentifier(this.selectedEvent);
       this.$emit("event-chat-joined", {
         eventId: eventMongoId,
         title: this.selectedEvent.title || "Evento",
         openChat: true,
       });
     },
+
+    openSharePopup() {
+      if (!this.selectedEvent || !this.currentUser) return;
+      this.showSharePopup = true;
+      this.loadShareChats();
+    },
+
+    closeSharePopup() {
+      this.showSharePopup = false;
+    },
+
+    async loadShareChats() {
+      if (!this.currentUser?.id) return;
+      this.shareLoading = true;
+      this.shareChats = [];
+      try {
+//LOADFRIENDS
+        const friends = await apiJson(`/users/${this.currentUser.id}/friends`);
+        const friendChats = (Array.isArray(friends) ? friends : []).map(
+          (f) => ({
+            key: "friend-" + f.id,
+            conversationType: "private",
+            otherUser: f,
+            name: f.username,
+            avatar: f.username.charAt(0).toUpperCase(),
+            typeLabel: "Privado",
+          }),
+        );
+//LOAD EVENTS
+        const eventConvs = await apiJson(
+          `/users/${this.currentUser.id}/conversations/event`,
+        );
+        const eventChats = (Array.isArray(eventConvs) ? eventConvs : []).map(
+          (ec) => ({
+            key: "event-" + ec.conversationId,
+            conversationType: "event",
+            conversationId: ec.conversationId,
+            name: ec.title || "Chat del evento",
+            avatar: "E",
+            typeLabel: "Chat del evento",
+          }),
+        );
+
+        let groupConv = null;
+        try {
+          const resp = await fetch("http://localhost:5000/conversations/group");
+          groupConv = await resp.json();
+        } catch (e) {
+          /* IHSBFVHJKLSDBKHJB */
+        }
+        const groupChats = groupConv
+          ? [
+              {
+                key: "group",
+                conversationType: "group",
+                conversationId: groupConv._id,
+                name: "Chat grupal",
+                avatar: "G",
+                typeLabel: "Todos los usuarios",
+              },
+            ]
+          : [];
+
+        this.shareChats = [...groupChats, ...friendChats, ...eventChats];
+      } catch (e) {
+        console.error("Error loading chats for sharing:", e);
+      } finally {
+        this.shareLoading = false;
+      }
+    },
+
+    async sendEventToChat(chat) {
+      if (!this.selectedEvent || !this.currentUser) return;
+      this.sendingTo = chat.key;
+//TEST STRUCTURE
+      try {
+        const event = this.selectedEvent;
+        const eventId = eventIdentifier(event) || event._id;
+        const imageUrl = `http://localhost:5000${event.image}`;
+        const dateStr = this.formatDate(event.start);
+        const distanceStr =
+          this.userLocation && this.eventDistanceKm(event) !== null
+            ? `A ${this.eventDistanceKm(event)} km`
+            : "";
+        const locationStr =
+          event.location && event.location.length > 0
+            ? event.location[0].location
+            : "";
+
+        const shareText = `[EVENT_SHARE]${eventId}||${event.title}||${imageUrl}||${dateStr}||${distanceStr}||${locationStr}`;
+
+        let convId = null;
+
+        if (chat.conversationType === "group") {
+          convId = chat.conversationId;
+        } else if (chat.conversationType === "event") {
+          convId = chat.conversationId;
+        } else if (chat.conversationType === "private") {
+          const data = await apiJson(
+            `/users/${this.currentUser.id}/conversations/private`,
+            {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ friendId: chat.otherUser.id }),
+            },
+          );
+          convId = data.conversationId;
+        }
+
+        if (!convId) {
+          console.error("No conversation ID found");
+          return;
+        }
+//sendd
+        const response = await fetch("http://localhost:5000/messages", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            conversationId: convId,
+            senderId: this.currentUser.id,
+            text: shareText,
+          }),
+        });
+
+        if (!response.ok) {
+          throw new Error("Error sending message");
+        }
+
+        this.showSharePopup = false;
+        this.notification = "Evento compartido correctamente";
+        this.notificationClass = "success";
+        setTimeout(() => {
+          this.notification = "";
+        }, 3000);
+      } catch (e) {
+        console.error("Error sharing event:", e);
+        this.notification = "Error al compartir el evento";
+        this.notificationClass = "error";
+        setTimeout(() => {
+          this.notification = "";
+        }, 3000);
+      } finally {
+        this.sendingTo = null;
+      }
+    },
+//TEST COPY TEXT========================
+copyEventInfo() {
+  if (!this.selectedEvent) return;
+  
+  const event = this.selectedEvent;
+  
+  //textttt
+  let eventText = `_____CarMeet Club_____\nEstas invitado a un evento!\n${event.title}\n`;
+  eventText += `Tipo: ${event.type}\n`;
+  eventText += `Fecha: ${this.formatDateFull(event.start)}\n`;
+  
+  if (event.end) {
+    eventText += `Hasta: ${this.formatDateFull(event.end)}\n`;
+  }
+  
+  if (event.location && event.location.length > 0) {
+    eventText += `Ubicación: ${event.location[0].location}\n`;
+  }
+  
+  if (event.description) {
+    const cleanDescription = event.description.replace(/<[^>]*>/g, '');
+    eventText += `Descripción: ${cleanDescription}\n`;
+  }
+  
+  eventText += `Descarga CarMeet Club para estar al tanto de las ultimas novedades! \n`;
+  
+//test copy
+  navigator.clipboard.writeText(eventText).then(() => {
+    this.notification = 'Copiado!';
+    this.notificationClass = 'success';
+    setTimeout(() => { this.notification = ''; }, 3000);
+  }).catch(() => {
+    this.notification = 'Error al copiar la información';
+    this.notificationClass = 'error';
+    setTimeout(() => { this.notification = ''; }, 3000);
+  });
+},
+
+
+
 
     updateEventInList(updatedEvent) {
       const idx = this.events.findIndex(
@@ -983,8 +1252,7 @@ if (this.eventSearchText && this.eventSearchText.trim()) {
   height: calc(100vh - 2rem - 75px);
   max-height: calc(100vh - 2rem - 75px);
   overflow-y: auto;
-  
-  
+
   color: white;
   font-family: "Inter", sans-serif;
   box-sizing: border-box;
@@ -992,15 +1260,6 @@ if (this.eventSearchText && this.eventSearchText.trim()) {
 
   display: flex;
   flex-direction: column;
-
-  background: linear-gradient(
-    135deg,
-    rgba(255, 255, 255, 0.12),
-    rgba(0, 0, 0, 0.726)
-  );
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-
 
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.25);
 }
@@ -1054,20 +1313,15 @@ if (this.eventSearchText && this.eventSearchText.trim()) {
   min-height: 0;
   display: flex;
   flex-direction: column;
-
 }
 
 .panel-card {
-  background: rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.06);
   min-height: 1.5rem;
   height: auto;
   padding: 0.4rem 1rem;
-  display:flex;
+  display: flex;
   flex-direction: row;
-
-
-
-
 }
 
 .events-list-panel {
@@ -1092,6 +1346,7 @@ if (this.eventSearchText && this.eventSearchText.trim()) {
 .btn-ghost {
   font-family: inherit;
   padding: 0.5rem 1rem;
+
   cursor: pointer;
   transition: all 0.25s ease;
   backdrop-filter: blur(12px);
@@ -1164,15 +1419,14 @@ if (this.eventSearchText && this.eventSearchText.trim()) {
   flex-wrap: wrap;
   gap: 0.75rem;
   align-items: center;
-  justify-content:center;
-  flex:space-evenly;
+  justify-content: center;
+  flex: space-evenly;
   width: 100%;
   height: auto;
 }
 .location-controls,
 .filter-controls,
 .sort-control {
-
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1349,7 +1603,7 @@ if (this.eventSearchText && this.eventSearchText.trim()) {
   flex: 1;
   min-height: 0;
   padding-right: 0.25rem;
-  padding-top:0.2rem
+  padding-top: 0.2rem;
 }
 
 .events-list::-webkit-scrollbar {
@@ -1469,12 +1723,10 @@ if (this.eventSearchText && this.eventSearchText.trim()) {
   z-index: 20;
   display: flex;
   flex-direction: column;
-  background: linear-gradient(135deg, rgb(54, 54, 54), rgb(0, 0, 0));
-  backdrop-filter: blur(18px);
-  -webkit-backdrop-filter: blur(18px);
-  border: 1px solid rgba(255, 255, 255, 0.25);
-  border-radius: 0.8rem;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+  background: linear-gradient(135deg, rgba(54, 54, 54, 0.267), rgb(0, 0, 0));
+  backdrop-filter: blur(9px);
+  -webkit-backdrop-filter: blur(9px);
+
   overflow: hidden;
 }
 
@@ -1626,7 +1878,7 @@ if (this.eventSearchText && this.eventSearchText.trim()) {
   padding: 0.2rem 0.5rem;
   border-radius: 0.5rem;
   font-size: 0.82rem;
-  cursor:pointer;
+  cursor: pointer;
 }
 
 .moderators-list {
@@ -1688,12 +1940,20 @@ if (this.eventSearchText && this.eventSearchText.trim()) {
 }
 
 .action-buttons {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, auto));
+  row-gap: 0.5rem;
+  gap: 0.5rem;
+  width: 100%;
   justify-content: center;
+  align-items: center;
 }
-
+.chat-event-btn {
+  width: 100%;
+}
 .attend-btn {
   width: 100%;
-  padding: 0.5rem 1.5rem;
+
   font-size: 0.95rem;
   font-weight: 600;
   background: linear-gradient(135deg, rgb(59, 20, 90), rgba(46, 76, 94, 0.726));
@@ -1723,8 +1983,6 @@ if (this.eventSearchText && this.eventSearchText.trim()) {
     flex-wrap: wrap;
     gap: 0.75rem;
     align-items: center;
-    
-    
   }
   .events-container {
     max-height: 100vh;
@@ -1732,7 +1990,6 @@ if (this.eventSearchText && this.eventSearchText.trim()) {
     height: 100vh;
     margin: 0;
     padding-bottom: 3.5rem;
- 
   }
   .location-controls,
   .filter-controls,
@@ -1740,8 +1997,6 @@ if (this.eventSearchText && this.eventSearchText.trim()) {
   .sort-control {
     flex-shrink: 0;
   }
-
-
 
   .page-header {
     flex-direction: column;
@@ -1773,5 +2028,149 @@ if (this.eventSearchText && this.eventSearchText.trim()) {
   justify-content: center;
   flex: 1;
 }
-.chat-event-btn{margin-top: 0.4rem;}
+
+.share-popup-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.share-popup {
+  background: rgba(20, 20, 40, 0.98);
+  backdrop-filter: blur(14px);
+  border: 1px solid rgba(99, 102, 241, 0.4);
+  border-radius: 0.6rem;
+  width: min(380px, 90vw);
+  max-height: 70vh;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.55);
+  animation: slideUp 0.22s ease;
+}
+
+.share-popup-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid rgba(99, 102, 241, 0.25);
+  color: rgba(246, 249, 255, 0.95);
+  font-weight: 600;
+  font-size: 0.95rem;
+}
+
+.share-popup-close {
+  background: none;
+  border: none;
+  color: rgba(186, 250, 255, 0.7);
+  cursor: pointer;
+  font-size: 1.1rem;
+  padding: 0.2rem 0.4rem;
+}
+
+.share-popup-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 0.5rem;
+}
+
+.share-loading,
+.share-empty {
+  text-align: center;
+  padding: 1.5rem;
+  color: rgba(255, 255, 255, 0.55);
+  font-style: italic;
+}
+
+.share-chat-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+.share-chat-item {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  width: 100%;
+  padding: 0.6rem 0.7rem;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 0.5rem;
+  cursor: pointer;
+  text-align: left;
+  color: rgb(255, 230, 210);
+  font-family: "Inter", sans-serif;
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+.share-chat-item:hover:not(:disabled) {
+  background: rgba(99, 102, 241, 0.12);
+  border-color: rgba(99, 102, 241, 0.3);
+}
+
+.share-chat-item:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.share-chat-avatar {
+  flex-shrink: 0;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.85rem;
+  font-weight: 700;
+  background: linear-gradient(
+    135deg,
+    rgba(103, 12, 139, 0.55),
+    rgba(168, 85, 247, 0.6)
+  );
+  color: #fff;
+}
+
+.share-chat-info {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  flex: 1;
+}
+
+.share-chat-name {
+  font-size: 0.82rem;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.share-chat-type {
+  font-size: 0.68rem;
+  opacity: 0.55;
+}
+
+.share-sending {
+  font-size: 0.75rem;
+  color: rgba(100, 200, 255, 0.8);
+  flex-shrink: 0;
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
 </style>
