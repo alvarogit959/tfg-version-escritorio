@@ -1,15 +1,15 @@
-====Lanzar el server primero!======
-El server está incluido dentro de este repositorio como serverCarmeet.js, lanzandolo como "node .\serverCarmeet.js"
+==== **Lanzar el server primero!** ======
+El server está incluido dentro de este repositorio como **serverCarmeet.js**, lanzandolo como "**node .\serverCarmeet.js**"
 
-Este es el documento principal donde tengo la documentación en latex/pdf del proyecto dentro de la carpeta "Documentación del proyecto".
+Este es el documento principal donde tengo la **documentación** en latex/pdf del proyecto dentro de la carpeta "**Documentación del proyecto**".
 
-Para la version de movil, es la direccion: https://github.com/alvarogit959/carmeet-phone
+Para la version de **movil**, es la direccion: https://github.com/alvarogit959/carmeet-phone
 
-Link Drive de los instaladores como .exe: https://drive.google.com/drive/folders/1pB5D6lEBgyw6MmiKzaDXcIjlvWkjMGZJ?usp=drive_link
+Link Drive de los **instaladores como .exe**, arreglé algunos bugs despues de crear los .exe por lo que recomiendo mas usar crearlos de nuevo: https://drive.google.com/drive/folders/1pB5D6lEBgyw6MmiKzaDXcIjlvWkjMGZJ?usp=drive_link
 
-Si quieres verlo desde Visual studio simplemente usar: npm run electron:serve 
+Si quieres verlo desde Visual studio simplemente usar: **npm run electron:serve**
 
-Link del video de la aplicación funcionando como .exe: https://youtu.be/CoYdliQ5uD4
+Link del **video de la aplicación** funcionando como .exe: https://youtu.be/CoYdliQ5uD4
 
 Lanzar los dos exe al mismo tiempo puede ser incompatible al usar tecnologías como mapbox que solo permiten una request al mismo tiempo en la versión gratuita.
 
