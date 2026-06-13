@@ -30,7 +30,7 @@
         </button>
        
       
-
+//test giterror
       <button
         class="filter-btn" id="feria"
         :class="{ 'filter-btn--hidden': isTypeHidden('feria') }"
