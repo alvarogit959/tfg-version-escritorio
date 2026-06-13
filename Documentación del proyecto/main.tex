@@ -1,0 +1,468 @@
+\documentclass[a4paper, 11pt]{article}
+\usepackage[spanish]{babel}
+\usepackage{graphicx}
+\usepackage{hyperref}
+\usepackage{listings}
+\usepackage{xcolor}
+\usepackage{geometry}
+\usepackage{float}
+\usepackage{placeins}
+\usepackage{caption}
+\usepackage{setspace}
+
+\usepackage{fontspec}
+\setmainfont{Arial}         
+\setsansfont{Arial}        
+
+\geometry{margin=2.5cm}
+
+\onehalfspacing
+
+\renewcommand{\floatpagefraction}{.8}
+\renewcommand{\textfraction}{0.05}   
+\renewcommand{\topfraction}{0.8}    
+\renewcommand{\bottomfraction}{0.8}
+
+
+\graphicspath{{images/}}
+
+\title{Proyecto de fin de ciclo}
+\author{Álvaro Del Valle Fernández}
+
+\begin{document}
+
+\begin{center}
+\vspace*{\fill}
+{\Huge\textbf{CarMeet Club}} \\
+\vspace{1cm}
+{\LARGE Proyecto de fin de ciclo}\par
+\vspace{1cm}
+{Álvaro Del Valle Fernández}
+\vspace*{\fill} 
+\end{center}
+\newpage
+
+\tableofcontents
+\clearpage
+
+
+\section{Introdución}
+    \subsection{Resumen}
+Este proyecto se centra en la creación de un sistema centralizado e intuitivo para organizar eventos y quedadas del mundo del motor. \par
+El punto clave es un sistema centralizado en el cual el usuario pueda ver claramente a que eventos puede acudir, cuando y de que tratan, 
+generando una mayor afluencia a esos eventos mejorando la comunidad. \par
+Promuebe tambien la comunicación entre los miembros facilitando saber si hay cambios de horario o si utilizan otros grupos para comunicarse. 
+Mediante el mapa y los carteles el usuario puede ver claramente si esta interesado o no en el evento, sin necesidad de ver ubicaciones y fechas.
+    \subsection{Objetivo del proyecto}
+El objetivo final de esta aplicación es crear un entorno muy sencillo de utilizar con el objetivo de unificar a los aficionados en una sola plataforma,
+actualmente estos eventos se organizan desde grupos de facebook separados, grupos de Whatsapp, grupos de Instagram y foros del mundo del automovil. \par 
+Esto genera una dificultad a la hora de encontrar eventos y confirmar si realmente se realizarán ese dia, siendo común que se anuncie un evento por
+una de esas webs y que luego se cambie la ubicacion o dia cuando los miembros hablan por un grupo privado. \par
+Este proyecto se centra en unificar a todos los usuarios de la forma mas sencilla e intuitiva, fortaleciendo la comunidad.
+\newpage
+\subsection{Coste y ganancia}
+Esta aplicacion no requiere un servidor a gran escala debido a que el trafico no es extremadamente alto, los usuarios entrarán cada cierto tiempo
+a revisar y comprobar los chats, lo que puede generar algo de carga son las imagenes, la carga de imagenes del evento puede suponer un problema con un trafico muy elevado. \par
+Para el servidor se puede utilizar un pago mensual para alojarlo en un centro de datos o mediante un servidor propio pequeño. \par
+
+Todas las tecnologías son gratuitas aunque Mapbox tiene un numero limitado de conexiones, por lo que se necesitaría pagar a largo plazo. \par
+
+Para rentabilizar la aplicacion existen diferentes metodos, el primero es que el tipo de audiencia de esta página 
+es muy especifica, por lo que anuncios especificos a la audiencia generan mayor ganancia y no resultan 
+tan intrusivos al estar relacionado. \par
+Otro metodo es promover eventos, al pagar se puede poner un evento en el menu principlal como publicidad, tambien indicandolo con un icono mas llamativo dentro del 
+propio mapa. \par
+
+
+
+\newpage
+\section{Requisitos y planificación}
+    \subsection{Tecnologías usadas}
+    \begin{figure}[H]
+    \centering
+    \includegraphics[width=0.5\textwidth]{img2.png}
+    \end{figure}
+    JavaScript: Usé este lenguaje para crear mi app debido a que es con el que estoy mas familiarizado, tambien se adapta perfectamente a mi proyecto, con elementos interactivos y animaciones.
+
+    \begin{figure}[H]
+    \centering
+    \includegraphics[width=0.5\textwidth]{img1.png}
+    \end{figure}
+    Vue: Lo utilicé como framework js para la construccion de la interfaz y la app, siendo mas del 80 porciento del codigo.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.3\textwidth]{img3.png}
+    \end{figure}
+    HTML: Para estructurar la app.
+
+    \begin{figure}[H]
+    \centering
+    \includegraphics[width=0.5\textwidth]{img4.png}
+    \end{figure}
+    Leaflet: Biblioteca centrada en la creación de mapas web, es la tecnología principal que utilize para mostrar el mapa y los eventos.
+
+    \begin{figure}[H]
+    \centering
+    \includegraphics[width=0.5\textwidth]{img5.jpg}
+    \end{figure}
+    OpenStreetMap: Ofrece los datos geográficos para mostrar el mapa correctamente, en si actua como una base de datos gratuita.
+
+    \begin{figure}[H]
+    \centering
+    \includegraphics[width=0.5\textwidth]{img6.png}
+    \end{figure}
+    MapBox: Utilizado para mapas con mayor detalle y elementos 3D, en mi caso lo utilize para editar los estilos del mapa, pudiendo crear un estilo propio e importarlo en mi aplicación.
+
+    \begin{figure}[H]
+    \centering
+    \includegraphics[width=0.5\textwidth]{img7.png}
+    \end{figure}
+    MongoDB Atlas: Utilize Atlas debido a que es el servicio de base de datos que me resulto mas sencillo de utilizar, siendo rapido y perfecto para el tipo de aplicacion, incluido para chats.
+
+    \subsection{Escalabilidad del proyecto}
+    Este proyecto puede ser ampliado de forma sencilla gracias a las tecnologías utilizadas, la unicas limitaciones son elementos de pago al mover una aplicacion a una
+    escala de empresa, como puede ser el uso de mapbox, sistemas mas avanzados de obtencion de geolocalización y el elemento mas importante, la capacidad del servidor.
+
+    La base de datos actual ya maneja cientos de eventos, cada uno contaría con numerosas imagenes que el servidor debe gestionar, todo este trafico necesitaría un server dedicado aumentando los costes.
+
+    En el apartado de software, las tecnologías que utilizé son perfectas para proyectos a gran escala, pudiendo ampliar y mejorar la aplicacíon facilmente aunque la carga de usuarios sea mucho mas alta.
+
+\newpage
+\section{Diseño}
+    \subsection{Estructura de la base de datos}
+    \begin{figure}[H]
+    \centering
+    \includegraphics[width=1\textwidth]{img21.png}
+    \end{figure}
+    \newpage
+    Principlamente me guie por las IDs para enlazar los elementos entre si, con relaciones N:M entre listas de numerosos elementos,
+    por ejemplo un usuario puede apuntarse a numerosos eventos y un evento tiene numerosos usuarios, un usuario tiene multiples amigos, el usuario amigo puede tener multiples amigos.
+
+    En si traté de crear una base de datos muy sencilla dentro de la dificultad de la práctica, con numerosos arrays para crear las relaciones.
+
+
+    Relaciones principales: En users, joinedevents es un evento N:M donde un evento tiene muchos usuarios y un usuario se puede apuntar a muchos eventos.
+
+
+    ManagedEvents con relacion 1:N un usuario puede organizar varios eventos.
+
+
+    Friends N:M con un usuario puede tener varios amigos, un usuario amigo puede tener varios amigos
+
+    
+    Friendrequests 1:N un usuario recibe varias peticiones de amistad.
+
+    Dentro de conversations: Participants N:M al poedr ser un chat privado o un chat grupal.
+    
+    Messages 1:N donde una conversación puede tener muchos mensajes.
+
+    Dentro de la base de Messages: SenderId N:1 un usuario puede enviar varios mensajes.
+    \begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\textwidth]{img27.png}
+    \end{figure}
+
+\newpage
+    \subsection{Casos de uso}
+    \begin{figure}[H]
+    \centering
+    \includegraphics[width=1\textwidth]{img22.png}
+    \end{figure}
+    Para simplificar el esquema elimine ciertas rutas que el usuario puede tomar, como por ejemplo entrar a un chat privado para ver el perfil de un usuario, a la hora de diseñar la aplicacion añadí
+    numerosas rutas redundantes debido a que esto facilita el uso de estas.
+    
+    Por ejemplo para ver un evento se puede acceder desde el menu principal, desde el propio mapa, desde la vista eventos o si estas apuntado a este, desde tu propio perfil.
+
+
+\newpage
+\section{Detalle del proyecto}
+    \subsection{App}
+
+    El archivo App.vue contiene la barra superior, para editar la barra predeterminada que crea vue, la oculté y cree una propia. Esta barra cumple las mismas funciones pero coincide esteticamente con el resto de la aplicación.
+    \subsection{Main}
+            \begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\textwidth]{img19.png}
+    \end{figure}
+    \begin{figure}[H]
+    \centering
+    \includegraphics[width=0.3\textwidth]{img30.png}
+    \end{figure}
+    El archivo main.vue tiene dos funciones importantes en mi proyecto, primero este crea la barra del menu con inicio, mapa, eventos y perfil enlanzado estos correctamente y creando el extraible de perfil.
+    
+    Luego esta  el codigo que administra las diferentes vistas y como se mostrarán en el contenedor.
+
+
+    El ultimo elemento del template es el boton del chat, main incluye el codigo entero del chat, manejando desde las notificaciones de mensaje nuevo al envio de los mensajes al servidor.
+    
+    Botón del chat:
+    \begin{figure}[H]
+    \centering
+    \includegraphics[width=0.3\textwidth]{img26.png}
+    \end{figure}
+
+    Chat desplegado, cuenta con una barra lateral para seleccionar los chats que pueden ser, el chat grupal, chat grupal de eventos o chat privado. El mensaje muestra un button con el nombre del usuario el cual dirige a la view user en el cual se peude ver el perfil y abrir el chat privado con este usuario.
+      \begin{figure}[H]
+    \centering
+    \includegraphics[width=0.6\textwidth]{img25.png}
+    \end{figure}
+    Funciona mediante sockets tal y como aprendí en las clases, aunque cuenta con varias opciones extras, primero el "scrolltobottom" el cual mueve el scrollbar a la posicion mas baja del contenedor, esta funcion se 
+    activa en el principio al abrir el chat y cada vez que se envia o recibe un mensaje nuevo.
+
+    Otro punto es la logica para notificaciones, cuando hay un mensaje pendiente aparece un circulo rojo en el icono de chat, el cual desaparece una vez leido el chat. Para ello necesité crear en la base de datos el valor "readBy" para
+    poder comprobar correctamente, siendo este un array de ids de usuarios que leyeron el mensaje.
+
+    \subsection{Inicio}
+            \begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\textwidth]{img8.png}
+    \end{figure}
+            \begin{figure}[H]
+    \centering
+    \includegraphics[width=0.3\textwidth]{img31.png}
+    \end{figure}
+    El archivo inicio.vue muestra el menu de inicio principal, en un principio del proyecto mi idea era mostrar el mapa directamente, minimizando la cantidad de elementos que puedan ser confusos para el usuario, pero decidí en crear esta vista para mostrar los eventos de una forma mas vistosa gracias a los poster.
+
+    Esta vista primero muestra los 5 eventos mas cercanos al usuario, de predeterminado uso la ubicacion de Madrid, cuando activas el gps muestra los eventos mas cercanos al usuario.
+    
+    Tras este elemento simplemente añadi un elemento para ir a la vista mapa, el elemento central de la aplicación.
+
+    El siguiente elemento es un menu con los eventos ordenados por fecha, siendo el primero el que se celebrará mas pronto o se esta celebrando. La app gestiona desde el server y desde los propios filtos la fecha, por lo que eventos que ya pasaron no se muestran en ninguna vista.
+    
+    Desde el lado del servidor simplemente estoy obteniendo los datos con diferentes GET.
+
+    El metodo de obtención de ubicación es mediante una API de navegador, la cual devuelve la ubicacion aproximada, con metodos de ubicacion precisa me encuentré con numerosos problemas junto a multiples versiones de pago, que funcionaban en web pero no implementadas dentro de la aplicación.
+    
+    Para los poster de los eventos, decidí hacerlo de forma profesional y cargar los poster desde el servidor, estas imagenes son todas administradas desde el servidor mediante la estructura que pense que es mas idonea.
+
+    Primero tengo una carpeta "event-images", esta contiene carpetas nombradas con la id de cada evento, en cada una de ellas hay un archivo poster.jpg. Para mostrar la imagen primero obtengo la lista de eventos con las ids, 
+    una vez obtenidas las ids busca una carpeta que tenga un nombre igual a la id, si la encuentra muestra la imagen dentro de esta llamada "poster".
+    
+    Si no encuentra una imagen, este muestra una predeterminada para no alterar visualmente la aplicación.
+    \subsection{Mapa}
+
+    \begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\textwidth]{img9.png}
+    \end{figure}
+
+    \begin{figure}[H]
+    \centering
+    \includegraphics[width=0.3\textwidth]{img32.png}
+    \end{figure}
+    El archivo map.vue incluye los elementos mas complicados y centrales para la aplicación, la barra superior contiene los filtros que se aplicarán al mapa, aunque parezca sencilla el apartado de Ubicación resultó muy complicado.
+
+    Los primeros botones siguen el codigo de color de los puntos del mapa para que sea mas intuitivo.
+    
+    Utilize dos metodos para la ubicación, mediante metadata del navegador el cual da la ubicación aproximada y mediante un cuadro de busqueda en el cual una vez añadido el nombre de la ubicación esta aparece señalada en el mapa, para ello utilize mapbox:
+
+
+    \begin{lstlisting}[frame=single,breaklines=true]
+     const response = await fetch(
+    `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(this.manualLocation)}.json?access_token=${mapboxgl.accessToken}`
+  );
+    \end{lstlisting}
+    
+    Esto permite transformar el texto en coordenadas al buscar la ubicación dentro de la base de datos de mapbox.
+    \begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\textwidth]{img20.png}
+    \end{figure}
+
+    En la imagen podemos ver las opciones para activar la ubicación junto al siguiente punto de conflicto a la hora de diseñar la aplicación, el rango de busqueda.
+
+    El selector de rango es solo visible cuando el usuario activa la ubicación o escribe una ubicación, ahora solo se mostrarán eventos en el radio indicado, pudiendo aplicar multiples filtros al mismo tiempo.
+
+    El siguiente punto de conflicto fue crear un menu mas reducido para el selector de fechas, encontrándome con numerosos problemas al cambiar el formato del icono, rompiendo la aplicación.
+
+    Cuando se realiza click en el evento aparece un pop up con los datos de este, esto fue realtivamente sencillo de programar siguiendo guias, encontrándome con pocos problemas.
+
+    Al tener una base de datos de cientos de eventos, decidí añadir solo los carteles de los eventos mas cercanos o proximos, programé que si la aplicación no encuentra el archivo "poster.png" dentro de la carpeta con el mismo nombre que la id del evento, en ese caso mostrará una foto predetermiada.
+
+    \subsection{Eventos}
+            \begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\textwidth]{img10.png}
+    \end{figure}
+            \begin{figure}[H]
+    \centering
+    \includegraphics[width=0.3\textwidth]{img33.png}
+    \end{figure}
+    El archivo events.vue es similar a la vista de eventos en main, con la principal diferencia, los filtros, estos permiten ajustar las opciones de forma similar a la vista mapa junto al boton de crear nuevo evento.
+
+    Esta vista muestra la lista de eventos junto a un popup al realizar click para ver los datos de cada uno, todo en el mismo vue. 
+
+    Cuando se realiza click en el evento del mapa, esta redirige a esta vista, que muestra todos los datos junto al poster e intruduce la opcion de asistir al evento. Podemos ver el array de organizadores junto al de asistentes, que se actualizarán cuando un usuario asista.
+
+    El elemento superior de mapa necesité crear un vue separado para renderizarlo correctamente.
+
+    Ahora cuenta tambien con la opcion de compartir el evento, como crear un link a un evento a una app instalable o de movil no tiene sentido, cree un metodo para compartirlo de forma interna, donde se puede decidir en que chat se envia en enlaze al evento.
+
+    Tambien por asegurarme incluí unbotón para copiar, como un control C, los datos del evento junto a una inivitación para descargar la app cumpliendo lo requerido.
+
+    \subsection{Minimapa}
+            \begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\textwidth]{img11.png}
+    \end{figure}
+    \begin{figure}[H]
+    \centering
+    \includegraphics[width=0.3\textwidth]{img34.png}
+    \end{figure}
+    El archivo eventMiniMap.vue lo cree de forma separada debido a problemas de estabilidad, debido a que el menu esta dentro de una vista en si, siendo tres vistas en una. Este simplemente obtiene el valor de las coordenadas del evento y situa el punto en el mapa de forma basica. 
+    
+    Utilize este mapa sin mapbox debido al uso limitado de este, de esta forma no pierdo el numero de usos gratuitos y muestro la información de la misma manera.
+
+    \subsection{Nuevo evento}
+                \begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\textwidth]{img16.png}
+    \end{figure}
+    \begin{figure}[H]
+    \centering
+    \includegraphics[width=0.3\textwidth]{img35.png}
+    \end{figure}
+    El archivo newEvent.vue es la vista dedicada a crear un nuevo evento, simplemente crea un evento mediante post si cumple todas las condiciones, por ejemplo titulo unico, todos los campos cubiertos, fecha no anterior a la actual etc.
+
+
+    \subsection{Login}
+                                \begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\textwidth]{img23.png}
+    \end{figure}
+    \begin{figure}[H]
+    \centering
+    \includegraphics[width=0.3\textwidth]{img42.png}
+    \end{figure}
+                El archivo login-view.vue es muy similar a la anterior práctica, en el cual segui la misma estructura de login y confirmación de datos
+                \subsection{Nuevo usuario}
+    \begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\textwidth]{img24.png}
+    \end{figure}
+    \begin{figure}[H]
+    \centering
+    \includegraphics[width=0.3\textwidth]{img43.png}
+    \end{figure}
+                El archivo newUser.vue  tambien similar a la practica anterior, con confirmaciones extra para evitar nombres duplicados, campos vacios y correos no validos.
+
+
+    \subsection{Mi perfil}
+                \begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\textwidth]{img12.png}
+    \end{figure}
+    \begin{figure}[H]
+    \centering
+    \includegraphics[width=0.3\textwidth]{img36.png}
+    \end{figure}
+    El archivo profile.vue es una vista basica donde muestro los datos predeterminados del perfil, pero tambien permito hacer post editando algunos de los contenidos de esta.
+
+    En esta vista tambien puedo ver a que eventos estoy apuntado dandome los datos basicos, puedo ver y salir del evento facilmente desde esta vista.
+    \subsection{Perfil de usuario}
+                \begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\textwidth]{img17.png}
+    \end{figure}
+    El archivo user.vue es la vista del perfil de un usuario, donde podemos ver los datos del usuario, añadirlo a amigo y abrir un chat privado con este usuario.
+    \subsection{Mis eventos}
+                \begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\textwidth]{img13.png}
+    \end{figure}
+    \begin{figure}[H]
+    \centering
+    \includegraphics[width=0.3\textwidth]{img37.png}
+    \end{figure}
+    El archivo myEvents.vue es una vista que permite gestionar los eventos creados junto los eventos a los que uno esta apuntado, algunos elementos son redundantes como la opcion de salir del evento pero me resulta mas intuitivo para el usuario que este pueda realizar la misma accion de diferentes metodos, pudiendo encontrar lo que busca mas facilmente.
+
+    \subsection{Amigos}
+                \begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\textwidth]{img14.png}
+    \end{figure}
+    \begin{figure}[H]
+    \centering
+    \includegraphics[width=0.3\textwidth]{img38.png}
+    \end{figure}
+    El archivo friends.vue es una vista basica que muestra tus amigos, el primer elemento sirve para buscar y añadir amigos, enviando solicitudes.
+    
+    Hacinedo click en el nombre te redirige a la vista del perfil, las otras opciones son chat y eliminar amigo que funcionan de forma similar a funciones vistas anteriormente.
+    \subsection{Panel admin}
+                \begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\textwidth]{img15.png}
+    \end{figure}
+    \begin{figure}[H]
+    \centering
+    \includegraphics[width=0.3\textwidth]{img39.png}
+    \end{figure}
+    El archivo adminPanel.vue paermite gestionar eventos y usuarios, si el usuario tiene el rol Admin, este puede editar cualquier evento e incluso eliminarlo. 
+
+    El menu usuarios permite ver los perfiles y eliminar usuarios de forma permanente mediante un delete.
+    \subsection{Editar actividad}
+    \begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\textwidth]{img18.png}
+    \end{figure}
+    \begin{figure}[H]
+    \centering
+    \includegraphics[width=0.3\textwidth]{img40.png}
+    \end{figure}
+    El archivo editActivity.vue es otra vista centrada en la edicion de los datos dentro de la base de datos, siguiendo la estructura y el tipo de dato, teniendo problemas iriginalmente con el formato de la fecha.
+    
+    Primero obtiene los datos de la activity y los muestra en los espacios, tras realizar una modificacion esta hace un PUT al servidor para actualizar los datos, todo con catchs para erroes.
+\subsection{Foro}
+   \begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\textwidth]{img28.png}
+    \end{figure}
+    \begin{figure}[H]
+    \centering
+    \includegraphics[width=0.3\textwidth]{img41.png}
+    \end{figure}
+    El archivo forum.vue inlcuye el foro, aqui se pueden ver las entradas del foro, responder a las conversaciones, crear nuevas entradas del foro y como administrador, poder eliminar entradas de este.
+
+    La estructura es simple, utilize la base de eventos adaptando las vistas para el chat del foro, reutilizando elementos para no perder tiempo. Para la base de datos utilize una estructura muy similar al chat con la cantidad requerida de campos para un blog.
+   
+    \begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\textwidth]{img29.png}
+    \end{figure}
+    \newpage
+
+\section{Conclusión del proyecto}
+    \subsection{Resultados}
+        Los resultados son los esperados aunque me gustaria tener el modo "Rutas" completo, el cual no me dio tiempo a terminar de forma estable.
+
+        El resto funciona de forma correcta, aunque me llevo bastante mas tiempo de lo esperado los ultimos pasos de arreglo de errores pequeños y mejoras.
+
+        En esta practica me encontré tambien con errores que no afectan al funcionamiento, estos estan arreglados casi completamente pero algunos elementos siguen fallando aunque recargue el cache y todas las opciones, siendo principlamente problemas con las versiones.
+
+    \subsection{Mejoras}
+    Dentro de los apartados que puedo mejorar, el mas interesante y rapido de implementar seria añadir imagenes del evento, publicadas por los propios administradores del evento o por los usuarios.
+
+
+    Tambien enlazar los eventos con las ediciones del año pasado, de forma que puedas ver el poster y galeria de imagenes del evento del anterior año.
+
+
+    Las rutas es otra opcion que no pude completar debido a la dificultad de esta, con numerosos porblemas para añadir puntos de interes y desvios. Crear una ruta desde punto A a punto B resulta sencillo con las tecnologías que 
+    estoy usando, pero añadir desvios resulto muy compliado a la hora de crear la interfaz.
+
+
+    Otra mejora es hacerlo internacional, pero necesitaría bases de datos con estructuras similares que pudiese adaptar, siendo bastante complejo.
+
+\newpage
+    \subsection{Conclusión}
+    Gracias a este proyecto aprendi como usar diversas tecnologías muy especificas, que pueden servirme para crear otras aplicaciones que implementen un mapa de forma muy sencilla.
+    
+    En principio me resulto sencillo el uso de leaflet y openstreetmap, pero añadir MapBox me resulto bastante complicado con numerosos pasos y errores junto problemas de estabilidad que luego fui solucionando.
+
+    La app funciona perfectamente en movil aunque no es el objetivo principal, esta app realmente funcionaria mejor como pagina web al ser revisada cara cierto tiempo y al funcionar perfectamente en web.  
+
+    Uno de mis mayores obstaculos fue encontrar serivcios que sean gratuitos para crear mi aplicacion, teniendo que utilizar diversas aplicaciones para la ubicacion GPS hasta que encontre una que pude usar gratis.
+
+    En este proyecto me encontre con menos problemas relacionados con la base de datos debido a que cree un esquema previo para analizar posibles puntos y problemas que pueda encontrar, por lo que necesite cambiar la estructura de la base de datos pocas veces.
+    
+\end{document}
