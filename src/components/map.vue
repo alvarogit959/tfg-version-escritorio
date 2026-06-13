@@ -1276,15 +1276,19 @@ a {
   padding: 0 !important;
   border: none !important;
 }
-@media (max-width: 700px) {
+@media (max-width: 870px) {
+  .filters-container{margin-top: 2.5rem;}
+}
+@media (max-width: 768px) {
   .mainarea {
     max-height: 100vh;
     width: 100%;
     height: 100vh;
     margin: 0;
     padding-bottom: 1.5rem;
-  }
 
+  }
+.filters-container{margin-top: 0rem;}
 
 }
 
