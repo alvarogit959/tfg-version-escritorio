@@ -5,7 +5,7 @@ Este es el documento principal donde tengo la documentación en latex/pdf del pr
 
 Para la version de movil, es la direccion: https://github.com/alvarogit959/carmeet-phone
 
-Link Drive de los instaladores como .exe: https://drive.google.com/drive/folders/1pB5D6lEBgyw6MmiKzaDXcIjlvWkjMGZJ?usp=drive_link
+Link Drive de los instaladores como .exe, arreglé algunos bugs despues de crear los .exe por lo que recomiendo mas usar crearlos de nuevo: https://drive.google.com/drive/folders/1pB5D6lEBgyw6MmiKzaDXcIjlvWkjMGZJ?usp=drive_link
 
 Si quieres verlo desde Visual studio simplemente usar: npm run electron:serve 
 
