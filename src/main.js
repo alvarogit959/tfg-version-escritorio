@@ -4,7 +4,7 @@ import router from './router'
 import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
 
-// Configurar iconos de Leaflet
+//TEST---- DOESNT WORK NOW
 delete L.Icon.Default.prototype._getIconUrl;
 L.Icon.Default.mergeOptions({
   iconRetinaUrl: require('leaflet/dist/images/marker-icon-2x.png'),

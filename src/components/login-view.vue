@@ -67,11 +67,10 @@ methods: {
       const response = await res.json();
       const user = response.user;
 
-      // Guardar datos en localStorage
+      //save
       localStorage.setItem('user', JSON.stringify(user));
       localStorage.setItem('isLoggedIn', 'true');
 
-      // Limpiar campos
       this.username = "";
       this.password = "";
       this.notification = "";

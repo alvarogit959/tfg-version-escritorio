@@ -23,7 +23,6 @@ export default {
     return {};
   },
   methods: {
-    // 🔲 Window controls
     closeWindow() {
       window.electron?.ipcRenderer.send("close-window");
     },

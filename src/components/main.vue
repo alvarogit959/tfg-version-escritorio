@@ -35,6 +35,15 @@
               Eventos
             </button>
           </li>
+                    <li>
+            <button
+              class="nav-btn"
+              :class="{ active: currentView === 'forum' }"
+              @click="switchView('forum')"
+            >
+              Foro
+            </button>
+          </li>
           <!--<li>
             <button
               class="nav-btn"
@@ -204,6 +213,13 @@
         />
       </div>
 
+      <div v-if="currentView === 'forum'" class="view-container">
+        <ForumView
+          :current-user="currentUser"
+          @view-user="openUserProfile"
+        />
+      </div>
+
       <div v-if="currentView === 'friends'" class="view-container">
         <FriendsView
           v-if="isLoggedIn && currentUser"
@@ -227,15 +243,15 @@
       :class="{ active: chatOpen }"
       title="Abrir chat"
     >
-      <span v-if="!chatOpen">Chat</span>
+      <div v-if="!chatOpen" class="chat-icon"></div>
       <span v-else>✕</span>
       <span
         v-if="hasUnreadMessages && !chatOpen"
-        class="notification-badge"
+        class="notification-redcircle"
       ></span>
     </button>
 
-    <div v-if="isLoggedIn && chatOpen" class="chat-panel">
+      <div v-if="isLoggedIn && chatOpen" class="chat-panel">
       <aside class="chat-sidebar">
         <div class="sidebar-header">
           <span>Chats</span>
@@ -244,48 +260,22 @@
           </button>
         </div>
         <ul class="chat-list">
-          <li>
+          <li v-for="conv in sortedChats" :key="conv.key">
             <button
               type="button"
               class="chat-list-item"
-              :class="{ active: isGroupActive }"
-              @click="selectGroupChat"
+              :class="{ active: conv.isActive }"
+              @click="conv.onSelect()"
             >
-              <span class="chat-avatar group-avatar">G</span>
+              <span class="chat-avatar" :class="conv.avatarClass">{{ conv.avatar }}</span>
               <span class="chat-list-info">
-                <span class="chat-list-name">Chat grupal</span>
-                <span class="chat-list-preview">Todos los usuarios</span>
+                <span class="chat-list-name">{{ conv.name }}</span>
+                <span class="chat-list-preview">{{ conv.typeLabel }}</span>
               </span>
-            </button>
-          </li>
-          <li v-for="friend in privateFriendsList" :key="friend.id">
-            <button
-              type="button"
-              class="chat-list-item"
-              :class="{ active: privateChatFriend?.id === friend.id }"
-              @click="startPrivateChatWith(friend)"
-            >
-              <span class="chat-avatar">{{
-                friend.username.charAt(0).toUpperCase()
-              }}</span>
-              <span class="chat-list-info">
-                <span class="chat-list-name">{{ friend.username }}</span>
-                <span class="chat-list-preview">Privado</span>
-              </span>
-            </button>
-          </li>
-          <li v-for="eventConv in eventConversations" :key="eventConv.conversationId">
-            <button
-              type="button"
-              class="chat-list-item"
-              :class="{ active: eventChatActive?.conversationId === eventConv.conversationId }"
-              @click="selectEventChat(eventConv)"
-            >
-              <span class="chat-avatar event-chat-avatar">E</span>
-              <span class="chat-list-info">
-                <span class="chat-list-name">{{ eventConv.title }}</span>
-                <span class="chat-list-preview">Chat del evento</span>
-              </span>
+              <span
+                v-if="conv.hasUnread"
+                class="chat-notification-dot"
+              ></span>
             </button>
           </li>
         </ul>
@@ -375,6 +365,7 @@ import newUser from "./newUser.vue";
 import UserView from "./user.vue";
 import AdminPanelView from "./adminPanel.vue";
 import FriendsView from "./friends.vue";
+import ForumView from "./forum.vue";
 import { apiJson, isAdminRole } from "../utils/api.js";
 import { io } from "socket.io-client";
 const socket = io("http://localhost:5000");
@@ -393,6 +384,7 @@ export default {
     UserView,
     AdminPanelView,
     FriendsView,
+    ForumView,
   },
   emits: ["view-user"],
   computed: {
@@ -410,6 +402,62 @@ export default {
       if (this.eventChatActive) return this.eventChatActive.title || "Chat del evento";
       if (this.privateChatFriend) return this.privateChatFriend.username;
       return "Mensajes";
+    },
+    sortedChats() {
+      const chats = [];
+
+      //GROUPCHAT
+      if (this.groupConversationId) {
+        chats.push({
+          key: "group",
+          conversationId: this.groupConversationId,
+          name: "Chat grupal",
+          avatar: "G",
+          avatarClass: "group-avatar",
+          typeLabel: "Todos los usuarios",
+          isActive: this.isGroupActive,
+          lastMessageAt: this.groupLastMsgAt,
+          hasUnread: this.chatUnread["group"] === true,
+          onSelect: () => this.selectGroupChat(),
+        });
+      }
+
+      //PRIVATE CHATS
+      for (const friend of this.privateFriendsList) {
+        const convId = this.privateConvIds[friend.id];
+        chats.push({
+          key: "private-" + friend.id,
+          conversationId: convId,
+          name: friend.username,
+          avatar: friend.username.charAt(0).toUpperCase(),
+          avatarClass: "",
+          typeLabel: "Privado",
+          isActive: this.privateChatFriend?.id === friend.id,
+          lastMessageAt: this.privateLastMsgAt[friend.id] || 0,
+          hasUnread: this.chatUnread["private-" + friend.id] === true,
+          onSelect: () => this.startPrivateChatWith(friend),
+        });
+      }
+
+      //EVENT CHAT
+      for (const ev of this.eventConversations) {
+        chats.push({
+          key: "event-" + ev.conversationId,
+          conversationId: ev.conversationId,
+          name: ev.title || "Chat del evento",
+          avatar: "E",
+          avatarClass: "event-chat-avatar",
+          typeLabel: "Chat del evento",
+          isActive: this.eventChatActive?.conversationId === ev.conversationId,
+          lastMessageAt: ev.lastMessage?.sentAt ? new Date(ev.lastMessage.sentAt).getTime() : 0,
+          hasUnread: this.chatUnread["event-" + ev.conversationId] === true,
+          onSelect: () => this.selectEventChat(ev),
+        });
+      }
+
+      //SORT TEST
+      chats.sort((a, b) => (b.lastMessageAt || 0) - (a.lastMessageAt || 0));
+      return chats;
     },
   },
   data() {
@@ -432,6 +480,11 @@ export default {
       viewUserId: null,
       returnViewAfterUser: "inicio",
       hasUnreadMessages: false,
+      chatUnread: {},
+      chatSeen: {},
+      groupLastMsgAt: 0,
+      privateConvIds: {},
+      privateLastMsgAt: {},
     };
   },
   watch: {
@@ -457,20 +510,32 @@ export default {
       const msgConvId = String(
         msg.conversationId?._id || msg.conversationId || "",
       );
+
+      //UPDATE
+      const convKey = this.determineChatKey(msgConvId);
+      if (convKey) {
+        const msgTime = new Date(msg.sentAt || Date.now()).getTime();
+        if (convKey === "group") {
+          this.groupLastMsgAt = Math.max(this.groupLastMsgAt, msgTime);
+        } else if (convKey.startsWith("private-")) {
+          const friendId = convKey.replace("private-", "");
+          this.privateLastMsgAt = { ...this.privateLastMsgAt, [friendId]: Math.max(this.privateLastMsgAt[friendId] || 0, msgTime) };
+        }
+
+        //NOT RECIVED
+        const isActive = this.conversationId && msgConvId === String(this.conversationId);
+        if (!isActive || !this.chatOpen) {
+          this.chatUnread = { ...this.chatUnread, [convKey]: true };
+          this.hasUnreadMessages = true;
+        }
+      }
+
       if (this.conversationId && msgConvId !== String(this.conversationId)) {
         return;
       }
 
       const exists = this.messages.some((m) => m.id === msg._id);
       if (exists) return;
-      //NOTIFICACIÓN
-      if (
-        !this.chatOpen ||
-        !this.conversationId ||
-        msgConvId !== String(this.conversationId)
-      ) {
-        this.hasUnreadMessages = true;
-      }
 
       this.messages.push(this.processMessage(msg));
     });
@@ -490,7 +555,7 @@ export default {
     onEventChatJoined({ eventId, openChat }) {
       this.loadEventConversations();
       if (openChat) {
-        // Find and select the event chat
+//Find chat
         setTimeout(() => {
           const found = this.eventConversations.find(
             (ec) => String(ec.eventId) === String(eventId)
@@ -499,7 +564,7 @@ export default {
             this.chatOpen = true;
             this.selectEventChat(found);
           } else {
-            // Refresh and try again
+//loaddd
             this.loadEventConversations().then(() => {
               const retry = this.eventConversations.find(
                 (ec) => String(ec.eventId) === String(eventId)
@@ -514,7 +579,7 @@ export default {
       }
     },
     onEventChatLeft({ eventId }) {
-      // Remove the event chat from list if currently active
+//removo da envtovo 
       if (this.eventChatActive && String(this.eventChatActive.eventId) === String(eventId)) {
         this.eventChatActive = null;
         this.conversationId = null;
@@ -685,6 +750,20 @@ export default {
       }
     },
 
+    determineChatKey(convId) {
+      if (!convId) return null;
+      const strId = String(convId);
+      if (this.groupConversationId && strId === String(this.groupConversationId)) return "group";
+      for (const ev of this.eventConversations) {
+        if (strId === String(ev.conversationId)) return "event-" + ev.conversationId;
+      }
+      for (const friend of this.privateFriendsList) {
+        const fId = this.privateConvIds[friend.id];
+        if (fId && strId === String(fId)) return "private-" + friend.id;
+      }
+      return null;
+    },
+
     selectGroupChat() {
       this.chatMode = "group";
       this.privateChatFriend = null;
@@ -703,6 +782,7 @@ export default {
       }
       if (this.groupConversationId) {
         this.conversationId = this.groupConversationId;
+        this.chatUnread = { ...this.chatUnread, group: false };
         this.loadMessages();
       } else {
         this.loadGroupConversation();
@@ -736,6 +816,7 @@ export default {
       }
 
       this.conversationId = eventConv.conversationId;
+      this.chatUnread = { ...this.chatUnread, ["event-" + eventConv.conversationId]: false };
       socket.emit("join-event-chat", { conversationId: eventConv.conversationId });
       this.loadMessages();
     },
@@ -766,6 +847,9 @@ export default {
           convId = data.conversationId;
         }
 
+        //store id of converationnne
+        this.privateConvIds = { ...this.privateConvIds, [otherUser.id]: convId };
+
         if (this.conversationId && this.conversationId !== convId) {
           socket.emit("leave-private-chat", {
             conversationId: this.conversationId,
@@ -774,6 +858,7 @@ export default {
 
         this.conversationId = convId;
         this.privateChatFriend = otherUser;
+        this.chatUnread = { ...this.chatUnread, ["private-" + otherUser.id]: false };
         socket.emit("join-private-chat", { conversationId: convId });
         this.loadMessages();
       } catch (error) {
@@ -1279,9 +1364,9 @@ export default {
   position: fixed;
   bottom: 20px;
   right: 20px;
-  width: 100px;
-  height: 50px;
-  border-radius: 0.2rem;
+  width: 4rem;
+  height: 4rem;
+  border-radius: 2rem;
   background: rgba(26, 6, 61, 0.774);
   border: 1px solid rgb(120, 85, 201);
   color: rgb(231, 231, 231);
@@ -1295,9 +1380,10 @@ export default {
   z-index: 100;
   -webkit-app-region: no-drag;
 }
-.notification-badge {
-  margin-left: 0.5rem;
-  margin-bottom: 0.8rem;
+.notification-redcircle {
+  position:absolute;
+  margin-left: 3rem;
+  margin-bottom: 3rem;
   width: 15px;
   height: 15px;
   background: red;
@@ -1432,6 +1518,15 @@ export default {
     rgba(168, 85, 247, 0.85)
   );
   color: rgba(255, 255, 255, 0.95);
+}
+
+.chat-notification-dot {
+  flex-shrink: 0;
+  width: 10px;
+  height: 10px;
+  background: #ff3b30;
+  border-radius: 50%;
+  box-shadow: 0 0 6px rgba(255, 59, 48, 0.6);
 }
 
 .event-chat-avatar {
@@ -1665,7 +1760,20 @@ export default {
 .chat-conversation {
   min-height: 0;
 }
-
+.chat-icon{background-image: url("http://localhost:5000/event-images/chaticon.png");
+  position: relative;
+  background-size: 100%;
+  width:2.5rem;
+  height: 2.5rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  overflow: hidden;
+  background-size: cover;
+  background-position: center;
+}
 .shared-event-card {
   display: flex;
   flex-direction: column;

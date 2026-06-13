@@ -909,7 +909,7 @@ export default {
 
         await this.loadAttendeesForSelected();
 
-        // Unir al usuario al chat del evento
+        //Push da god damm usahr in da group
         const eventMongoId = this.selectedEvent?._id || eventId;
         try {
           await apiJson(`/events/${eventMongoId}/conversation/join`, {
@@ -1002,7 +1002,7 @@ export default {
           }
         }
 
-        // Quitar al usuario del chat del evento
+        //REMOVE USER FROM EVENT
         const eventMongoId = event._id || eventId;
         try {
           await apiJson(`/events/${eventMongoId}/conversation/leave`, {
@@ -1215,12 +1215,12 @@ copyEventInfo() {
   
 //test copy
   navigator.clipboard.writeText(eventText).then(() => {
-    this.notification = 'Copiado!';
-    this.notificationClass = 'success';
     setTimeout(() => { this.notification = ''; }, 3000);
   }).catch(() => {
-    this.notification = 'Error al copiar la información';
+
+    this.notification = 'Erroerroreroroerooo';
     this.notificationClass = 'error';
+    //if the notification doesnt work properlly try: https://www.youtube.com/watch?v=avCWDDox1nE&autoplay=1
     setTimeout(() => { this.notification = ''; }, 3000);
   });
 },

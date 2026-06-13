@@ -90,7 +90,7 @@ methods: {
     this.city = "";
     this.country = "";
 
-    // Emit evento para que main.vue sepa que se creó el usuario
+    //emit to update
     setTimeout(() => {
       this.$emit("userCreated");
     }, 1500);

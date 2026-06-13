@@ -111,6 +111,57 @@ const eventSchema = new mongoose.Schema({
 
 const Event = mongoose.model("Event", eventSchema);
 
+// Schema for Forum posts
+const forumPostSchema = new mongoose.Schema({
+  id: {
+    type: Number,
+    required: true,
+    unique: true,
+  },
+  title: {
+    type: String,
+    required: true,
+  },
+  content: {
+    type: String,
+    required: true,
+  },
+  author: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "User",
+    required: true,
+  },
+  tags: {
+    type: [String],
+    default: [],
+  },
+  replies: [{
+    author: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      required: true,
+    },
+    content: {
+      type: String,
+      required: true,
+    },
+    createdAt: {
+      type: Date,
+      default: Date.now,
+    },
+  }],
+  createdAt: {
+    type: Date,
+    default: Date.now,
+  },
+  updatedAt: {
+    type: Date,
+    default: Date.now,
+  },
+});
+
+const ForumPost = mongoose.model("ForumPost", forumPostSchema);
+
 const userSchema = new mongoose.Schema({
   username: {
     type: String,
@@ -1715,6 +1766,173 @@ app.get("/events/:eventId/attendees", async (req, res) => {
   }
 });
 
+
+// ===== FORUM ENDPOINTS =====
+
+// GET all forum posts (with author populated)
+app.get("/forum", async (req, res) => {
+  try {
+    const posts = await ForumPost.find()
+      .populate("author", "username profileImage role")
+      .populate("replies.author", "username profileImage role")
+      .sort({ createdAt: -1 });
+    res.status(200).json(posts);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "Error obteniendo posts del foro" });
+  }
+});
+
+// GET single forum post
+app.get("/forum/:postId", async (req, res) => {
+  try {
+    const post = await ForumPost.findById(req.params.postId)
+      .populate("author", "username profileImage role")
+      .populate("replies.author", "username profileImage role");
+    if (!post) {
+      return res.status(404).json({ error: "Post no encontrado" });
+    }
+    res.status(200).json(post);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "Error obteniendo post" });
+  }
+});
+
+// CREATE forum post
+app.post("/forum", async (req, res) => {
+  try {
+    const { title, content, authorId, tags } = req.body;
+
+    if (!title || !content || !authorId) {
+      return res.status(400).json({ error: "Faltan campos requeridos (title, content, authorId)" });
+    }
+
+    const lastPost = await ForumPost.findOne().sort({ id: -1 }).select("id");
+    const nextId = lastPost ? lastPost.id + 1 : 1;
+
+    const newPost = new ForumPost({
+      id: nextId,
+      title: title.trim(),
+      content: content.trim(),
+      author: authorId,
+      tags: tags || [],
+      replies: [],
+    });
+
+    await newPost.save();
+
+    const populated = await ForumPost.findById(newPost._id)
+      .populate("author", "username profileImage role");
+
+    res.status(201).json(populated);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "Error creando post" });
+  }
+});
+
+// ADD REPLY to forum post
+app.post("/forum/:postId/replies", async (req, res) => {
+  try {
+    const { authorId, content } = req.body;
+
+    if (!authorId || !content) {
+      return res.status(400).json({ error: "Faltan campos requeridos (authorId, content)" });
+    }
+
+    const post = await ForumPost.findById(req.params.postId);
+    if (!post) {
+      return res.status(404).json({ error: "Post no encontrado" });
+    }
+
+    post.replies.push({
+      author: authorId,
+      content: content.trim(),
+      createdAt: new Date(),
+    });
+
+    post.updatedAt = new Date();
+    await post.save();
+
+    const populated = await ForumPost.findById(post._id)
+      .populate("author", "username profileImage role")
+      .populate("replies.author", "username profileImage role");
+
+    res.status(201).json(populated);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "Error añadiendo respuesta" });
+  }
+});
+
+// DELETE forum post (only admin or author)
+app.delete("/forum/:postId", async (req, res) => {
+  try {
+    const { userId } = req.body;
+
+    if (!userId) {
+      return res.status(400).json({ error: "userId es obligatorio" });
+    }
+
+    const post = await ForumPost.findById(req.params.postId);
+    if (!post) {
+      return res.status(404).json({ error: "Post no encontrado" });
+    }
+
+    const user = await User.findById(userId).select("role");
+    const isAdmin = user?.role === "admin";
+    const isAuthor = post.author.toString() === userId.toString();
+
+    if (!isAdmin && !isAuthor) {
+      return res.status(403).json({ error: "No tienes permiso para eliminar este post" });
+    }
+
+    await ForumPost.findByIdAndDelete(post._id);
+    res.status(200).json({ message: "Post eliminado" });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "Error eliminando post" });
+  }
+});
+
+// DELETE a reply (only admin or reply author)
+app.delete("/forum/:postId/replies/:replyId", async (req, res) => {
+  try {
+    const { userId } = req.body;
+
+    if (!userId) {
+      return res.status(400).json({ error: "userId es obligatorio" });
+    }
+
+    const post = await ForumPost.findById(req.params.postId);
+    if (!post) {
+      return res.status(404).json({ error: "Post no encontrado" });
+    }
+
+    const reply = post.replies.id(req.params.replyId);
+    if (!reply) {
+      return res.status(404).json({ error: "Respuesta no encontrada" });
+    }
+
+    const user = await User.findById(userId).select("role");
+    const isAdmin = user?.role === "admin";
+    const isReplyAuthor = reply.author.toString() === userId.toString();
+
+    if (!isAdmin && !isReplyAuthor) {
+      return res.status(403).json({ error: "No tienes permiso para eliminar esta respuesta" });
+    }
+
+    post.replies.pull({ _id: req.params.replyId });
+    post.updatedAt = new Date();
+    await post.save();
+
+    res.status(200).json({ message: "Respuesta eliminada" });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "Error eliminando respuesta" });
+  }
+});
 
 // =====SOCKET.IO EVENT LISTENERS ======================
 io.on("connection", (socket) => {
