@@ -5,7 +5,13 @@ Este es el documento principal donde tengo la documentación en latex/pdf del pr
 
 Para la version de movil, es la direccion: https://github.com/alvarogit959/carmeet-phone
 
-Link del video de la aplicación funcionando como .exe: 
+Link Drive de los instaladores como .exe: https://drive.google.com/drive/folders/1pB5D6lEBgyw6MmiKzaDXcIjlvWkjMGZJ?usp=drive_link
+
+Si quieres verlo desde Visual studio simplemente usar: npm run electron:serve 
+
+Link del video de la aplicación funcionando como .exe: https://youtu.be/CoYdliQ5uD4
+
+Lanzar los dos exe al mismo tiempo puede ser incompatible al usar tecnologías como mapbox que solo permiten una request al mismo tiempo en la versión gratuita.
 
 El resto del readme son comandos que puede necesitar para funcionar si se lanza la app como "serve" y no estan instalados previamente.
 
