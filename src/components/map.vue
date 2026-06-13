@@ -462,30 +462,6 @@ activateGPS() {
     updateRangeFilter() {
       this.updateDistanceCircle();
       this.updateMarkerVisibility();
-        if (this.userLocation) {
-    const bounds = new mapboxgl.LngLatBounds();
-
-    this.eventMarkers.forEach(({ event }) => {
-      if (!this.isEventHidden(event)) {
-        const coords = this.getEventCoordinates(event);
-        if (coords) {
-          bounds.extend([coords.lng, coords.lat]);
-        }
-      }
-    });
-
-    bounds.extend([
-      this.userLocation.lng,
-      this.userLocation.lat
-    ]);
-
-    if (!bounds.isEmpty()) {
-      this.map.fitBounds(bounds, {
-        padding: 50,
-        maxZoom: 12
-      });
-    }
-  }
     },
 
     getEventCoordinates(event) {
@@ -854,6 +830,7 @@ escapeHtml(text) {
   row-gap: 0.1rem;
   width: 100%;
   max-height: 100vh;
+  
   background: linear-gradient(
     135deg,
     rgba(255,255,255,0.12),
@@ -982,6 +959,7 @@ a {
   width: 100%;
   height: 85vh;
   overflow: hidden;
+  touch-action: none;
 }
 #coches{color:#9aa1ff}
 #motos{color:#cf4343}
