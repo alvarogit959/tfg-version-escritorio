@@ -1421,9 +1421,9 @@ app.post("/messages", async (req, res) => {
         "new-message",
         populatedMessage
       );
-    } else {
-      io.to("group-chat").emit("new-message", populatedMessage);
     }
+
+    io.to("group-chat").emit("new-message", populatedMessage);
 
     res.status(201).json(populatedMessage);
 

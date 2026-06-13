@@ -150,7 +150,7 @@ export default {
       required: true,
     },
   },
-  emits: ["profile-updated"],
+  emits: ["profile-updated", "event-chat-left"],
   data() {
     return {
       profile: null,
@@ -262,6 +262,21 @@ export default {
           { method: "DELETE" },
         );
         this.profile = data;
+
+        const eventMongoId = event._id || eventId;
+        try {
+          await apiJson(`/events/${eventMongoId}/conversation/leave`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ userId: this.userId }),
+          });
+        } catch (chatError) {
+          console.error("Error saliendo del chat del evento:", chatError);
+        }
+        this.$emit("event-chat-left", {
+          eventId: eventMongoId,
+        });
+
         this.showNotification("Has salido del evento", "success");
         this.$emit("profile-updated", data);
       } catch (error) {

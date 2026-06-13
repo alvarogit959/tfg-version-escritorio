@@ -81,7 +81,6 @@ methods: {
       return;
     }
 
-    this.notification = "Usuario creado correctamente";
 
     this.username = "";
     this.email = "";
