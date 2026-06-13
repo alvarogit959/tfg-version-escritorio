@@ -37,8 +37,6 @@ async function createWindow() {
     createProtocol('app')
 
     win.loadURL('app://./index.html')
-
-    win.webContents.openDevTools()
   }
 }
 ipcMain.on('minimize-window', () => {
