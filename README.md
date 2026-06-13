@@ -1,6 +1,8 @@
 ==== **Lanzar el server primero!** ======
 El server está incluido dentro de este repositorio como **serverCarmeet.js**, lanzandolo como "**node .\serverCarmeet.js**"
 
+El documento pdf para la **presentación del proyecto** está dentro de "**Documentación del proyecto**"
+
 Este es el documento principal donde tengo la **documentación** en latex/pdf del proyecto dentro de la carpeta "**Documentación del proyecto**".
 
 Para la version de **movil**, es la direccion: https://github.com/alvarogit959/carmeet-phone
