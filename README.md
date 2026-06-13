@@ -9,7 +9,9 @@ Link Drive de los instaladores como .exe: https://drive.google.com/drive/folders
 
 Si quieres verlo desde Visual studio simplemente usar: npm run electron:serve 
 
-Link del video de la aplicación funcionando como .exe: 
+Link del video de la aplicación funcionando como .exe: https://youtu.be/CoYdliQ5uD4
+
+Lanzar los dos exe al mismo tiempo puede ser incompatible al usar tecnologías como mapbox que solo permiten una request al mismo tiempo en la versión gratuita.
 
 El resto del readme son comandos que puede necesitar para funcionar si se lanza la app como "serve" y no estan instalados previamente.
 
