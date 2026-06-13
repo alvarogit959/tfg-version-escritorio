@@ -1,7 +1,18 @@
+====Lanzar el server primero!======
+El server está incluido dentro de este repositorio como serverCarmeet.js, lanzandolo como "node .\serverCarmeet.js"
+
+Este es el documento principal donde tengo la documentación en latex/pdf del proyecto dentro de la carpeta "Documentación del proyecto".
+
+Para la version de movil, es la direccion: https://github.com/alvarogit959/carmeet-phone
+
+Link del video de la aplicación funcionando como .exe: 
+
+El resto del readme son comandos que puede necesitar para funcionar si se lanza la app como "serve" y no estan instalados previamente.
+
+```
 # vue-electron-app
 
 ## Project setup
-```
 -Comandos necesarios para su funcionamiento:
 
 npm install
