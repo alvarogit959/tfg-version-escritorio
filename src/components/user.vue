@@ -15,7 +15,7 @@
         <div class="avatar-section">
           <img
             v-if="profile.profileImage && !imageError"
-            :src="profile.profileImage"
+            :src="profileImageUrl"
             alt="Foto de perfil"
             class="avatar"
             @error="onImageError"
@@ -145,6 +145,7 @@ import {
   eventIdentifier,
   isAdminRole,
   normalizeEventList,
+  resolveImageUrl,
 } from "../utils/api.js";
 
 export default {
@@ -172,6 +173,9 @@ export default {
     };
   },
   computed: {
+    profileImageUrl() {
+      return resolveImageUrl(this.profile?.profileImage, true);
+    },
     isOwnProfile() {
       const cur = this.currentUser?.id;
       return cur && String(cur) === String(this.viewUserId);

@@ -13,10 +13,10 @@
       <div class="profile-hero">
         <div class="hero-glow" />
         <div class="profile-header">
-          <div class="avatar-wrap">
+          <div class="avatar-wrap" @click="triggerImageUpload" title="Cambiar foto de perfil">
             <img
               v-if="form.profileImage && !imageError"
-              :src="form.profileImage"
+              :src="profileImageUrl"
               alt="Foto de perfil"
               class="avatar"
               @error="onImageError"
@@ -24,6 +24,17 @@
             <div v-else class="avatar avatar-placeholder">
               {{ form.username.charAt(0).toUpperCase() }}
             </div>
+            <div class="avatar-overlay">
+              <span v-if="uploadingImage" class="upload-spinner" />
+              <span v-else class="avatar-overlay-icon">Seleccionar imagen</span>
+            </div>
+            <input
+              ref="imageInput"
+              type="file"
+              accept="image/*"
+              hidden
+              @change="onImageSelected"
+            />
           </div>
           <div class="header-info">
             <h1>{{ form.username }}</h1>
@@ -140,7 +151,7 @@
 </template>
 
 <script>
-import { apiJson, eventIdentifier } from "../utils/api.js";
+import { apiJson, eventIdentifier, resolveImageUrl } from "../utils/api.js";
 
 export default {
   name: "profile-view",
@@ -165,9 +176,13 @@ export default {
       notification: "",
       notificationClass: "",
       imageError: false,
+      uploadingImage: false,
     };
   },
   computed: {
+    profileImageUrl() {
+      return resolveImageUrl(this.form.profileImage, true);
+    },
     joinedEventsList() {
       if (!this.profile?.joinedEvents?.length) return [];
       return this.profile.joinedEvents.map((e) => {
@@ -289,6 +304,49 @@ export default {
 
     onImageError() {
       this.imageError = true;
+    },
+
+    triggerImageUpload() {
+      this.$refs.imageInput?.click();
+    },
+
+    async onImageSelected(event) {
+      const file = event.target.files?.[0];
+      if (!file) return;
+
+      if (!file.type.startsWith("image/")) {
+        this.showNotification("Selecciona un archivo de imagen válido", "error");
+        event.target.value = "";
+        return;
+      }
+
+      this.uploadingImage = true;
+
+      try {
+        const formData = new FormData();
+        formData.append("image", file);
+
+        const res = await fetch(
+          `http://localhost:5000/users/${this.userId}/profile-image`,
+          { method: "POST", body: formData }
+        );
+        const data = await res.json();
+
+        if (!res.ok) {
+          throw new Error(data.error || "Error subiendo la imagen");
+        }
+
+        this.profile = data;
+        this.form.profileImage = data.profileImage || "";
+        this.imageError = false;
+        this.$emit("profile-updated", data);
+      } catch (error) {
+        console.error(error);
+        this.showNotification(error.message, "error");
+      } finally {
+        this.uploadingImage = false;
+        event.target.value = "";
+      }
     },
 
     formatDate(date) {
@@ -433,6 +491,42 @@ export default {
   align-items: center;
   gap: 1.35rem;
   margin-bottom: 1.25rem;
+}
+
+.avatar-wrap {
+  position: relative;
+  flex-shrink: 0;
+  cursor: pointer;
+}
+
+.avatar-wrap:hover .avatar-overlay {
+  opacity: 1;
+}
+
+.avatar-overlay {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+  pointer-events: none;
+}
+
+.avatar-overlay-icon {
+  font-size: 0.8rem;
+}
+
+.upload-spinner {
+  width: 22px;
+  height: 22px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-top-color: white;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
 }
 
 .avatar {

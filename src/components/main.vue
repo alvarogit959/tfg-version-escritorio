@@ -44,7 +44,7 @@
               Foro
             </button>
           </li>
-          <!--<li>
+          <li>
             <button
               class="nav-btn"
               :class="{ active: currentView === 'routes' }"
@@ -52,7 +52,7 @@
             >
               Rutas
             </button>
-          </li>-->
+          </li>
           <li>
             <div class="profile-group">
               <button class="profile-btn" @click="toggleProfileMenu">
@@ -188,10 +188,27 @@
           @login="handleLogin"
         />
       </div>
-<!--
+
       <div v-if="currentView === 'routes'" class="view-container">
-        <RoutesView />
-      </div>-->
+        <RoutesView
+          :current-user="currentUser"
+          @create-route="switchView('newRoute')"
+        />
+      </div>
+
+      <div v-if="currentView === 'newRoute'" class="view-container">
+        <NewRoutesView
+          v-if="isLoggedIn && currentUser"
+          :current-user="currentUser"
+          @created="onRouteCreated"
+          @cancel="switchView('routes')"
+        />
+        <LoginView
+          v-else
+          @newUser="switchView('newUser')"
+          @login="handleLogin"
+        />
+      </div>
 
       <div v-if="currentView === 'profile'" class="view-container">
         <ProfileView
@@ -267,7 +284,15 @@
               :class="{ active: conv.isActive }"
               @click="conv.onSelect()"
             >
-              <span class="chat-avatar" :class="conv.avatarClass">{{ conv.avatar }}</span>
+              <span class="chat-avatar" :class="conv.avatarClass">
+                <img
+                  v-if="conv.avatarImage"
+                  :src="conv.avatarImage"
+                  alt=""
+                  class="chat-avatar-img"
+                />
+                <span v-else>{{ conv.avatar }}</span>
+              </span>
               <span class="chat-list-info">
                 <span class="chat-list-name">{{ conv.name }}</span>
                 <span class="chat-list-preview">{{ conv.typeLabel }}</span>
@@ -298,6 +323,16 @@
               class="message"
               :class="msg.type"
             >
+              <img
+                v-if="msg.senderImage"
+                :src="msg.senderImage"
+                alt=""
+                class="message-avatar"
+                @click="openUserProfile(msg.senderId)"
+              />
+              <div v-else class="message-avatar message-avatar-placeholder" @click="openUserProfile(msg.senderId)">
+                {{ msg.senderName.charAt(0).toUpperCase() }}
+              </div>
               <div class="message-content">
                 <button
                   v-if="msg.type === 'me' && msg.senderId"
@@ -307,15 +342,7 @@
                 >
                   {{ msg.senderName }}
                 </button>
-                <!-- <span class="message-sender">{{ msg.senderName }}</span>-->
-                <!--TEST SEND MESSAGE-->
-                <button
-                  type="button"
-                  class="message-sender"
-                  @click="openUserProfile(msg.senderId)"
-                >
-                  {{ msg.senderName }}
-                </button>
+
 
 <!--SHOW DA THINGI-->
                 <div v-if="msg.isEventShare" class="shared-event-card" @click="openSharedEvent(msg.eventData)">
@@ -356,7 +383,8 @@ import "mapbox-gl/dist/mapbox-gl.css";
 import InicioView from "./inicio.vue";
 import MapView from "./map.vue";
 import EventsView from "./events.vue";
-//import RoutesView from "./routesMap.vue";
+import RoutesView from "./routesMap.vue";
+import NewRoutesView from "./newRoutes.vue";
 import LoginView from "./login-view.vue";
 import ProfileView from "./profile.vue";
 import MyEventsView from "./myEvents.vue";
@@ -366,7 +394,7 @@ import UserView from "./user.vue";
 import AdminPanelView from "./adminPanel.vue";
 import FriendsView from "./friends.vue";
 import ForumView from "./forum.vue";
-import { apiJson, isAdminRole } from "../utils/api.js";
+import { apiJson, isAdminRole, resolveImageUrl } from "../utils/api.js";
 import { io } from "socket.io-client";
 const socket = io("http://localhost:5000");
 export default {
@@ -375,7 +403,8 @@ export default {
     InicioView,
     MapView,
     EventsView,
-    //RoutesView,
+    RoutesView,
+    NewRoutesView,
     LoginView,
     ProfileView,
     MyEventsView,
@@ -430,6 +459,7 @@ export default {
           conversationId: convId,
           name: friend.username,
           avatar: friend.username.charAt(0).toUpperCase(),
+          avatarImage: resolveImageUrl(friend.profileImage),
           avatarClass: "",
           typeLabel: "Privado",
           isActive: this.privateChatFriend?.id === friend.id,
@@ -446,6 +476,7 @@ export default {
           conversationId: ev.conversationId,
           name: ev.title || "Chat del evento",
           avatar: "E",
+          avatarImage: resolveImageUrl(ev.image),
           avatarClass: "event-chat-avatar",
           typeLabel: "Chat del evento",
           isActive: this.eventChatActive?.conversationId === ev.conversationId,
@@ -677,6 +708,9 @@ export default {
     onEventCreated() {
       this.switchView("events");
     },
+    onRouteCreated() {
+      this.switchView("routes");
+    },
     handleLogin(user) {
       this.isLoggedIn = user.status === true;
       this.currentUser = user;
@@ -723,6 +757,7 @@ export default {
         status: user.status,
       };
       localStorage.setItem("user", JSON.stringify(this.currentUser));
+      this.loadPrivateFriendsList();
     },
     loadGroupConversation() {
       fetch("http://localhost:5000/conversations/group")
@@ -936,7 +971,7 @@ export default {
         text: msg.text,
         senderId: msg.senderId._id,
         senderName: msg.senderId.username,
-        senderImage: msg.senderId.profileImage,
+        senderImage: resolveImageUrl(msg.senderId.profileImage),
         type: msg.senderId._id === this.currentUser.id ? "user" : "bot",
         sentAt: msg.sentAt,
         isEventShare: !!eventData,
@@ -1527,13 +1562,21 @@ export default {
     rgba(168, 85, 247, 0.6)
   );
   color: #fff;
+  overflow: hidden;
 }
 
-.group-avatar {
+.chat-avatar-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.event-chat-avatar {
   background: linear-gradient(
     135deg,
-    rgba(99, 102, 241, 0.9),
-    rgba(168, 85, 247, 0.85)
+    rgba(255, 162, 100, 0.9),
+    rgba(255, 100, 50, 0.85)
   );
   color: rgba(255, 255, 255, 0.95);
 }
@@ -1547,14 +1590,54 @@ export default {
   box-shadow: 0 0 6px rgba(255, 59, 48, 0.6);
 }
 
-.event-chat-avatar {
+.group-avatar {
   background: linear-gradient(
     135deg,
-    rgba(255, 162, 100, 0.9),
-    rgba(255, 100, 50, 0.85)
+    rgba(99, 102, 241, 0.9),
+    rgba(168, 85, 247, 0.85)
   );
   color: rgba(255, 255, 255, 0.95);
 }
+
+.message-avatar {
+  flex-shrink: 0;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  object-fit: cover;
+  cursor: pointer;
+  align-self: flex-start;
+  margin-top: 5px;
+}
+
+.message-avatar-placeholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(
+    135deg,
+    rgba(103, 12, 139, 0.55),
+    rgba(168, 85, 247, 0.6)
+  );
+  color: #fff;
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.message.user {
+  flex-direction: row-reverse;
+
+}
+
+.message.bot {
+  flex-direction: row;
+  justify-content: flex-start;
+}
+/*
+.message.user .message-avatar,
+.message.user .message-avatar-placeholder {
+  align-self: flex-bottom;
+}*/
 
 .chat-list-info {
   min-width: 0;
@@ -1630,6 +1713,8 @@ export default {
 
 .message {
   display: flex;
+  align-items: flex-end;
+  gap: 6px;
   animation: messageIn 0.3s ease;
 }
 
@@ -1642,14 +1727,6 @@ export default {
     opacity: 1;
     transform: translateY(0);
   }
-}
-
-.message.user {
-  justify-content: flex-end;
-}
-
-.message.bot {
-  justify-content: flex-start;
 }
 
 .message-content {
@@ -1677,24 +1754,7 @@ export default {
   color: rgba(255, 230, 210, 0.95);
 }
 
-.message-sender {
-  font-size: 0.9rem;
-  color: rgb(201, 202, 255);
-  background-color: rgba(0, 0, 0, 0);
-  border: none;
-  font-weight: 600;
-  font-family: "Inter", sans-serif;
-  cursor: pointer;
-}
-.message-sender:hover {
-  width: auto;
-  height: auto;
-  transform: scale(1.1);
-  background-color: rgb(61, 61, 99);
-  border-radius: 1rem;
-  margin: 0.5rem;
-  transition: 0.5s;
-}
+
 .message-time {
   font-size: 0.75rem;
   color: rgba(255, 255, 255, 0.5);
@@ -1801,7 +1861,7 @@ export default {
   overflow: hidden;
   cursor: pointer;
   transition: all 0.2s ease;
-  margin: 4px 0;
+  
   max-width: 100%;
 }
 

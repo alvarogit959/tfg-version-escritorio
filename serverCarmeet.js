@@ -6,18 +6,118 @@ const cors = require("cors");
 const http = require("http");
 const bcrypt = require("bcrypt");
 const { Server } = require("socket.io");
+const { createClient } = require("redis");
 
 const path = require('path');
 const fs = require("fs");
+const multer = require("multer");
 const app = express();
 app.use(cors());
 app.use(express.json());
+
+const redisClient = createClient({
+  url: process.env.REDIS_URL || "redis://127.0.0.1:6379",
+});
+
+redisClient.on("error", (error) => {
+  console.error("Redis client error:", error);
+});
+
+redisClient
+  .connect()
+  .then(() => console.log("Conectado a Redis"))
+  .catch((error) => {
+    console.error("Redis no disponible; la cache HTTP queda desactivada:", error);
+  });
+
+const CACHE_TTL_SECONDS = 60;
+
+const cacheResponse = (namespace) => async (req, res, next) => {
+  if (!redisClient.isReady) {
+    return next();
+  }
+
+  let cacheKey;
+  try {
+    const version = (await redisClient.get(`http-cache:${namespace}:version`)) || "0";
+    cacheKey = `http-cache:${namespace}:${version}:${req.originalUrl}`;
+    const cachedResponse = await redisClient.get(cacheKey);
+
+    if (cachedResponse !== null) {
+      res.set("X-Cache", "HIT");
+      return res.status(200).json(JSON.parse(cachedResponse));
+    }
+  } catch (error) {
+    console.error(`Error leyendo cache Redis (${namespace}):`, error);
+    res.set("X-Cache", "BYPASS");
+    return next();
+  }
+
+  res.set("X-Cache", "MISS");
+  const sendJson = res.json.bind(res);
+  res.json = (body) => {
+    if (res.statusCode === 200 && redisClient.isReady) {
+      redisClient
+        .set(cacheKey, JSON.stringify(body), { EX: CACHE_TTL_SECONDS })
+        .catch((error) => {
+          console.error(`Error guardando cache Redis (${namespace}):`, error);
+        });
+    }
+    return sendJson(body);
+  };
+
+  return next();
+};
+
+const invalidateCache = async (namespace) => {
+  if (!redisClient.isReady) {
+    return;
+  }
+
+  try {
+    await redisClient.incr(`http-cache:${namespace}:version`);
+  } catch (error) {
+    console.error(`Error invalidando cache Redis (${namespace}):`, error);
+  }
+};
+
 //TEST IMAGES SERVER
 
 app.use(
   "/event-images",
   express.static(path.join(__dirname, "event-images"))
 );
+
+app.use(
+  "/profile-images",
+  express.static(path.join(__dirname, "profile-images"))
+);
+
+const profileImageStorage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    const userDir = path.join(__dirname, "profile-images", req.params.userId);
+    fs.mkdirSync(userDir, { recursive: true });
+    cb(null, userDir);
+  },
+  filename: (req, file, cb) => {
+    const ext = path.extname(file.originalname).toLowerCase() || ".jpg";
+    // Unique filename with timestamp so each upload gets a new URL,
+    // preventing the browser/Electron from serving a cached old image.
+    cb(null, `profile-${Date.now()}${ext}`);
+  },
+});
+
+const uploadProfileImage = multer({
+  storage: profileImageStorage,
+  limits: { fileSize: 5 * 1024 * 1024 },
+  fileFilter: (req, file, cb) => {
+    if (file.mimetype.startsWith("image/")) {
+      cb(null, true);
+    } else {
+      cb(new Error("Solo se permiten archivos de imagen"));
+    }
+  },
+});
 
 
 //CREAR SERVIDOR
@@ -111,7 +211,7 @@ const eventSchema = new mongoose.Schema({
 
 const Event = mongoose.model("Event", eventSchema);
 
-// Schema for Forum posts
+//Esquema post foro
 const forumPostSchema = new mongoose.Schema({
   id: {
     type: Number,
@@ -340,6 +440,137 @@ const messageSchema = new mongoose.Schema({
 
 const Message = mongoose.model("Message", messageSchema);
 
+// ===== ROUTES (Rutas) =====
+const routeStopSchema = new mongoose.Schema(
+  {
+    name: { type: String, default: "" },
+    latitude: { type: Number, required: true },
+    longitude: { type: Number, required: true },
+    description: { type: String, default: "" },
+  },
+  { _id: false }
+);
+
+const routeSchema = new mongoose.Schema({
+  title: { type: String, required: true },
+  description: { type: String, default: "" },
+  offroad: { type: Boolean, default: false },
+  creatorId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "User",
+    required: true,
+  },
+  start: { type: routeStopSchema, required: true },
+  stops: { type: [routeStopSchema], default: [] },
+  end: { type: routeStopSchema, required: true },
+  createdAt: { type: Date, default: Date.now },
+});
+
+const Route = mongoose.model("Route", routeSchema);
+
+// GET all routes
+app.get("/routes", cacheResponse("routes"), async (req, res) => {
+  try {
+    const routes = await Route.find()
+      .populate("creatorId", "username profileImage")
+      .sort({ createdAt: -1 });
+    res.status(200).json(routes);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "Error obteniendo rutas" });
+  }
+});
+
+// GET single route
+app.get("/routes/:routeId", cacheResponse("routes"), async (req, res) => {
+  try {
+    const route = await Route.findById(req.params.routeId).populate(
+      "creatorId",
+      "username profileImage"
+    );
+    if (!route) {
+      return res.status(404).json({ error: "Ruta no encontrada" });
+    }
+    res.status(200).json(route);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "Error obteniendo ruta" });
+  }
+});
+
+// CREATE route
+app.post("/routes", async (req, res) => {
+  try {
+    const { title, description, offroad, creatorId, start, stops, end } = req.body;
+
+    if (!title || !creatorId || !start || !end) {
+      return res
+        .status(400)
+        .json({ error: "Faltan campos requeridos (title, creatorId, start, end)" });
+    }
+
+    if (
+      start.latitude === undefined ||
+      start.longitude === undefined ||
+      end.latitude === undefined ||
+      end.longitude === undefined
+    ) {
+      return res
+        .status(400)
+        .json({ error: "Las coordenadas de inicio y fin son obligatorias" });
+    }
+
+    const newRoute = new Route({
+      title: title.trim(),
+      description: (description || "").trim(),
+      offroad: !!offroad,
+      creatorId,
+      start,
+      stops: Array.isArray(stops) ? stops : [],
+      end,
+    });
+
+    await newRoute.save();
+    await invalidateCache("routes");
+    const populated = await Route.findById(newRoute._id).populate(
+      "creatorId",
+      "username profileImage"
+    );
+    res.status(201).json(populated);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "Error creando ruta" });
+  }
+});
+
+// DELETE route
+app.delete("/routes/:routeId", async (req, res) => {
+  try {
+    const { userId } = req.body;
+    const route = await Route.findById(req.params.routeId);
+    if (!route) {
+      return res.status(404).json({ error: "Ruta no encontrada" });
+    }
+
+    const user = await User.findById(userId).select("role");
+    const isAdmin = user?.role === "admin";
+    const isCreator = route.creatorId.toString() === userId;
+
+    if (!isAdmin && !isCreator) {
+      return res
+        .status(403)
+        .json({ error: "No tienes permiso para eliminar esta ruta" });
+    }
+
+    await Route.findByIdAndDelete(route._id);
+    await invalidateCache("routes");
+    res.status(200).json({ message: "Ruta eliminada" });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "Error eliminando ruta" });
+  }
+});
+
 app.post("/users", async (req, res) => {
   try {
     const { username, email, password, location } = req.body;
@@ -531,9 +762,11 @@ const findEventByIdentifier = async (identifier) => {
 
 const addUserToEvent = async (user, event) => {
   const userIdStr = user._id.toString();
+  let attendeeAdded = false;
   if (!event.attendees.includes(userIdStr)) {
     event.attendees.push(userIdStr);
     await event.save();
+    attendeeAdded = true;
   }
   const alreadyJoined = user.joinedEvents.some((id) =>
     id.equals(event._id)
@@ -541,6 +774,9 @@ const addUserToEvent = async (user, event) => {
   if (!alreadyJoined) {
     user.joinedEvents.push(event._id);
     await user.save();
+  }
+  if (attendeeAdded) {
+    await invalidateCache("events");
   }
 };
 
@@ -553,6 +789,7 @@ const removeUserFromEvent = async (user, event) => {
       attendee !== userIdStr
   );
   await event.save();
+  await invalidateCache("events");
   user.joinedEvents = user.joinedEvents.filter(
     (id) => !id.equals(event._id)
   );
@@ -592,6 +829,7 @@ const deleteEventCompletely = async (event) => {
     }
   );
   await Event.findByIdAndDelete(eventId);
+  await invalidateCache("events");
 };
 
 const purgeUserFromAllEvents = async (user) => {
@@ -615,11 +853,15 @@ const purgeUserFromAllEvents = async (user) => {
     );
     await event.save();
   }
+  if (events.length > 0) {
+    await invalidateCache("events");
+  }
 };
 
 const removeAttendeeFromEvent = async (event, attendeeRef) => {
   event.attendees = event.attendees.filter((a) => a !== attendeeRef);
   await event.save();
+  await invalidateCache("events");
 
   if (mongoose.Types.ObjectId.isValid(attendeeRef)) {
     const attendeeUser = await User.findById(attendeeRef);
@@ -747,6 +989,56 @@ app.patch("/users/:userId", async (req, res) => {
     res.status(500).json({ error: "Error actualizando usuario" });
   }
 });
+
+app.post(
+  "/users/:userId/profile-image",
+  uploadProfileImage.single("image"),
+  async (req, res) => {
+    try {
+      const { userId } = req.params;
+
+      if (!req.file) {
+        return res.status(400).json({ error: "No se recibió ninguna imagen" });
+      }
+
+      const profileImage = `/profile-images/${userId}/${req.file.filename}`;
+
+      // Capture the old profile image path before updating
+      const oldUser = await User.findById(userId).select("profileImage");
+      const oldProfileImage = oldUser?.profileImage || "";
+
+      const user = await User.findByIdAndUpdate(
+        userId,
+        { profileImage },
+        { returnDocument: "after" }
+      )
+        .select("-passwordHash")
+        .populate("joinedEvents");
+
+      if (!user) {
+        return res.status(404).json({ error: "Usuario no encontrado" });
+      }
+
+      // Delete the old profile image file to avoid accumulating stale files
+      if (oldProfileImage && oldProfileImage !== profileImage) {
+        const oldPath = path.join(
+          __dirname,
+          oldProfileImage.replace(/^\//, "")
+        );
+        fs.unlink(oldPath, (err) => {
+          if (err && err.code !== "ENOENT") {
+            console.error("Error eliminando imagen antigua:", err);
+          }
+        });
+      }
+
+      res.status(200).json(formatUserResponse(user));
+    } catch (error) {
+      console.error(error);
+      res.status(500).json({ error: "Error subiendo imagen de perfil" });
+    }
+  }
+);
 
 app.get("/users/:userId/relationship/:otherUserId", async (req, res) => {
   try {
@@ -1007,12 +1299,34 @@ app.get("/users/:userId/conversations/event", async (req, res) => {
     })
       .sort({ "lastMessage.sentAt": -1 });
 
-    const list = conversations.map((conv) => ({
-      conversationId: conv._id,
-      eventId: conv.eventId,
-      title: conv.title,
-      lastMessage: conv.lastMessage,
-    }));
+    const list = await Promise.all(
+      conversations.map(async (conv) => {
+        let image = "/event-images/default.jpg";
+
+        if (conv.eventId) {
+          const event = await Event.findById(conv.eventId);
+          if (event) {
+            const posterPath = path.join(
+              __dirname,
+              "event-images",
+              event.id.toString(),
+              "poster.jpg"
+            );
+            image = fs.existsSync(posterPath)
+              ? `/event-images/${event.id}/poster.jpg`
+              : "/event-images/default.jpg";
+          }
+        }
+
+        return {
+          conversationId: conv._id,
+          eventId: conv.eventId,
+          title: conv.title,
+          lastMessage: conv.lastMessage,
+          image,
+        };
+      })
+    );
 
     res.status(200).json(list);
   } catch (error) {
@@ -1485,7 +1799,7 @@ app.post("/conversations/:conversationId/add-participant", async (req, res) => {
   }
 });
 
-app.get("/events", async (req, res) => {
+app.get("/events", cacheResponse("events"), async (req, res) => {
   try {
     const events = await Event.find().sort({ start: 1 });
 
@@ -1581,6 +1895,7 @@ app.post("/events", async (req, res) => {
     });
 
     await newEvent.save();
+    await invalidateCache("events");
 
     if (creatorId) {
       await User.findByIdAndUpdate(creatorId, {
@@ -1631,6 +1946,7 @@ app.patch("/events/:eventId", async (req, res) => {
     }
 
     await event.save();
+    await invalidateCache("events");
     res.status(200).json(event);
   } catch (error) {
     console.error(error);
@@ -1697,7 +2013,7 @@ app.delete("/events/:eventId", async (req, res) => {
   }
 });
 
-app.get("/events/:eventId/moderators", async (req, res) => {
+app.get("/events/:eventId/moderators", cacheResponse("events"), async (req, res) => {
   try {
     const event = await findEventByIdentifier(req.params.eventId);
     if (!event) {
@@ -1736,7 +2052,7 @@ app.get("/events/:eventId/moderators", async (req, res) => {
   }
 });
 
-app.get("/events/:eventId/attendees", async (req, res) => {
+app.get("/events/:eventId/attendees", cacheResponse("events"), async (req, res) => {
   try {
     const event = await findEventByIdentifier(req.params.eventId);
     if (!event) {
@@ -1770,7 +2086,7 @@ app.get("/events/:eventId/attendees", async (req, res) => {
 // ===== FORUM ENDPOINTS =====
 
 // GET all forum posts (with author populated)
-app.get("/forum", async (req, res) => {
+app.get("/forum", cacheResponse("forum"), async (req, res) => {
   try {
     const posts = await ForumPost.find()
       .populate("author", "username profileImage role")
@@ -1784,7 +2100,7 @@ app.get("/forum", async (req, res) => {
 });
 
 // GET single forum post
-app.get("/forum/:postId", async (req, res) => {
+app.get("/forum/:postId", cacheResponse("forum"), async (req, res) => {
   try {
     const post = await ForumPost.findById(req.params.postId)
       .populate("author", "username profileImage role")
@@ -1821,6 +2137,7 @@ app.post("/forum", async (req, res) => {
     });
 
     await newPost.save();
+    await invalidateCache("forum");
 
     const populated = await ForumPost.findById(newPost._id)
       .populate("author", "username profileImage role");
@@ -1854,6 +2171,7 @@ app.post("/forum/:postId/replies", async (req, res) => {
 
     post.updatedAt = new Date();
     await post.save();
+    await invalidateCache("forum");
 
     const populated = await ForumPost.findById(post._id)
       .populate("author", "username profileImage role")
@@ -1889,6 +2207,7 @@ app.delete("/forum/:postId", async (req, res) => {
     }
 
     await ForumPost.findByIdAndDelete(post._id);
+    await invalidateCache("forum");
     res.status(200).json({ message: "Post eliminado" });
   } catch (error) {
     console.error(error);
@@ -1926,6 +2245,7 @@ app.delete("/forum/:postId/replies/:replyId", async (req, res) => {
     post.replies.pull({ _id: req.params.replyId });
     post.updatedAt = new Date();
     await post.save();
+    await invalidateCache("forum");
 
     res.status(200).json({ message: "Respuesta eliminada" });
   } catch (error) {

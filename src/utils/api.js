@@ -1,5 +1,22 @@
 const API_BASE = "http://localhost:5000";
 
+export function resolveImageUrl(imagePath, cacheBust = false) {
+  if (!imagePath) return "";
+  let url;
+  if (imagePath.startsWith("http://") || imagePath.startsWith("https://")) {
+    url = imagePath;
+  } else {
+    url = `${API_BASE}${imagePath.startsWith("/") ? imagePath : `/${imagePath}`}`;
+  }
+  // Append a cache-busting query param so the browser/Electron always
+  // fetches the latest version of the image instead of a cached one.
+  if (cacheBust) {
+    const sep = url.includes("?") ? "&" : "?";
+    url = `${url}${sep}t=${Date.now()}`;
+  }
+  return url;
+}
+
 export async function apiJson(path, options = {}) {
   const res = await fetch(`${API_BASE}${path}`, options);
   const text = await res.text();
