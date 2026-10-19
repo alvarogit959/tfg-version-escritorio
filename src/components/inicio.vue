@@ -250,6 +250,13 @@ export default {
 
 
 <style scoped>
+  :root {
+  font-family: "Segoe UI", -apple-system, BlinkMacSystemFont, sans-serif;
+  font-synthesis: none;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
 html,
 body {
   height: 100%;
@@ -266,6 +273,7 @@ body {
   right: 5px;
 }
 .mainarea {
+  border: 1px solid rgba(171, 87, 226, 0.3);
   display: flex;
   flex-direction: column;
   row-gap: 1rem;
@@ -274,13 +282,6 @@ body {
   max-height: calc(100vh - 2rem - 60px);
   overflow-y: auto;
   overflow-x: hidden;
-  background: linear-gradient(
-    135deg,
-    rgba(11, 6, 61, 0.5),
-    rgba(0, 0, 0, 0.5)
-  );
-
-
   align-items: center;
   justify-content: flex-start;
   color: rgb(255, 255, 255);
@@ -306,12 +307,10 @@ body {
 }
 
 h3 {
-  font-family: "Inter", sans-serif;
   color: rgb(255, 255, 255);
   font-size: 1.7rem;
 }
 input {
-  font-family: "Inter", sans-serif;
   width: 60%;
   height: 2.8rem;
   padding: 0 1rem;
@@ -322,8 +321,6 @@ input {
   background: rgba(255, 255, 255, 0.15);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
-
-  border: 1px solid rgba(255, 255, 255, 0.25);
   border-radius: 1rem;
   color: white;
 }
@@ -336,7 +333,6 @@ input:focus {
   box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.15);
 }
 button {
-  font-family: "Inter", sans-serif;
   width: 100%;
   padding: 0.5rem 1rem;
   cursor: pointer;
@@ -344,7 +340,7 @@ button {
   background: rgba(255, 255, 255, 0.12);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
-  border: 1px solid rgba(255, 255, 255, 0.25);
+ border: 1px solid rgba(171, 87, 226, 0.3);
   border-radius: 0.2rem;
   color: white;
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.25);
@@ -387,7 +383,7 @@ a {
   background: rgba(255, 255, 255, 0.08);
   border-radius: 1rem;
   margin: 1rem 0;
-  border: 1px solid rgba(255, 255, 255, 0.2);
+
 }
 
 .filter-group {
@@ -396,14 +392,13 @@ a {
 }
 
 .filter-btn {
-  font-family: "Inter", sans-serif;
   padding: 0.7rem 1rem;
   cursor: pointer;
   transition: all 0.25s ease;
   background: rgba(255, 255, 255, 0.12);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
-  border: 1px solid rgba(255, 255, 255, 0.25);
+
   border-radius: 0.8rem;
   color: white;
   font-size: 0.95rem;
@@ -427,7 +422,6 @@ a {
   background: rgba(30, 30, 40, 0.95);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
-  border: 1px solid rgba(255, 255, 255, 0.25);
   border-radius: 0.8rem;
   padding: 0.8rem;
   min-width: 200px;
@@ -440,14 +434,12 @@ a {
 }
 
 .submenu-btn {
-  font-family: "Inter", sans-serif;
   margin-left: 5rem;
   padding: 0.6rem 1rem;
   cursor: pointer;
   transition: all 0.2s ease;
   background: rgba(255, 255, 255, 0.1);
   backdrop-filter: blur(12px);
-  border: 1px solid rgba(255, 255, 255, 0.2);
   border-radius: 0.6rem;
   color: white;
   text-align: left;
@@ -460,11 +452,10 @@ a {
 }
 
 .submenu input {
-  font-family: "Inter", sans-serif;
   width: 100%;
   padding: 0.6rem;
   background: rgba(255, 255, 255, 0.1);
-  border: 1px solid rgba(255, 255, 255, 0.2);
+
   border-radius: 0.6rem;
   color: white;
   font-size: 0.9rem;
@@ -485,14 +476,13 @@ a {
 }
 
 .mainarea::-webkit-scrollbar-track {
-  background: rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0);
   border-radius: 10px;
 }
 
 .mainarea::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.28);
+  background: rgba(255, 255, 255, 0);
   border-radius: 10px;
-  border: 1px solid rgba(0, 0, 0, 0.15);
   transition: all 0.3s ease;
 }
 
@@ -515,7 +505,7 @@ a {
   padding: 0.5rem 1rem;
   background: rgba(255, 162, 100, 0.1);
   border-radius: 0.6rem;
-  border: 1px solid rgba(255, 162, 100, 0.3);
+
 }
 
 .nearby-events-row,
@@ -554,9 +544,9 @@ a {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  background: rgba(29, 14, 43, 0.336);
+  background: rgba(8, 4, 10, 0.295);
   backdrop-filter: blur(12px);
-  border: 1px solid rgba(255, 255, 255, 0.25);
+
   border-radius: 0.4rem;
   cursor: pointer;
   transition: all 0.25s ease;
@@ -635,7 +625,7 @@ a {
   
   background-size: cover;
   background-position: center;
-  border: 1px solid rgb(78, 78, 78);
+
 }
 .blurtest {
   background: rgba(0, 0, 0, 0.39);
@@ -677,7 +667,7 @@ a {
   padding: 0.8rem 1rem;
   background: rgba(255, 255, 255, 0.12);
   backdrop-filter: blur(12px);
-  border: 1px solid rgba(255, 255, 255, 0.25);
+
   border-radius: 0.8rem;
   cursor: pointer;
   transition: all 0.25s ease;
@@ -705,11 +695,10 @@ a {
   background: rgba(83, 13, 129, 0.596);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
-  border: 1px solid rgba(255, 255, 255, 0.25);
+
   border-radius: 1rem;
   color: white;
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.25);
-  font-family: "Inter", sans-serif;
   font-size: 1rem;
 }
 
@@ -733,11 +722,10 @@ a {
   background: rgba(115, 134, 197, 0.507);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
-  border: 1px solid rgba(255, 255, 255, 0.25);
+
   border-radius: 0.4rem;
   color: white;
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.25);
-  font-family: "Inter", sans-serif;
   font-size: 1rem;
 }
 
@@ -774,6 +762,7 @@ a {
 
 
 @media (max-width: 700px) {
+
   .mainarea {
     max-height: 100vh;
     width: 100%;

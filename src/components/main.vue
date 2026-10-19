@@ -56,7 +56,21 @@
           <li>
             <div class="profile-group">
               <button class="profile-btn" @click="toggleProfileMenu">
-                {{ isLoggedIn ? "Perfil   ▼" : "Iniciar sesión" }}
+                <template v-if="isLoggedIn && currentUser">
+                  <img
+                    v-if="currentUser.profileImage && profileImageLoadError !== currentUser.profileImage"
+                    :src="profileImageUrl"
+                    alt="Foto de perfil"
+                    class="profile-avatar"
+                    @error="profileImageLoadError = currentUser.profileImage"
+                  />
+                  <span v-else class="profile-avatar-fallback">
+                    {{ currentUser.username?.charAt(0).toUpperCase() }}
+                  </span>
+                  <span>{{ currentUser.username }}</span>
+                </template>
+                <span v-else>Iniciar sesión</span>
+                <span v-if="isLoggedIn" aria-hidden="true">▼</span>
               </button>
               <div v-if="showProfileMenu" class="submenu">
                 <template v-if="isLoggedIn">
@@ -417,6 +431,9 @@ export default {
   },
   emits: ["view-user"],
   computed: {
+    profileImageUrl() {
+      return resolveImageUrl(this.currentUser?.profileImage);
+    },
     isAdmin() {
       return isAdminRole(this.currentUser?.role);
     },
@@ -496,6 +513,7 @@ export default {
       currentView: "inicio",
       isLoggedIn: false,
       currentUser: null,
+      profileImageLoadError: "",
       chatOpen: false,
       chatMode: "group",
       messages: [],
@@ -1134,7 +1152,7 @@ export default {
 }
 
 .navbar {
-  background: rgba(16, 16, 32, 0.274);
+  
   /*backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);*/
   padding: 0.8rem 1.5rem;
@@ -1210,9 +1228,12 @@ export default {
 }
 
 .profile-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
   font-family: "Inter", sans-serif;
   padding: 0.6rem 1rem;
-  background: rgba(103, 12, 139, 0.377);
+  background: rgba(103, 12, 139, 0);
   border: 1px solid rgba(171, 87, 226, 0.3);
   border-radius: 0.2rem;
   color: rgba(255, 255, 255, 0.8);
@@ -1221,6 +1242,26 @@ export default {
   font-size: 0.95rem;
   font-weight: 500;
   white-space: nowrap;
+}
+
+.profile-avatar,
+.profile-avatar-fallback {
+  width: 1.8rem;
+  height: 1.8rem;
+  border-radius: 50%;
+  flex: 0 0 1.8rem;
+}
+
+.profile-avatar {
+  object-fit: cover;
+}
+
+.profile-avatar-fallback {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(99, 102, 241, 0.35);
+  color: #fff;
 }
 
 .profile-btn:hover {
@@ -1501,7 +1542,7 @@ export default {
   font-size: 0.82rem;
   font-weight: 700;
   color: rgba(246, 249, 255, 0.95);
-  border-bottom: 1px solid rgba(182, 214, 255, 0.2);
+
 }
 
 .sidebar-close {
