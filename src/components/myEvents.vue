@@ -521,11 +521,7 @@ export default {
   overflow-y: auto;
   padding: 1.5rem 2rem;
   color: white;
-  background: linear-gradient(
-    135deg,
-    rgba(99, 86, 155, 0.247),
-    rgba(0, 0, 0, 0.705)
-  );
+
   
 
 
@@ -601,7 +597,11 @@ h1 {
 
 .moderated-card {
   border-color: rgba(255, 193, 7, 0.35);
-  background: rgba(12, 3, 59, 0.24);
+  background: linear-gradient(
+    135deg,
+    rgba(17, 13, 73, 0.6),
+    rgba(0, 0, 0, 0.6)
+  );
 }
 
 .event-card-header {

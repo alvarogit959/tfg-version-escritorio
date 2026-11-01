@@ -1,4 +1,4 @@
-==== **Lanzar el server primero!** ======
+==== **Iniciar Docker primero, Redis, server y luego app!** ======
 El server está incluido dentro de este repositorio como **serverCarmeet.js**, lanzandolo como "**node .\serverCarmeet.js**"
 
 El documento pdf para la **presentación del proyecto** está dentro de "**Documentación del proyecto**"
@@ -19,7 +19,7 @@ Para iniciar Redis en Windows con Docker Desktop:
 
 ```powershell
 docker compose up -d redis
-```
+``` 
 
 El servicio escucha en `127.0.0.1:6379` por defecto y persiste sus datos en el volumen `redis-data`. Para usar otro servidor Redis, define `REDIS_URL` antes de iniciar `serverCarmeet.js` (por ejemplo, `redis://127.0.0.1:6379`). Si Redis no está disponible, el servidor sigue atendiendo las peticiones sin cache y registra el error.
 
@@ -60,7 +60,7 @@ npm install socket.io-client
 
 npm install mapbox-gl
 -Lanzar app:
-node .\serverVueElectron.js
+node .\serverCarmeet.js
 npm run electron:serve   
 
 C:\Users\delva\Desktop\Clases\SEGUNDOAÑO\segundoCuatrimestre\vue-electron-app\event-images\default.jpg

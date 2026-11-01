@@ -1318,7 +1318,7 @@ copyEventInfo() {
 }
 
 .panel-card {
-  background: rgba(255, 255, 255, 0.06);
+  /*background: rgba(255, 255, 255, 0.06);*/
   min-height: 1.5rem;
   height: auto;
   padding: 0.4rem 1rem;
@@ -1666,6 +1666,7 @@ copyEventInfo() {
 }
 
 .event-type {
+  position:absolute;
   padding: 0.25rem 0.55rem;
   border-radius: 0.5rem;
   font-size: 0.72rem;

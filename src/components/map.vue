@@ -829,12 +829,12 @@ escapeHtml(text) {
   row-gap: 0.1rem;
   width: 100%;
   max-height: 100vh;
-  
+  /*
   background: linear-gradient(
     135deg,
     rgba(255,255,255,0.12),
     rgba(0, 0, 0, 0.726)
-  );
+  );*/
 
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.25);
   color: rgb(255, 255, 255);

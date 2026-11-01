@@ -1233,7 +1233,11 @@ export default {
   gap: 0.5rem;
   font-family: "Inter", sans-serif;
   padding: 0.6rem 1rem;
-  background: rgba(103, 12, 139, 0);
+    background: linear-gradient(
+    135deg,
+    rgba(17, 13, 73, 0.4),
+    rgba(0, 0, 0, 0.4)
+  );
   border: 1px solid rgba(171, 87, 226, 0.3);
   border-radius: 0.2rem;
   color: rgba(255, 255, 255, 0.8);
@@ -1268,12 +1272,9 @@ export default {
   background: rgba(99, 102, 241, 0.2);
   border-color: rgba(99, 102, 241, 0.6);
   color: rgba(99, 102, 241, 1);
-  transform: translateY(-2px);
+  transform: scale(1.02);
 }
 
-.profile-btn:active {
-  transform: scale(0.95);
-}
 
 .submenu {
   position: absolute;

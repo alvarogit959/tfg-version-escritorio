@@ -386,11 +386,12 @@ export default {
   box-sizing: border-box;
   -webkit-app-region: no-drag;
   gap: 1rem;
+  /*
   background: linear-gradient(
     135deg,
     rgba(255, 255, 255, 0.12),
     rgba(0, 0, 0, 0.726)
-  );
+  );*/
   height: calc(100vh - 2rem - 60px);
   max-height: calc(100vh - 2rem - 60px);
   overflow-y: auto;

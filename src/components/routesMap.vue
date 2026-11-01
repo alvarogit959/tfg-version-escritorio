@@ -731,17 +731,20 @@ export default {
   flex-direction: column;
   width: 100%;
   height: 100%;
-  padding: 1rem;
+  padding-left: 1rem;
+  padding-right: 1rem;
+  padding-bottom: 1rem;
   box-sizing: border-box;
   color: white;
   font-family: "Inter", sans-serif;
   -webkit-app-region: no-drag;
   gap: 0.75rem;
+  /*
   background: linear-gradient(
     135deg,
     rgba(255, 255, 255, 0.12),
     rgba(0, 0, 0, 0.726)
-  );
+  );*/
 }
 
 .routes-header {
