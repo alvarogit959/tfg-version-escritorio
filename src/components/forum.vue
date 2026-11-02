@@ -492,7 +492,9 @@ export default {
 .panel-card {
   min-height: 1.5rem;
   height: auto;
-  padding: 0.4rem 1rem;
+  
+  padding-right: 0.5rem;
+  padding-left: 0.5rem;
   display: flex;
   flex-direction: space;
 }

@@ -722,11 +722,7 @@ export default {
   overflow-y: auto;
   padding: 1.5rem 2rem;
   color: white;
-  background: linear-gradient(
-    135deg,
-    rgba(80, 40, 120, 0.25),
-    rgba(0, 0, 0, 0.75)
-  );
+
 
   border-radius: 1rem;
   box-sizing: border-box;
@@ -1056,6 +1052,7 @@ h1 {
 }
 
 .type-badge {
+  position: absolute;
   font-size: 0.75rem;
   padding: 0.2rem 0.5rem;
   background: rgba(255, 255, 255, 0.15);
@@ -1152,16 +1149,9 @@ h1 {
   cursor: pointer;
 }
 
-.attendees-block {
-  margin-top: 0.75rem;
-  padding-top: 0.75rem;
-  border-top: 1px solid rgba(255, 255, 255, 0.15);
-}
 
-.attendees-block h4 {
-  margin: 0 0 0.5rem;
-  font-size: 0.95rem;
-}
+
+
 
 .attendees-list {
   list-style: none;

@@ -44,7 +44,7 @@
               Foro
             </button>
           </li>
-          <!--<li>
+          <li>
             <button
               class="nav-btn"
               :class="{ active: currentView === 'routes' }"
@@ -52,11 +52,25 @@
             >
               Rutas
             </button>
-          </li>-->
+          </li>
           <li>
             <div class="profile-group">
               <button class="profile-btn" @click="toggleProfileMenu">
-                {{ isLoggedIn ? "Perfil   ▼" : "Iniciar sesión" }}
+                <template v-if="isLoggedIn && currentUser">
+                  <img
+                    v-if="currentUser.profileImage && profileImageLoadError !== currentUser.profileImage"
+                    :src="profileImageUrl"
+                    alt="Foto de perfil"
+                    class="profile-avatar"
+                    @error="profileImageLoadError = currentUser.profileImage"
+                  />
+                  <span v-else class="profile-avatar-fallback">
+                    {{ currentUser.username?.charAt(0).toUpperCase() }}
+                  </span>
+                  <span>{{ currentUser.username }}</span>
+                </template>
+                <span v-else>Iniciar sesión</span>
+                <span v-if="isLoggedIn" aria-hidden="true">▼</span>
               </button>
               <div v-if="showProfileMenu" class="submenu">
                 <template v-if="isLoggedIn">
@@ -188,10 +202,28 @@
           @login="handleLogin"
         />
       </div>
-<!--
+
       <div v-if="currentView === 'routes'" class="view-container">
-        <RoutesView />
-      </div>-->
+        <RoutesView
+          :current-user="currentUser"
+          :initial-route-id="routeFromChat && routeFromChat.routeId"
+          @create-route="switchView('newRoute')"
+        />
+      </div>
+
+      <div v-if="currentView === 'newRoute'" class="view-container">
+        <NewRoutesView
+          v-if="isLoggedIn && currentUser"
+          :current-user="currentUser"
+          @created="onRouteCreated"
+          @cancel="switchView('routes')"
+        />
+        <LoginView
+          v-else
+          @newUser="switchView('newUser')"
+          @login="handleLogin"
+        />
+      </div>
 
       <div v-if="currentView === 'profile'" class="view-container">
         <ProfileView
@@ -267,7 +299,15 @@
               :class="{ active: conv.isActive }"
               @click="conv.onSelect()"
             >
-              <span class="chat-avatar" :class="conv.avatarClass">{{ conv.avatar }}</span>
+              <span class="chat-avatar" :class="conv.avatarClass">
+                <img
+                  v-if="conv.avatarImage"
+                  :src="conv.avatarImage"
+                  alt=""
+                  class="chat-avatar-img"
+                />
+                <span v-else>{{ conv.avatar }}</span>
+              </span>
               <span class="chat-list-info">
                 <span class="chat-list-name">{{ conv.name }}</span>
                 <span class="chat-list-preview">{{ conv.typeLabel }}</span>
@@ -298,6 +338,16 @@
               class="message"
               :class="msg.type"
             >
+              <img
+                v-if="msg.senderImage"
+                :src="msg.senderImage"
+                alt=""
+                class="message-avatar"
+                @click="openUserProfile(msg.senderId)"
+              />
+              <div v-else class="message-avatar message-avatar-placeholder" @click="openUserProfile(msg.senderId)">
+                {{ msg.senderName.charAt(0).toUpperCase() }}
+              </div>
               <div class="message-content">
                 <button
                   v-if="msg.type === 'me' && msg.senderId"
@@ -307,15 +357,7 @@
                 >
                   {{ msg.senderName }}
                 </button>
-                <!-- <span class="message-sender">{{ msg.senderName }}</span>-->
-                <!--TEST SEND MESSAGE-->
-                <button
-                  type="button"
-                  class="message-sender"
-                  @click="openUserProfile(msg.senderId)"
-                >
-                  {{ msg.senderName }}
-                </button>
+
 
 <!--SHOW DA THINGI-->
                 <div v-if="msg.isEventShare" class="shared-event-card" @click="openSharedEvent(msg.eventData)">
@@ -327,6 +369,19 @@
                     <p class="shared-event-date">{{ msg.eventData.date }}</p>
                     <p v-if="msg.eventData.distance" class="shared-event-distance">{{ msg.eventData.distance }}</p>
                     <p v-if="msg.eventData.location" class="shared-event-location">{{ msg.eventData.location }}</p>
+                  </div>
+                </div>
+                <div v-else-if="msg.isRouteShare" class="shared-route-card">
+                  <div class="shared-route-details">
+                    <h5>{{ msg.routeData.title }}</h5>
+                    <p>Ruta compartida en CarMeet Club</p>
+                    <button
+                      type="button"
+                      class="shared-route-open"
+                      @click="openSharedRoute(msg.routeData)"
+                    >
+                      Abrir ruta
+                    </button>
                   </div>
                 </div>
                 <p v-else>{{ msg.text }}</p>
@@ -356,7 +411,8 @@ import "mapbox-gl/dist/mapbox-gl.css";
 import InicioView from "./inicio.vue";
 import MapView from "./map.vue";
 import EventsView from "./events.vue";
-//import RoutesView from "./routesMap.vue";
+import RoutesView from "./routesMap.vue";
+import NewRoutesView from "./newRoutes.vue";
 import LoginView from "./login-view.vue";
 import ProfileView from "./profile.vue";
 import MyEventsView from "./myEvents.vue";
@@ -366,7 +422,7 @@ import UserView from "./user.vue";
 import AdminPanelView from "./adminPanel.vue";
 import FriendsView from "./friends.vue";
 import ForumView from "./forum.vue";
-import { apiJson, isAdminRole } from "../utils/api.js";
+import { apiJson, isAdminRole, resolveImageUrl } from "../utils/api.js";
 import { io } from "socket.io-client";
 const socket = io("http://localhost:5000");
 export default {
@@ -375,7 +431,8 @@ export default {
     InicioView,
     MapView,
     EventsView,
-    //RoutesView,
+    RoutesView,
+    NewRoutesView,
     LoginView,
     ProfileView,
     MyEventsView,
@@ -388,6 +445,9 @@ export default {
   },
   emits: ["view-user"],
   computed: {
+    profileImageUrl() {
+      return resolveImageUrl(this.currentUser?.profileImage);
+    },
     isAdmin() {
       return isAdminRole(this.currentUser?.role);
     },
@@ -430,6 +490,7 @@ export default {
           conversationId: convId,
           name: friend.username,
           avatar: friend.username.charAt(0).toUpperCase(),
+          avatarImage: resolveImageUrl(friend.profileImage),
           avatarClass: "",
           typeLabel: "Privado",
           isActive: this.privateChatFriend?.id === friend.id,
@@ -446,6 +507,7 @@ export default {
           conversationId: ev.conversationId,
           name: ev.title || "Chat del evento",
           avatar: "E",
+          avatarImage: resolveImageUrl(ev.image),
           avatarClass: "event-chat-avatar",
           typeLabel: "Chat del evento",
           isActive: this.eventChatActive?.conversationId === ev.conversationId,
@@ -465,6 +527,7 @@ export default {
       currentView: "inicio",
       isLoggedIn: false,
       currentUser: null,
+      profileImageLoadError: "",
       chatOpen: false,
       chatMode: "group",
       messages: [],
@@ -477,6 +540,7 @@ export default {
       eventChatActive: null,
       showProfileMenu: false,
       eventFromMap: null,
+      routeFromChat: null,
       viewUserId: null,
       returnViewAfterUser: "inicio",
       hasUnreadMessages: false,
@@ -621,6 +685,9 @@ export default {
       if (viewName !== "events") {
         this.eventFromMap = null;
       }
+      if (viewName !== "routes") {
+        this.routeFromChat = null;
+      }
       if (viewName !== "user") {
         this.viewUserId = null;
       }
@@ -664,6 +731,15 @@ export default {
       this.currentView = "events";
     },
 
+    openSharedRoute(routeData) {
+      this.chatOpen = false;
+      this.routeFromChat = null;
+      this.$nextTick(() => {
+        this.routeFromChat = routeData;
+        this.currentView = "routes";
+      });
+    },
+
     openEventFromMap(event) {
       this.eventFromMap = event;
       this.currentView = "events";
@@ -676,6 +752,9 @@ export default {
 
     onEventCreated() {
       this.switchView("events");
+    },
+    onRouteCreated() {
+      this.switchView("routes");
     },
     handleLogin(user) {
       this.isLoggedIn = user.status === true;
@@ -723,6 +802,7 @@ export default {
         status: user.status,
       };
       localStorage.setItem("user", JSON.stringify(this.currentUser));
+      this.loadPrivateFriendsList();
     },
     loadGroupConversation() {
       fetch("http://localhost:5000/conversations/group")
@@ -929,18 +1009,33 @@ export default {
       };
     },
 
+    parseRouteShare(messageText) {
+      if (!messageText || !messageText.startsWith("[ROUTE_SHARE]")) return null;
+      try {
+        const routeData = JSON.parse(messageText.slice("[ROUTE_SHARE]".length));
+        if (!routeData.routeId || !routeData.title) return null;
+        return routeData;
+      } catch (error) {
+        console.error("Error parsing shared route:", error);
+        return null;
+      }
+    },
+
     processMessage(msg) {
       const eventData = this.parseEventShare(msg.text);
+      const routeData = this.parseRouteShare(msg.text);
       return {
         id: msg._id,
         text: msg.text,
         senderId: msg.senderId._id,
         senderName: msg.senderId.username,
-        senderImage: msg.senderId.profileImage,
+        senderImage: resolveImageUrl(msg.senderId.profileImage),
         type: msg.senderId._id === this.currentUser.id ? "user" : "bot",
         sentAt: msg.sentAt,
         isEventShare: !!eventData,
         eventData: eventData,
+        isRouteShare: !!routeData,
+        routeData,
       };
     },
 
@@ -1099,7 +1194,7 @@ export default {
 }
 
 .navbar {
-  background: rgba(16, 16, 32, 0.274);
+  
   /*backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);*/
   padding: 0.8rem 1.5rem;
@@ -1175,9 +1270,16 @@ export default {
 }
 
 .profile-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
   font-family: "Inter", sans-serif;
   padding: 0.6rem 1rem;
-  background: rgba(103, 12, 139, 0.377);
+    background: linear-gradient(
+    135deg,
+    rgba(17, 13, 73, 0.4),
+    rgba(0, 0, 0, 0.4)
+  );
   border: 1px solid rgba(171, 87, 226, 0.3);
   border-radius: 0.2rem;
   color: rgba(255, 255, 255, 0.8);
@@ -1188,16 +1290,33 @@ export default {
   white-space: nowrap;
 }
 
+.profile-avatar,
+.profile-avatar-fallback {
+  width: 1.8rem;
+  height: 1.8rem;
+  border-radius: 50%;
+  flex: 0 0 1.8rem;
+}
+
+.profile-avatar {
+  object-fit: cover;
+}
+
+.profile-avatar-fallback {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(99, 102, 241, 0.35);
+  color: #fff;
+}
+
 .profile-btn:hover {
   background: rgba(99, 102, 241, 0.2);
   border-color: rgba(99, 102, 241, 0.6);
   color: rgba(99, 102, 241, 1);
-  transform: translateY(-2px);
+  transform: scale(1.02);
 }
 
-.profile-btn:active {
-  transform: scale(0.95);
-}
 
 .submenu {
   position: absolute;
@@ -1371,11 +1490,6 @@ export default {
     padding: 0.4rem 0.8rem;
     font-size: 0.8rem;
   }
-  .view-container {
-
-  height: calc(100vh);
-
-}
 }
 
 .chat-button {
@@ -1466,7 +1580,7 @@ export default {
   font-size: 0.82rem;
   font-weight: 700;
   color: rgba(246, 249, 255, 0.95);
-  border-bottom: 1px solid rgba(182, 214, 255, 0.2);
+
 }
 
 .sidebar-close {
@@ -1527,13 +1641,21 @@ export default {
     rgba(168, 85, 247, 0.6)
   );
   color: #fff;
+  overflow: hidden;
 }
 
-.group-avatar {
+.chat-avatar-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.event-chat-avatar {
   background: linear-gradient(
     135deg,
-    rgba(99, 102, 241, 0.9),
-    rgba(168, 85, 247, 0.85)
+    rgba(255, 162, 100, 0.9),
+    rgba(255, 100, 50, 0.85)
   );
   color: rgba(255, 255, 255, 0.95);
 }
@@ -1547,14 +1669,54 @@ export default {
   box-shadow: 0 0 6px rgba(255, 59, 48, 0.6);
 }
 
-.event-chat-avatar {
+.group-avatar {
   background: linear-gradient(
     135deg,
-    rgba(255, 162, 100, 0.9),
-    rgba(255, 100, 50, 0.85)
+    rgba(99, 102, 241, 0.9),
+    rgba(168, 85, 247, 0.85)
   );
   color: rgba(255, 255, 255, 0.95);
 }
+
+.message-avatar {
+  flex-shrink: 0;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  object-fit: cover;
+  cursor: pointer;
+  align-self: flex-start;
+  margin-top: 5px;
+}
+
+.message-avatar-placeholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(
+    135deg,
+    rgba(103, 12, 139, 0.55),
+    rgba(168, 85, 247, 0.6)
+  );
+  color: #fff;
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.message.user {
+  flex-direction: row-reverse;
+
+}
+
+.message.bot {
+  flex-direction: row;
+  justify-content: flex-start;
+}
+/*
+.message.user .message-avatar,
+.message.user .message-avatar-placeholder {
+  align-self: flex-bottom;
+}*/
 
 .chat-list-info {
   min-width: 0;
@@ -1630,6 +1792,8 @@ export default {
 
 .message {
   display: flex;
+  align-items: flex-end;
+  gap: 6px;
   animation: messageIn 0.3s ease;
 }
 
@@ -1642,14 +1806,6 @@ export default {
     opacity: 1;
     transform: translateY(0);
   }
-}
-
-.message.user {
-  justify-content: flex-end;
-}
-
-.message.bot {
-  justify-content: flex-start;
 }
 
 .message-content {
@@ -1677,24 +1833,7 @@ export default {
   color: rgba(255, 230, 210, 0.95);
 }
 
-.message-sender {
-  font-size: 0.9rem;
-  color: rgb(201, 202, 255);
-  background-color: rgba(0, 0, 0, 0);
-  border: none;
-  font-weight: 600;
-  font-family: "Inter", sans-serif;
-  cursor: pointer;
-}
-.message-sender:hover {
-  width: auto;
-  height: auto;
-  transform: scale(1.1);
-  background-color: rgb(61, 61, 99);
-  border-radius: 1rem;
-  margin: 0.5rem;
-  transition: 0.5s;
-}
+
 .message-time {
   font-size: 0.75rem;
   color: rgba(255, 255, 255, 0.5);
@@ -1801,7 +1940,7 @@ export default {
   overflow: hidden;
   cursor: pointer;
   transition: all 0.2s ease;
-  margin: 4px 0;
+  
   max-width: 100%;
 }
 
@@ -1860,6 +1999,52 @@ export default {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+.shared-route-card {
+  max-width: 100%;
+  overflow: hidden;
+  border: 1px solid rgba(139, 92, 246, 0.45);
+  border-radius: 0.4rem;
+  background: rgba(29, 14, 43, 0.6);
+}
+
+.shared-route-details {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  padding: 0.65rem 0.75rem;
+}
+
+.shared-route-details h5,
+.shared-route-details p {
+  margin: 0;
+}
+
+.shared-route-details h5 {
+  color: white;
+  font-size: 0.85rem;
+}
+
+.shared-route-details p {
+  color: rgba(255, 255, 255, 0.65);
+  font-size: 0.72rem;
+}
+
+.shared-route-open {
+  align-self: flex-start;
+  padding: 0.4rem 0.7rem;
+  border: 1px solid rgba(139, 92, 246, 0.6);
+  border-radius: 0.3rem;
+  color: white;
+  background: rgba(139, 92, 246, 0.4);
+  font: inherit;
+  font-size: 0.75rem;
+  cursor: pointer;
+}
+
+.shared-route-open:hover {
+  background: rgba(139, 92, 246, 0.7);
 }
 
 </style>

@@ -1,4 +1,4 @@
-==== **Lanzar el server primero!** ======
+==== **Iniciar Docker primero, Redis, server y luego app!** ======
 El server está incluido dentro de este repositorio como **serverCarmeet.js**, lanzandolo como "**node .\serverCarmeet.js**"
 
 El documento pdf para la **presentación del proyecto** está dentro de "**Documentación del proyecto**"
@@ -11,6 +11,18 @@ Link Drive de los **instaladores como .exe**: https://drive.google.com/drive/fol
 
 Si quieres verlo desde Visual studio simplemente usar: **npm run electron:serve**
 
+### Cache Redis
+
+Redis cachea las respuestas GET de `/events`, `/forum` y `/routes` durante 60 segundos. Las escrituras de esas funcionalidades invalidan la cache correspondiente.
+
+Para iniciar Redis en Windows con Docker Desktop:
+
+```powershell
+docker compose up -d redis
+``` 
+
+El servicio escucha en `127.0.0.1:6379` por defecto y persiste sus datos en el volumen `redis-data`. Para usar otro servidor Redis, define `REDIS_URL` antes de iniciar `serverCarmeet.js` (por ejemplo, `redis://127.0.0.1:6379`). Si Redis no está disponible, el servidor sigue atendiendo las peticiones sin cache y registra el error.
+
 Link del **video de la aplicación** funcionando como .exe: https://youtu.be/CoYdliQ5uD4
 
 Lanzar los dos exe al mismo tiempo puede ser incompatible al usar tecnologías como mapbox que solo permiten una request al mismo tiempo en la versión gratuita.
@@ -18,6 +30,9 @@ Lanzar los dos exe al mismo tiempo puede ser incompatible al usar tecnologías c
 El resto del readme son comandos que puede necesitar para funcionar si se lanza la app como "serve" y no estan instalados previamente.
 
 ```
+#test multer para subir imagenes
+npm install multer 
+
 # vue-electron-app
 
 ## Project setup
@@ -45,7 +60,7 @@ npm install socket.io-client
 
 npm install mapbox-gl
 -Lanzar app:
-node .\serverVueElectron.js
+node .\serverCarmeet.js
 npm run electron:serve   
 
 C:\Users\delva\Desktop\Clases\SEGUNDOAÑO\segundoCuatrimestre\vue-electron-app\event-images\default.jpg
@@ -59,5 +74,4 @@ npm run electron:build
 
  https://www.fffuel.co/dddepth/
         
-
 
