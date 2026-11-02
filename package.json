@@ -18,6 +18,8 @@
         "bcrypt": "^6.0.0",
         "core-js": "^3.8.3",
         "cors": "^2.8.6",
+        "docker": "^1.0.0",
+        "dotenv": "^17.4.2",
         "leaflet": "^1.9.4",
         "mapbox-gl": "^3.24.0",
         "mongoose": "^9.4.1",
