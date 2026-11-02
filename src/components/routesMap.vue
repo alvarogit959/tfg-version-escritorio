@@ -12,9 +12,8 @@
     </div>
 
     <div class="routes-layout">
-      <!-- Sidebar with route list / route detail -->
+      <!-- Probably the problem with the width?? -->
       <aside class="routes-sidebar">
-        <!-- Route detail panel (covers the sidebar when a route is selected) -->
         <div v-if="routeDetail" class="route-detail-panel">
           <button class="close-detail-btn" @click="closeRouteDetail" title="Cerrar">
             ✕
@@ -57,9 +56,80 @@
               </div>
             </div>
           </div>
+
+          <div class="route-share-actions">
+            <button
+              type="button"
+              class="route-share-btn"
+              @click="openSharePopup"
+            >
+              Compartir en chat
+            </button>
+            <button
+              type="button"
+              class="route-share-btn"
+              :class="{ copied: copyButtonClicked }"
+              @click="copyRouteInfo"
+            >
+              {{ copyButtonClicked ? "Copiado!" : "Copiar información" }}
+            </button>
+          </div>
+
+          <div
+            v-if="showSharePopup"
+            class="route-share-popup-overlay"
+            @click.self="closeSharePopup"
+          >
+            <div class="route-share-popup">
+              <div class="route-share-popup-header">
+                <span>Compartir en chat</span>
+                <button
+                  type="button"
+                  class="route-share-popup-close"
+                  @click="closeSharePopup"
+                >
+                  ✕
+                </button>
+              </div>
+              <div class="route-share-popup-body">
+                <div v-if="shareLoading" class="route-share-state">
+                  Cargando chats...
+                </div>
+                <div
+                  v-else-if="shareChats.length === 0"
+                  class="route-share-state"
+                >
+                  No hay chats disponibles
+                </div>
+                <div v-else class="route-share-chat-list">
+                  <button
+                    v-for="chat in shareChats"
+                    :key="chat.key"
+                    type="button"
+                    class="route-share-chat"
+                    :disabled="sendingTo === chat.key"
+                    @click="sendRouteToChat(chat)"
+                  >
+                    <span class="route-share-avatar">{{ chat.avatar }}</span>
+                    <span class="route-share-chat-info">
+                      <span class="route-share-chat-name">{{ chat.name }}</span>
+                      <span class="route-share-chat-type">
+                        {{ chat.typeLabel }}
+                      </span>
+                    </span>
+                    <span
+                      v-if="sendingTo === chat.key"
+                      class="route-share-sending"
+                    >
+                      Enviando...
+                    </span>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
 
-        <!-- Route list (hidden when detail panel is open) -->
         <template v-else>
           <div v-if="loading" class="loading">Cargando rutas...</div>
           <p v-else-if="routes.length === 0" class="no-routes">
@@ -150,6 +220,10 @@ export default {
       type: Object,
       default: null,
     },
+    initialRouteId: {
+      type: String,
+      default: null,
+    },
   },
   data() {
     return {
@@ -163,6 +237,12 @@ export default {
       routeLineSourceId: "routes-line-source",
       routeLineLayerId: "routes-line-layer",
       routeDetail: null,
+      showSharePopup: false,
+      shareChats: [],
+      shareLoading: false,
+      sendingTo: null,
+      copyButtonClicked: false,
+      copyResetTimer: null,
       showUbicacion: false,
       manualLocation: "",
       userLocation: null,
@@ -178,8 +258,16 @@ export default {
       return this.routes.find((r) => r._id === this.selectedRouteId) || null;
     },
   },
+  watch: {
+    initialRouteId(routeId) {
+      if (routeId) this.openRouteById(routeId);
+    },
+  },
   async mounted() {
     await this.loadRoutes();
+    if (this.initialRouteId) {
+      await this.openRouteById(this.initialRouteId);
+    }
     this.$nextTick(() => {
       setTimeout(() => {
         this.initializeMap();
@@ -189,6 +277,7 @@ export default {
   },
   beforeUnmount() {
     window.removeEventListener("resize", this.onWindowResize);
+    if (this.copyResetTimer) clearTimeout(this.copyResetTimer);
     this.clearRouteMarkers();
     if (this.map) {
       this.map.remove();
@@ -222,6 +311,193 @@ export default {
       this.selectedRouteId = route._id;
       this.routeDetail = route;
       this.drawSelectedRoute();
+    },
+
+    async openRouteById(routeId) {
+      let route = this.routes.find(
+        (item) => String(item._id) === String(routeId),
+      );
+      if (!route) {
+        try {
+          route = await apiJson(`/routes/${encodeURIComponent(routeId)}`);
+        } catch (error) {
+          console.error("Error opening shared route:", error);
+          this.showNotification(error.message || "No se pudo abrir la ruta", "error");
+          return;
+        }
+      }
+
+      this.selectRoute(route);
+    },
+
+    openSharePopup() {
+      if (!this.routeDetail) return;
+      if (!this.currentUser) {
+        this.showNotification("Debes iniciar sesión para compartir rutas", "error");
+        return;
+      }
+      this.showSharePopup = true;
+      this.loadShareChats();
+    },
+
+    closeSharePopup() {
+      this.showSharePopup = false;
+    },
+
+    async loadShareChats() {
+      const userId = this.currentUser?.id || this.currentUser?._id;
+      if (!userId) return;
+
+      this.shareLoading = true;
+      this.shareChats = [];
+      try {
+        const friends = await apiJson(`/users/${userId}/friends`);
+        const friendChats = (Array.isArray(friends) ? friends : []).map(
+          (friend) => ({
+            key: `friend-${friend.id}`,
+            conversationType: "private",
+            otherUser: friend,
+            name: friend.username,
+            avatar: friend.username.charAt(0).toUpperCase(),
+            typeLabel: "Privado",
+          }),
+        );
+
+        const eventConversations = await apiJson(
+          `/users/${userId}/conversations/event`,
+        );
+        const eventChats = (
+          Array.isArray(eventConversations) ? eventConversations : []
+        ).map((conversation) => ({
+          key: `event-${conversation.conversationId}`,
+          conversationType: "event",
+          conversationId: conversation.conversationId,
+          name: conversation.title || "Chat del evento",
+          avatar: "E",
+          typeLabel: "Chat del evento",
+        }));
+
+        let groupChat = null;
+        try {
+          const response = await fetch("http://localhost:5000/conversations/group");
+          if (!response.ok) {
+            throw new Error(`Error cargando el chat grupal: ${response.status}`);
+          }
+          groupChat = await response.json();
+        } catch (error) {
+          console.error("Error loading group chat for sharing:", error);
+        }
+
+        const groupChats = groupChat
+          ? [
+              {
+                key: "group",
+                conversationType: "group",
+                conversationId: groupChat._id,
+                name: "Chat grupal",
+                avatar: "G",
+                typeLabel: "Todos los usuarios",
+              },
+            ]
+          : [];
+
+        this.shareChats = [...groupChats, ...friendChats, ...eventChats];
+      } catch (error) {
+        console.error("Error loading chats for sharing route:", error);
+        this.showNotification(error.message || "Error cargando los chats", "error");
+      } finally {
+        this.shareLoading = false;
+      }
+    },
+
+    routeInfoText(route) {
+      const pointText = (point, fallback) => {
+        const name = point?.name || fallback;
+        const coordinates =
+          point?.latitude != null && point?.longitude != null
+            ? ` (${point.latitude}, ${point.longitude})`
+            : "";
+        const description = point?.description
+          ? ` — ${point.description}`
+          : "";
+        return `${name}${coordinates}${description}`;
+      };
+
+      const lines = [`Ruta: ${route.title}`];
+      if (route.description) lines.push(`Descripción: ${route.description}`);
+      lines.push(`Inicio: ${pointText(route.start, "Inicio")}`);
+      (route.stops || []).forEach((stop, index) => {
+        lines.push(`Parada ${index + 1}: ${pointText(stop, "Parada")}`);
+      });
+      lines.push(`Destino: ${pointText(route.end, "Destino")}`);
+      if (route.offroad) lines.push("Ruta offroad");
+      lines.push("Compartido desde CarMeet Club");
+      return lines.join("\n");
+    },
+
+    async sendRouteToChat(chat) {
+      if (!this.routeDetail || !this.currentUser) return;
+      this.sendingTo = chat.key;
+      try {
+        let conversationId = chat.conversationId;
+        if (chat.conversationType === "private") {
+          const userId = this.currentUser.id || this.currentUser._id;
+          const result = await apiJson(
+            `/users/${userId}/conversations/private`,
+            {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ friendId: chat.otherUser.id }),
+            },
+          );
+          conversationId = result.conversationId;
+        }
+
+        if (!conversationId) {
+          throw new Error("No se encontró la conversación");
+        }
+
+        const userId = this.currentUser.id || this.currentUser._id;
+        await apiJson("/messages", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            conversationId,
+            senderId: userId,
+            text: `[ROUTE_SHARE]${JSON.stringify({
+              routeId: this.routeDetail._id,
+              title: this.routeDetail.title,
+            })}`,
+          }),
+        });
+
+        this.closeSharePopup();
+        this.showNotification("Ruta compartida correctamente", "success");
+      } catch (error) {
+        console.error("Error sharing route:", error);
+        this.showNotification(error.message || "Error al compartir la ruta", "error");
+      } finally {
+        this.sendingTo = null;
+      }
+    },
+
+    async copyRouteInfo() {
+      if (!this.routeDetail) return;
+      try {
+        await navigator.clipboard.writeText(
+          this.routeInfoText(this.routeDetail),
+        );
+        this.copyButtonClicked = true;
+        if (this.copyResetTimer) clearTimeout(this.copyResetTimer);
+        this.copyResetTimer = setTimeout(() => {
+          this.copyButtonClicked = false;
+          this.copyResetTimer = null;
+        }, 2000);
+        this.showNotification("Información copiada", "success");
+      } catch (error) {
+        console.error("Error copying route information:", error);
+        this.showNotification("No se pudo copiar la información", "error");
+      }
     },
 
     canDeleteRoute(route) {
@@ -709,7 +985,8 @@ export default {
       });
 
       this.map.on("load", () => {
-        this.drawAllRouteMiddlePoints();
+        if (this.routeDetail) this.drawSelectedRoute();
+        else this.drawAllRouteMiddlePoints();
       });
     },
 
@@ -787,6 +1064,7 @@ export default {
 }
 
 .routes-layout {
+  width: 100%;
   display: flex;
   flex: 1;
   min-height: 0;
@@ -794,14 +1072,14 @@ export default {
 }
 
 .routes-sidebar {
-  width: 280px;
+  max-width: 100%;
   min-width: 220px;
-  overflow-y: auto;
-  background: rgba(255, 255, 255, 0.08);
-  backdrop-filter: blur(12px);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  border-radius: 0.3rem;
-  padding: 0.75rem;
+  
+  /*background: rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(12px);*/
+  /*border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 0.3rem;*/
+
 }
 
 .routes-sidebar::-webkit-scrollbar {
@@ -831,7 +1109,7 @@ export default {
 
 .route-item {
   position: relative;
-  padding: 0.75rem;
+  padding: 1rem;
   background: rgba(255, 255, 255, 0.06);
   border: 1px solid rgba(255, 255, 255, 0.15);
   border-radius: 0.3rem;
@@ -913,22 +1191,23 @@ export default {
   touch-action: none;
 }
 
-/* Route detail panel (fills the sidebar) */
+/* Route detail panel so i fill the sidebar with the thingi check if its still the same with */
 .route-detail-panel {
   position: relative;
   width: 100%;
   height: 100%;
   overflow-y: auto;
-  background: rgba(20, 20, 40, 0.92);
+  background: rgba(20, 20, 40, 0.692);
   backdrop-filter: blur(12px);
   border: 1px solid rgba(139, 92, 246, 0.5);
   border-radius: 0.4rem;
-  padding: 1rem;
   box-sizing: border-box;
+  padding: 1rem;
+
   color: white;
   font-family: "Inter", sans-serif;
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
-  z-index: 10;
+  
 }
 
 .route-detail-panel::-webkit-scrollbar {
@@ -982,6 +1261,160 @@ export default {
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
+}
+
+.route-share-actions {
+  display: grid;
+  gap: 0.5rem;
+  margin-top: 0.75rem;
+}
+
+.route-share-btn {
+  width: 100%;
+  padding: 0.65rem 0.8rem;
+  border: 1px solid rgba(139, 92, 246, 0.55);
+  border-radius: 0.3rem;
+  color: white;
+  font: inherit;
+  background: linear-gradient(
+    135deg,
+    rgba(139, 92, 246, 0.5),
+    rgba(99, 102, 241, 0.5)
+  );
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.route-share-btn:hover {
+  background: linear-gradient(
+    135deg,
+    rgba(139, 92, 246, 0.75),
+    rgba(99, 102, 241, 0.75)
+  );
+}
+
+.route-share-btn.copied {
+  background: rgba(34, 197, 94, 0.45);
+  border-color: rgba(34, 197, 94, 0.7);
+}
+
+.route-share-popup-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.55);
+}
+
+.route-share-popup {
+  display: flex;
+  flex-direction: column;
+  width: min(380px, 90vw);
+  max-height: 70vh;
+  border: 1px solid rgba(139, 92, 246, 0.5);
+  border-radius: 0.6rem;
+  background: rgba(20, 20, 40, 0.98);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.55);
+}
+
+.route-share-popup-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid rgba(139, 92, 246, 0.3);
+  font-weight: 600;
+}
+
+.route-share-popup-close {
+  padding: 0.2rem 0.4rem;
+  border: 0;
+  color: white;
+  background: transparent;
+  font-size: 1.1rem;
+  cursor: pointer;
+}
+
+.route-share-popup-body {
+  overflow-y: auto;
+  padding: 0.5rem;
+}
+
+.route-share-state {
+  padding: 1.5rem;
+  color: rgba(255, 255, 255, 0.65);
+  text-align: center;
+}
+
+.route-share-chat-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+.route-share-chat {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  width: 100%;
+  padding: 0.6rem 0.7rem;
+  border: 1px solid transparent;
+  border-radius: 0.5rem;
+  color: white;
+  background: transparent;
+  text-align: left;
+  cursor: pointer;
+}
+
+.route-share-chat:hover:not(:disabled) {
+  border-color: rgba(139, 92, 246, 0.4);
+  background: rgba(139, 92, 246, 0.15);
+}
+
+.route-share-chat:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.route-share-avatar {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: rgba(139, 92, 246, 0.65);
+  font-weight: 700;
+}
+
+.route-share-chat-info {
+  display: flex;
+  flex: 1;
+  min-width: 0;
+  flex-direction: column;
+  gap: 0.1rem;
+}
+
+.route-share-chat-name {
+  overflow: hidden;
+  font-size: 0.82rem;
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.route-share-chat-type {
+  font-size: 0.68rem;
+  opacity: 0.65;
+}
+
+.route-share-sending {
+  flex-shrink: 0;
+  color: rgba(100, 200, 255, 0.9);
+  font-size: 0.75rem;
 }
 
 .detail-point {

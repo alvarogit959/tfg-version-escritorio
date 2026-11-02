@@ -30,8 +30,8 @@ redisClient
     console.error("Redis no disponible; la cache HTTP queda desactivada:", error);
   });
 
-const CACHE_TTL_SECONDS = 60;
-
+const CACHE_TTL_SECONDS = 20 * 60; 
+//CHANGE HEREEE TIME SEGUNDOS 
 const cacheResponse = (namespace) => async (req, res, next) => {
   if (!redisClient.isReady) {
     return next();

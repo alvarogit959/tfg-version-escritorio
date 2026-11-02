@@ -75,9 +75,9 @@ export default {
       });
 
       L.tileLayer(
-        "https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png",
+        "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
         {
-          attribution: "&copy; OpenStreetMap contributors &copy; CARTO",
+          attribution: "&copy; OpenStreetMap contributors",
           maxZoom: 19,
         },
       ).addTo(this.map);

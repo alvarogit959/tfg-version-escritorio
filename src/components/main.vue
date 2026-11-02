@@ -206,6 +206,7 @@
       <div v-if="currentView === 'routes'" class="view-container">
         <RoutesView
           :current-user="currentUser"
+          :initial-route-id="routeFromChat && routeFromChat.routeId"
           @create-route="switchView('newRoute')"
         />
       </div>
@@ -370,6 +371,19 @@
                     <p v-if="msg.eventData.location" class="shared-event-location">{{ msg.eventData.location }}</p>
                   </div>
                 </div>
+                <div v-else-if="msg.isRouteShare" class="shared-route-card">
+                  <div class="shared-route-details">
+                    <h5>{{ msg.routeData.title }}</h5>
+                    <p>Ruta compartida en CarMeet Club</p>
+                    <button
+                      type="button"
+                      class="shared-route-open"
+                      @click="openSharedRoute(msg.routeData)"
+                    >
+                      Abrir ruta
+                    </button>
+                  </div>
+                </div>
                 <p v-else>{{ msg.text }}</p>
                 <span class="message-time">{{
                   new Date(msg.sentAt).toLocaleTimeString()
@@ -526,6 +540,7 @@ export default {
       eventChatActive: null,
       showProfileMenu: false,
       eventFromMap: null,
+      routeFromChat: null,
       viewUserId: null,
       returnViewAfterUser: "inicio",
       hasUnreadMessages: false,
@@ -670,6 +685,9 @@ export default {
       if (viewName !== "events") {
         this.eventFromMap = null;
       }
+      if (viewName !== "routes") {
+        this.routeFromChat = null;
+      }
       if (viewName !== "user") {
         this.viewUserId = null;
       }
@@ -711,6 +729,15 @@ export default {
         start: eventData.date,
       };
       this.currentView = "events";
+    },
+
+    openSharedRoute(routeData) {
+      this.chatOpen = false;
+      this.routeFromChat = null;
+      this.$nextTick(() => {
+        this.routeFromChat = routeData;
+        this.currentView = "routes";
+      });
     },
 
     openEventFromMap(event) {
@@ -982,8 +1009,21 @@ export default {
       };
     },
 
+    parseRouteShare(messageText) {
+      if (!messageText || !messageText.startsWith("[ROUTE_SHARE]")) return null;
+      try {
+        const routeData = JSON.parse(messageText.slice("[ROUTE_SHARE]".length));
+        if (!routeData.routeId || !routeData.title) return null;
+        return routeData;
+      } catch (error) {
+        console.error("Error parsing shared route:", error);
+        return null;
+      }
+    },
+
     processMessage(msg) {
       const eventData = this.parseEventShare(msg.text);
+      const routeData = this.parseRouteShare(msg.text);
       return {
         id: msg._id,
         text: msg.text,
@@ -994,6 +1034,8 @@ export default {
         sentAt: msg.sentAt,
         isEventShare: !!eventData,
         eventData: eventData,
+        isRouteShare: !!routeData,
+        routeData,
       };
     },
 
@@ -1448,11 +1490,6 @@ export default {
     padding: 0.4rem 0.8rem;
     font-size: 0.8rem;
   }
-  .view-container {
-
-  height: calc(100vh);
-
-}
 }
 
 .chat-button {
@@ -1962,6 +1999,52 @@ export default {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+.shared-route-card {
+  max-width: 100%;
+  overflow: hidden;
+  border: 1px solid rgba(139, 92, 246, 0.45);
+  border-radius: 0.4rem;
+  background: rgba(29, 14, 43, 0.6);
+}
+
+.shared-route-details {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  padding: 0.65rem 0.75rem;
+}
+
+.shared-route-details h5,
+.shared-route-details p {
+  margin: 0;
+}
+
+.shared-route-details h5 {
+  color: white;
+  font-size: 0.85rem;
+}
+
+.shared-route-details p {
+  color: rgba(255, 255, 255, 0.65);
+  font-size: 0.72rem;
+}
+
+.shared-route-open {
+  align-self: flex-start;
+  padding: 0.4rem 0.7rem;
+  border: 1px solid rgba(139, 92, 246, 0.6);
+  border-radius: 0.3rem;
+  color: white;
+  background: rgba(139, 92, 246, 0.4);
+  font: inherit;
+  font-size: 0.75rem;
+  cursor: pointer;
+}
+
+.shared-route-open:hover {
+  background: rgba(139, 92, 246, 0.7);
 }
 
 </style>
